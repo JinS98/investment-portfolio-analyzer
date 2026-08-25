@@ -1,0 +1,40 @@
+@use './styles/variables' as *;
+
+.app { min-height: 100vh; background: $color-bg; }
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-xl;
+  background: $color-surface;
+  border-bottom: 1px solid $color-border;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  @include mobile { padding: $spacing-md; }
+}
+
+.navBrand { font-size: 1.1rem; font-weight: 700; }
+
+.navRight { display: flex; align-items: center; gap: $spacing-md; }
+
+.navUser { font-size: 0.9rem; color: $color-text-muted; }
+
+.navBtn {
+  padding: $spacing-sm $spacing-md;
+  background: $color-primary;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.85; }
+}
+
+.loading {
+  @include flex-center;
+  min-height: 100vh;
+  color: $color-text-muted;
+}

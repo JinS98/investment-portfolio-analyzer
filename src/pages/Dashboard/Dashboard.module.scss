@@ -1,0 +1,118 @@
+@use '../../styles/variables' as *;
+
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-xl $spacing-lg;
+
+  @include mobile {
+    padding: $spacing-lg $spacing-md;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-xl;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.mockBadge {
+  font-size: 0.75rem;
+  padding: $spacing-xs $spacing-sm;
+  background: rgba($color-warning, 0.15);
+  border: 1px solid $color-warning;
+  border-radius: 4px;
+  color: $color-warning;
+}
+
+.updated {
+  font-size: 0.85rem;
+  color: $color-text-muted;
+}
+
+.refreshBtn {
+  padding: $spacing-sm $spacing-md;
+  background: $color-primary;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+
+  &:hover { opacity: 0.85; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.errorBanner {
+  background: rgba($color-danger, 0.15);
+  border: 1px solid $color-danger;
+  border-radius: 6px;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+  color: $color-danger;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+}
+
+.summaryCard {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.label {
+  font-size: 0.85rem;
+  color: $color-text-muted;
+}
+
+.value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.positive { color: $color-success; }
+.negative { color: $color-danger; }
+
+.empty {
+  @include card;
+  @include flex-center;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-2xl;
+  text-align: center;
+  color: $color-text-muted;
+  margin-bottom: $spacing-xl;
+}
+
+.emptyHint {
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+.placeholder {
+  @include card;
+  @include flex-center;
+  min-height: 180px;
+  color: $color-text-muted;
+  margin-bottom: $spacing-lg;
+}
