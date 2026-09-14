@@ -1,6 +1,6 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import type { ExchangeRate, StockItem, TossCandleItem } from '../types';
-import { calcPortfolioHistory } from '../utils/portfolioHistory';
+import type { ExchangeRate, StockItem, TossCandleItem } from '../../types';
+import { calcPortfolioHistory } from '../../utils/portfolioHistory';
 import styles from './PortfolioPerformanceChart.module.scss';
 
 interface PortfolioPerformanceChartProps {

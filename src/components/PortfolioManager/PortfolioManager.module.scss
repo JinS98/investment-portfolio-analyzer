@@ -1,4 +1,4 @@
-@use '../styles/variables' as *;
+@use '../../styles/variables' as *;
 .section { @include card; margin-bottom: $spacing-xl; }
 .section h2 { margin-top: 0; }
 .form { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(110px, 1fr) minmax(100px, .8fr) auto; gap: $spacing-md; align-items: end; margin-bottom: 30px; }

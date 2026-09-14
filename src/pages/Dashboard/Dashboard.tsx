@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePortfolio } from '../../hooks/usePortfolio';
-import { MarketDataPanel } from '../../components/MarketDataPanel';
-import { PortfolioManager } from '../../components/PortfolioManager';
-import { PortfolioAllocationChart } from '../../components/PortfolioAllocationChart';
-import { PortfolioPerformanceChart } from '../../components/PortfolioPerformanceChart';
-import { RiskGuidePanel } from '../../components/RiskGuidePanel';
+import { MarketDataPanel } from '../../components/MarketDataPanel/MarketDataPanel';
+import { PortfolioManager } from '../../components/PortfolioManager/PortfolioManager';
+import { PortfolioAllocationChart } from '../../components/PortfolioAllocationChart/PortfolioAllocationChart';
+import { PortfolioPerformanceChart } from '../../components/PortfolioPerformanceChart/PortfolioPerformanceChart';
+import { RiskGuidePanel } from '../../components/RiskGuidePanel/RiskGuidePanel';
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import styles from './Dashboard.module.scss';
 const Dashboard = () => {

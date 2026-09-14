@@ -1,5 +1,5 @@
-import type { RiskData } from '../types';
-import { createRiskGuide } from '../utils/riskGuide';
+import type { RiskData } from '../../types';
+import { createRiskGuide } from '../../utils/riskGuide';
 import styles from './RiskGuidePanel.module.scss';
 
 interface RiskGuidePanelProps {

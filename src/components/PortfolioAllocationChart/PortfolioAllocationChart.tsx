@@ -1,5 +1,5 @@
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import type { ExchangeRate, PriceMap, StockItem } from '../types';
+import type { ExchangeRate, PriceMap, StockItem } from '../../types';
 import styles from './PortfolioAllocationChart.module.scss';
 
 interface PortfolioAllocationChartProps {

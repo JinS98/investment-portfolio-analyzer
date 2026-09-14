@@ -1,4 +1,4 @@
-@use '../styles/variables' as *;
+@use '../../styles/variables' as *;
 
 .section { @include card; margin-bottom: $spacing-xl; }
 .header { display: flex; justify-content: space-between; align-items: start; gap: $spacing-md; margin-bottom: $spacing-md; h2 { font-size: 1.2rem; margin-bottom: $spacing-xs; } p { color: $color-text-muted; font-size: 0.85rem; } }

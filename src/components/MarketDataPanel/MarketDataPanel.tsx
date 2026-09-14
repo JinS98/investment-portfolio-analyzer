@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { fetchStocks, fetchQuotes, fetchCandlePage, searchStocks } from '../services/tossApi';
-import type { StockInfo, Quote, CandlePage, StockSearchItem } from '../types/market';
+import { fetchStocks, fetchQuotes, fetchCandlePage, searchStocks } from '../../services/tossApi';
+import type { StockInfo, Quote, CandlePage, StockSearchItem } from '../../types/market';
 import styles from './MarketDataPanel.module.scss';
 
 export function MarketDataPanel() {

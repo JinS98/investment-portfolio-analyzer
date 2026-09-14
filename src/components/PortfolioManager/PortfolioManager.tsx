@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { usePortfolio } from '../hooks/usePortfolio';
-import { searchStocks } from '../services/tossApi';
-import type { StockSearchItem } from '../types/market';
-import { formatRate } from '../utils/calculator';
-import { formatNumericInput, parseNumericInput } from '../utils/numericInput';
+import { usePortfolio } from '../../hooks/usePortfolio';
+import { searchStocks } from '../../services/tossApi';
+import type { StockSearchItem } from '../../types/market';
+import { formatRate } from '../../utils/calculator';
+import { formatNumericInput, parseNumericInput } from '../../utils/numericInput';
 import styles from './PortfolioManager.module.scss';
 
 type Draft = { buyPrice: string; quantity: string };
