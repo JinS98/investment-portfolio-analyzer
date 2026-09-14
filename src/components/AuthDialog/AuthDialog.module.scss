@@ -1,0 +1,111 @@
+@use '../../styles/variables' as *;
+
+.backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: $spacing-md;
+  background: rgba(0, 0, 0, 0.6);
+}
+.dialog {
+  position: relative;
+  width: min(100%, 400px);
+  padding: $spacing-xl;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+.dialog h2 {
+  font-size: 1.45rem;
+  margin-bottom: $spacing-xs;
+}
+.dialog > p {
+  color: $color-text-muted;
+  font-size: 0.9rem;
+  margin-bottom: $spacing-lg;
+}
+.close {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: $spacing-sm;
+  right: $spacing-sm;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: $color-text-muted;
+  font-size: 1.4rem;
+  &:hover {
+    background: rgba($color-text-muted, 0.12);
+    color: $color-text;
+  }
+}
+.google,
+.submit {
+  width: 100%;
+  padding: 11px $spacing-md;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.google {
+  border: 1px solid $color-border;
+  color: $color-text;
+  &:hover {
+    background: rgba($color-text-muted, 0.1);
+  }
+}
+.submit {
+  margin-top: $spacing-md;
+  background: $color-primary;
+  color: #fff;
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin: $spacing-lg 0;
+  color: $color-text-muted;
+  font-size: 0.8rem;
+  &::before,
+  &::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: $color-border;
+  }
+}
+form {
+  display: grid;
+  gap: $spacing-md;
+}
+label {
+  display: grid;
+  gap: $spacing-xs;
+  color: $color-text-muted;
+  font-size: 0.85rem;
+}
+input {
+  padding: 10px;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  background: $color-bg;
+  color: $color-text;
+  font: inherit;
+}
+.error {
+  color: $color-danger;
+  font-size: 0.85rem;
+}
+.modeButton {
+  width: 100%;
+  margin-top: $spacing-md;
+  color: #fff;
+  font-size: 0.85rem;
+}

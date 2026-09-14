@@ -1,30 +1,284 @@
 @use '../../styles/variables' as *;
-.section { @include card; margin-bottom: $spacing-xl; }
-.section h2 { margin-top: 0; }
-.form { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(110px, 1fr) minmax(100px, .8fr) auto; gap: $spacing-md; align-items: end; margin-bottom: 30px; }
-label { display: grid; gap: 6px; font-size: .85rem; color: $color-text-muted; }
-input { padding: 10px; border: 1px solid #64748b; border-radius: 6px; font: inherit; }
-button { padding: 10px 12px; border-radius: 6px; background: $color-primary; color: #fff; font: inherit; }
-.search { position: relative; }
-.searchInput { position: relative; }
-.searchInput input { width: 100%; box-sizing: border-box; padding-right: 40px; }
-.selectedCheck { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: $color-success; color: #fff; font-weight: 700; }
-.search ul { z-index: 3; position: absolute; top: calc(100% + 25px); max-height: 250px; overflow: auto; left: 0; right: 0; padding: 0; margin: 4px 0; list-style: none; border: 1px solid #64748b; border-radius: 6px; background: #fff; color: #172033; box-shadow: 0 8px 24px #0002; }
-.search li { padding: 10px; cursor: pointer; }
-.search li:hover { background: #e2e8f0; }
-.selectionHint, .selectionConfirmed { position: absolute; z-index: 4; top: 100%; left: 0; width: max-content; max-width: 100%; margin: 6px 0 0; font-size: .78rem; line-height: 1.4; }
-.selectionHint { color: $color-text-muted; }
-.selectionConfirmed { color: $color-success; font-weight: 600; }
-.error { color: $color-danger; margin: $spacing-md 0 0; }
-.currencyGuide { margin: $spacing-sm 0 0; color: $color-text-muted; font-size: .85rem; line-height: 1.5; }
-.empty { padding: $spacing-xl 0 0; color: $color-text-muted; }
-.actions { display: flex; gap: $spacing-md; justify-content: space-between; align-items: center; margin-top: $spacing-xl; color: $color-text-muted; font-size: .85rem; }
-.tableWrap { overflow-x: auto; margin-top: $spacing-lg; }
-.marketSummary { display: flex; flex-wrap: wrap; gap: $spacing-md; margin: $spacing-sm 0; color: $color-text-muted; }
-.marketSummary strong { color: $color-text; margin-left: 5px; }
-table { width: 100%; border-collapse: collapse; min-width: 850px; }
-th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid rgba($color-text-muted, .25); white-space: nowrap; }
-th:first-child, td:first-child { text-align: left; } td small { display: block; color: $color-text-muted; margin-top: 3px; } td input { width: 90px; padding: 7px; }
-td button + button { margin-left: 5px; background: transparent; color: $color-text; border: 1px solid #64748b; } tfoot { font-weight: 700; }
-.positive { color: $color-success; }.negative { color: $color-danger; }
-@include mobile { .form { grid-template-columns: 1fr 1fr; }.search { grid-column: 1 / -1; }.actions { align-items: flex-start; flex-direction: column; } }
+.section {
+  @include card;
+  margin-bottom: $spacing-xl;
+  container-type: inline-size;
+}
+.section h2 {
+  margin-top: 0;
+  margin-bottom: $spacing-xs;
+  font-size: 1.35rem;
+}
+.portfolioIntro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+  color: $color-text-muted;
+  font-size: 0.85rem;
+
+  span {
+    padding: $spacing-xs $spacing-sm;
+    border: 1px solid $color-border;
+    border-radius: 999px;
+  }
+
+  strong {
+    color: $color-primary;
+    margin-left: 2px;
+  }
+}
+.form {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(110px, 1fr) minmax(100px, 0.8fr) auto;
+  gap: $spacing-md;
+  align-items: end;
+  margin-bottom: 30px;
+}
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: $color-text-muted;
+}
+input {
+  padding: 10px;
+  border: 1px solid #64748b;
+  border-radius: 6px;
+  font: inherit;
+}
+button {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: $color-primary;
+  color: #fff;
+  font: inherit;
+}
+.search {
+  position: relative;
+}
+.searchInput {
+  position: relative;
+}
+.searchInput input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 40px;
+}
+.selectedCheck {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: $color-success;
+  color: #fff;
+  font-weight: 700;
+}
+.search ul {
+  z-index: 3;
+  position: absolute;
+  top: calc(100% + 25px);
+  max-height: 250px;
+  overflow: auto;
+  left: 0;
+  right: 0;
+  padding: 0;
+  margin: 4px 0;
+  list-style: none;
+  border: 1px solid #64748b;
+  border-radius: 6px;
+  background: #fff;
+  color: #172033;
+  box-shadow: 0 8px 24px #0002;
+}
+.search li {
+  padding: 10px;
+  cursor: pointer;
+}
+.search li:hover {
+  background: #e2e8f0;
+}
+.selectionHint,
+.selectionConfirmed {
+  position: absolute;
+  z-index: 4;
+  top: 100%;
+  left: 0;
+  width: max-content;
+  max-width: 100%;
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.selectionHint {
+  color: $color-text-muted;
+}
+.selectionConfirmed {
+  color: $color-success;
+  font-weight: 600;
+}
+.error {
+  color: $color-danger;
+  margin: $spacing-md 0 0;
+}
+.currencyGuide {
+  margin: $spacing-sm 0 0;
+  color: $color-text-muted;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.empty {
+  padding: $spacing-xl 0 0;
+  color: $color-text-muted;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $spacing-xl;
+  padding: $spacing-md;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  background: rgba($color-primary, 0.05);
+  color: $color-text-muted;
+  font-size: 0.85rem;
+
+  span {
+    flex: 1 1 260px;
+    line-height: 1.5;
+  }
+  button {
+    flex: 0 0 auto;
+  }
+}
+.tableWrap {
+  overflow-x: auto;
+  margin-top: $spacing-xl;
+  padding: $spacing-md;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  background: rgba($color-bg, 0.24);
+
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+    font-size: 1.05rem;
+  }
+}
+.marketSummary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $spacing-md;
+  margin: 0 0 $spacing-md;
+
+  > span {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    min-width: 0;
+    padding: $spacing-sm $spacing-md;
+    border-radius: 6px;
+    background: rgba($color-text-muted, 0.07);
+    color: $color-text-muted;
+    font-size: 0.8rem;
+  }
+}
+.marketSummary strong {
+  color: $color-text;
+  margin-left: 0;
+  overflow: hidden;
+  font-size: 1rem;
+  text-overflow: ellipsis;
+}
+.marketSummary strong.positive {
+  color: $color-success;
+}
+.marketSummary strong.negative {
+  color: $color-danger;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 850px;
+}
+th,
+td {
+  padding: 12px 8px;
+  text-align: right;
+  border-bottom: 1px solid rgba($color-text-muted, 0.25);
+  white-space: nowrap;
+}
+thead th {
+  color: $color-text-muted;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+tbody tr {
+  transition: background 0.15s;
+  &:hover {
+    background: rgba($color-primary, 0.06);
+  }
+}
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+td:first-child strong {
+  font-size: 0.95rem;
+}
+td small {
+  display: block;
+  color: $color-text-muted;
+  margin-top: 3px;
+}
+td input {
+  width: 90px;
+  padding: 7px;
+}
+td button + button {
+  margin-left: 5px;
+  background: transparent;
+  color: $color-text;
+  border: 1px solid #64748b;
+}
+tfoot {
+  font-weight: 700;
+  background: rgba($color-primary, 0.08);
+}
+.positive {
+  color: $color-success;
+}
+.negative {
+  color: $color-danger;
+}
+@container (max-width: 680px) {
+  .form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .search {
+    grid-column: 1 / -1;
+  }
+  .form > button {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+  .marketSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@include mobile {
+  .actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

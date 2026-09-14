@@ -5,7 +5,7 @@ export type { StockInfo, Quote, DailyCandle, CandlePage, Currency, ExchangeRate 
 // ────────────────────────────────────────────
 export interface StockItem {
   id: string;
-  ticker: string;       // 국내: KRX 코드(005930), 미국: 티커(AAPL)
+  ticker: string; // 국내: KRX 코드(005930), 미국: 티커(AAPL)
   market: 'KR' | 'US'; // 국내 / 미국
   name?: string;
   buyPrice: number;
@@ -68,8 +68,11 @@ export interface PortfolioHistory {
   id?: string;
   userId: string;
   date: string;
+  totalBuyValue: number;
   totalValue: number;
+  totalProfitAmount: number;
   totalProfitRate: number;
+  exchangeRate: number | null;
   savedAt: string;
 }
 
@@ -135,6 +138,7 @@ export interface PortfolioState {
   setError: (v: boolean) => void;
   setLastUpdated: (date: string) => void;
   setPortfolioHistory: (history: PortfolioHistory[]) => void;
+  upsertPortfolioHistory: (history: PortfolioHistory) => void;
   setLastMonthSnapshot: (snap: MonthlyPriceSnapshot) => void;
   setComputedData: (data: ComputedData) => void;
   setRiskData: (data: RiskData | null) => void;

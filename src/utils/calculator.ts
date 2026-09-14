@@ -1,9 +1,6 @@
 import type { StockItem, PriceMap, ComputedData, ComputedStock } from '../types';
 
-export const calcPortfolio = (
-  portfolio: StockItem[],
-  prices: PriceMap,
-): ComputedData => {
+export const calcPortfolio = (portfolio: StockItem[], prices: PriceMap): ComputedData => {
   let totalBuyValue = 0;
   let totalEvaluatedValue = 0;
 
@@ -21,13 +18,11 @@ export const calcPortfolio = (
   });
 
   const totalProfitAmount = totalEvaluatedValue - totalBuyValue;
-  const totalProfitRate =
-    totalBuyValue > 0 ? (totalProfitAmount / totalBuyValue) * 100 : 0;
+  const totalProfitRate = totalBuyValue > 0 ? (totalProfitAmount / totalBuyValue) * 100 : 0;
 
   const stocksWithWeight: ComputedStock[] = stocks.map((s) => ({
     ...s,
-    weight:
-      totalEvaluatedValue > 0 ? (s.evaluatedValue / totalEvaluatedValue) * 100 : 0,
+    weight: totalEvaluatedValue > 0 ? (s.evaluatedValue / totalEvaluatedValue) * 100 : 0,
   }));
 
   return {
@@ -39,8 +34,6 @@ export const calcPortfolio = (
   };
 };
 
-export const round = (n: number, digits = 2): number =>
-  Math.round(n * 10 ** digits) / 10 ** digits;
+export const round = (n: number, digits = 2): number => Math.round(n * 10 ** digits) / 10 ** digits;
 
-export const formatRate = (n: number): string =>
-  `${n >= 0 ? '+' : ''}${round(n)}%`;
+export const formatRate = (n: number): string => `${n >= 0 ? '+' : ''}${round(n)}%`;

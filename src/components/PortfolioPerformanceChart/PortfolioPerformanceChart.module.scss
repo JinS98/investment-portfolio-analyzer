@@ -1,10 +1,57 @@
 @use '../../styles/variables' as *;
 
-.section { @include card; margin-bottom: $spacing-xl; }
-.header { display: flex; justify-content: space-between; align-items: start; gap: $spacing-md; margin-bottom: $spacing-lg; h2 { font-size: 1.2rem; margin-bottom: $spacing-xs; } p { color: $color-text-muted; font-size: 0.85rem; } }
-.header > strong { font-size: 1.45rem; white-space: nowrap; }
-.status { color: $color-text-muted; padding: $spacing-lg 0; }
-.metrics { display: flex; flex-wrap: wrap; gap: $spacing-md $spacing-xl; margin-bottom: $spacing-md; color: $color-text-muted; font-size: 0.85rem; strong { color: $color-text; margin-left: $spacing-xs; } }
-.chart { min-width: 0; }
-.positive { color: $color-success !important; }
-.negative { color: $color-danger !important; }
+.section {
+  @include card;
+  margin-bottom: $spacing-xl;
+  container-type: inline-size;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: $spacing-xs;
+  }
+  p {
+    color: $color-text-muted;
+    font-size: 0.85rem;
+  }
+}
+.header > strong {
+  font-size: 1.45rem;
+  white-space: nowrap;
+}
+.status {
+  color: $color-text-muted;
+  padding: $spacing-lg 0;
+}
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md $spacing-xl;
+  margin-bottom: $spacing-md;
+  color: $color-text-muted;
+  font-size: 0.85rem;
+  strong {
+    color: $color-text;
+    margin-left: $spacing-xs;
+  }
+}
+.chart {
+  min-width: 0;
+}
+.positive {
+  color: $color-success !important;
+}
+.negative {
+  color: $color-danger !important;
+}
+
+@container (max-width: 480px) {
+  .header {
+    flex-wrap: wrap;
+  }
+}

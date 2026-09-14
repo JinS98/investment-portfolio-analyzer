@@ -1,6 +1,8 @@
 import {
   GoogleAuthProvider,
+  createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
@@ -15,14 +17,24 @@ export const signInWithGoogle = async (): Promise<AppUser> => {
   return toAppUser(result.user);
 };
 
+export const signUpWithEmail = async (email: string, password: string): Promise<AppUser> => {
+  if (!isFirebaseConfigured || !auth) throw new Error('Firebase 설정을 확인해 주세요.');
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  return toAppUser(result.user);
+};
+
+export const signInWithEmail = async (email: string, password: string): Promise<AppUser> => {
+  if (!isFirebaseConfigured || !auth) throw new Error('Firebase 설정을 확인해 주세요.');
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  return toAppUser(result.user);
+};
+
 export const signOutUser = async (): Promise<void> => {
   if (!isFirebaseConfigured || !auth) return;
   await signOut(auth);
 };
 
-export const subscribeAuthState = (
-  callback: (user: AppUser | null) => void,
-): (() => void) => {
+export const subscribeAuthState = (callback: (user: AppUser | null) => void): (() => void) => {
   if (!isFirebaseConfigured || !auth) {
     callback(null);
     return () => {};

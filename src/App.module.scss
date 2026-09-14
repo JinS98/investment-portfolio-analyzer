@@ -1,11 +1,14 @@
 @use './styles/variables' as *;
 
-.app { min-height: 100vh; background: $color-bg; }
+.app {
+  min-height: 100vh;
+  background: $color-bg;
+}
 
 .nav {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: $spacing-md $spacing-xl;
   background: $color-surface;
   border-bottom: 1px solid $color-border;
@@ -13,14 +16,57 @@
   top: 0;
   z-index: 100;
 
-  @include mobile { padding: $spacing-md; }
+  @include mobile {
+    padding: $spacing-md;
+    grid-template-columns: 1fr;
+    justify-items: start;
+    gap: $spacing-sm;
+  }
 }
 
-.navBrand { font-size: 1.1rem; font-weight: 700; }
+.navBrand {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
 
-.navRight { display: flex; align-items: center; gap: $spacing-md; }
+.navMenu {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
 
-.navUser { font-size: 0.9rem; color: $color-text-muted; }
+  a {
+    color: $color-text-muted;
+    border-radius: 6px;
+    padding: $spacing-sm $spacing-md;
+    font-size: 0.9rem;
+    font-weight: 500;
+    &:hover {
+      color: $color-text;
+      background: rgba($color-text-muted, 0.12);
+    }
+  }
+}
+
+.navMenuActive {
+  color: $color-primary !important;
+  background: rgba($color-primary, 0.15);
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  justify-self: end;
+
+  @include mobile {
+    justify-self: start;
+  }
+}
+
+.navUser {
+  font-size: 0.9rem;
+  color: $color-text-muted;
+}
 
 .navBtn {
   padding: $spacing-sm $spacing-md;
@@ -30,7 +76,9 @@
   font-size: 0.9rem;
   font-weight: 500;
   transition: opacity 0.2s;
-  &:hover { opacity: 0.85; }
+  &:hover {
+    opacity: 0.85;
+  }
 }
 
 .loading {

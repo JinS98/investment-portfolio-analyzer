@@ -28,6 +28,8 @@
   display: flex;
   align-items: center;
   gap: $spacing-md;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .mockBadge {
@@ -53,8 +55,13 @@
   font-weight: 500;
   transition: opacity 0.2s;
 
-  &:hover { opacity: 0.85; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover {
+    opacity: 0.85;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .errorBanner {
@@ -66,12 +73,149 @@
   color: $color-danger;
 }
 
+.historyError {
+  background: rgba($color-warning, 0.15);
+  border: 1px solid $color-warning;
+  border-radius: 6px;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+  color: $color-warning;
+  overflow-wrap: anywhere;
+}
+
 .exchangeRate {
   font-size: 0.85rem;
   padding: $spacing-xs $spacing-sm;
   border: 1px solid rgba($color-primary, 0.45);
   border-radius: 4px;
   color: $color-primary;
+}
+
+.layoutToggle {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  color: #fff;
+  line-height: 0;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
+
+  &:hover {
+    border-color: $color-primary;
+    color: $color-primary;
+    background: rgba($color-primary, 0.1);
+  }
+}
+
+.layoutIcon {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  gap: 3px;
+
+  i {
+    display: block;
+  }
+}
+
+.twoColumnIcon {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  i {
+    background: currentColor;
+    border-radius: 2px;
+  }
+}
+
+.singleColumnIcon {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(2, 1fr);
+  i {
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+  }
+  i:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+.componentGrid {
+  display: grid;
+  gap: $spacing-xl;
+  align-items: stretch;
+  margin-bottom: $spacing-xl;
+
+  > * {
+    min-width: 0;
+    max-width: 100%;
+    align-self: stretch;
+  }
+  > :is(.storageStatus, .errorBanner, .historyError, .empty) {
+    grid-column: 1 / -1;
+  }
+  > .placeholder {
+    display: none;
+  }
+  > :not(.storageStatus):not(.errorBanner):not(.empty):not(.placeholder) {
+    margin: 0;
+  }
+}
+
+.panelItem {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+  > :not(.dragHandle) {
+    box-sizing: border-box;
+    height: 100%;
+    margin: 0;
+  }
+}
+
+.panelDragging {
+  opacity: 0.45;
+}
+.hiddenPanel {
+  display: none;
+}
+
+.dragHandle {
+  position: absolute;
+  z-index: 5;
+  top: 10px;
+  right: 10px;
+  color: $color-text-muted;
+  font-size: 1rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+.double {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@include mobile {
+  .double {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .meta {
+    justify-content: flex-start;
+  }
 }
 
 .storageStatus {
@@ -103,8 +247,12 @@
   font-weight: 700;
 }
 
-.positive { color: $color-success; }
-.negative { color: $color-danger; }
+.positive {
+  color: $color-success;
+}
+.negative {
+  color: $color-danger;
+}
 
 .empty {
   @include card;
@@ -143,8 +291,14 @@
   gap: $spacing-md;
   margin-bottom: $spacing-lg;
 
-  h2 { font-size: 1.2rem; margin-bottom: $spacing-xs; }
-  p { color: $color-text-muted; font-size: 0.85rem; }
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: $spacing-xs;
+  }
+  p {
+    color: $color-text-muted;
+    font-size: 0.85rem;
+  }
 }
 
 .analysisCount {
@@ -156,7 +310,10 @@
   white-space: nowrap;
 }
 
-.riskStatus { color: $color-text-muted; padding: $spacing-lg 0; }
+.riskStatus {
+  color: $color-text-muted;
+  padding: $spacing-lg 0;
+}
 
 .riskGrid {
   display: grid;
@@ -164,7 +321,9 @@
   gap: $spacing-md;
   margin-bottom: $spacing-lg;
 
-  @include mobile { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @include mobile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .riskCard {
@@ -175,8 +334,14 @@
   flex-direction: column;
   gap: $spacing-xs;
 
-  span, small { color: $color-text-muted; font-size: 0.8rem; }
-  strong { font-size: 1.35rem; }
+  span,
+  small {
+    color: $color-text-muted;
+    font-size: 0.8rem;
+  }
+  strong {
+    font-size: 1.35rem;
+  }
 }
 
 .riskWarning {
@@ -189,7 +354,9 @@
   padding: $spacing-sm $spacing-md;
 }
 
-.riskTableWrap { overflow-x: auto; }
+.riskTableWrap {
+  overflow-x: auto;
+}
 
 .riskTable {
   width: 100%;
@@ -197,13 +364,23 @@
   min-width: 520px;
   font-size: 0.9rem;
 
-  th, td {
+  th,
+  td {
     border-bottom: 1px solid $color-border;
     padding: $spacing-sm;
     text-align: right;
   }
 
-  th { color: $color-text-muted; font-size: 0.8rem; font-weight: 500; }
-  th:first-child, td:first-child { text-align: left; }
-  tbody tr:last-child td { border-bottom: 0; }
+  th {
+    color: $color-text-muted;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  th:first-child,
+  td:first-child {
+    text-align: left;
+  }
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
 }

@@ -4,8 +4,13 @@ import { createRiskGuide } from '../src/utils/riskGuide.ts';
 
 test('risk guide marks high volatility and concentration as high risk', () => {
   const guide = createRiskGuide({
-    volatility: 180, mdd: -70, concentration: 100, maxWeight: 70,
-    analyzedTickers: ['RAM', 'MVLL'], insufficientTickers: [], stocks: [],
+    volatility: 180,
+    mdd: -70,
+    concentration: 100,
+    maxWeight: 70,
+    analyzedTickers: ['RAM', 'MVLL'],
+    insufficientTickers: [],
+    stocks: [],
   });
 
   assert.equal(guide.level, 'high');

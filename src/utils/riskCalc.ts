@@ -52,20 +52,35 @@ export const calcRisk = (
   const tickers = Object.keys(historicalData);
   const stockRisks: StockRiskData[] = tickers.map((ticker) => {
     const candles = historicalData[ticker];
-    return { ticker, observations: candles.length, volatility: calcVolatility(candles), mdd: calcMDD(candles) };
+    return {
+      ticker,
+      observations: candles.length,
+      volatility: calcVolatility(candles),
+      mdd: calcMDD(candles),
+    };
   });
   const analyzed = stockRisks.filter((stock) => stock.volatility !== null && stock.mdd !== null);
-  const insufficientTickers = stockRisks.filter((stock) => stock.volatility === null || stock.mdd === null).map((stock) => stock.ticker);
+  const insufficientTickers = stockRisks
+    .filter((stock) => stock.volatility === null || stock.mdd === null)
+    .map((stock) => stock.ticker);
   const sortedWeights = Object.entries(weights).sort(([, a], [, b]) => b - a);
   const concentration = sortedWeights.slice(0, 2).reduce((sum, [, weight]) => sum + weight, 0);
   const maxWeight = sortedWeights[0]?.[1] ?? 0;
-  if (!analyzed.length) return {
-    volatility: null, mdd: null, concentration: round(concentration), maxWeight: round(maxWeight),
-    analyzedTickers: [], insufficientTickers, stocks: stockRisks,
-  };
+  if (!analyzed.length)
+    return {
+      volatility: null,
+      mdd: null,
+      concentration: round(concentration),
+      maxWeight: round(maxWeight),
+      analyzedTickers: [],
+      insufficientTickers,
+      stocks: stockRisks,
+    };
 
   const analyzedWeight = analyzed.reduce((sum, stock) => sum + (weights[stock.ticker] ?? 0), 0);
-  const volatility = analyzed.reduce((sum, stock) => sum + stock.volatility! * (weights[stock.ticker] ?? 0), 0) / analyzedWeight;
+  const volatility =
+    analyzed.reduce((sum, stock) => sum + stock.volatility! * (weights[stock.ticker] ?? 0), 0) /
+    analyzedWeight;
   const mdd = Math.min(...analyzed.map((stock) => stock.mdd!));
 
   return {

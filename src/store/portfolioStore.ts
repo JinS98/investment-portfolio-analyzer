@@ -35,9 +35,7 @@ export const usePortfolioStore = create<PortfolioState>()(
 
       updateStock: (id, updates) =>
         set((state) => ({
-          portfolio: state.portfolio.map((s) =>
-            s.id === id ? { ...s, ...updates } : s,
-          ),
+          portfolio: state.portfolio.map((s) => (s.id === id ? { ...s, ...updates } : s)),
         })),
 
       removeStock: (id) =>
@@ -45,15 +43,16 @@ export const usePortfolioStore = create<PortfolioState>()(
           portfolio: state.portfolio.filter((s) => s.id !== id),
         })),
 
-      replacePortfolio: (portfolio) => set({
-        portfolio,
-        prices: {},
-        exchangeRate: null,
-        historicalData: {},
-        computedData: null,
-        riskData: null,
-        lastUpdated: null,
-      }),
+      replacePortfolio: (portfolio) =>
+        set({
+          portfolio,
+          prices: {},
+          exchangeRate: null,
+          historicalData: {},
+          computedData: null,
+          riskData: null,
+          lastUpdated: null,
+        }),
 
       setPrices: (prices) => set({ prices }),
       setExchangeRate: (exchangeRate) => set({ exchangeRate }),
@@ -62,6 +61,13 @@ export const usePortfolioStore = create<PortfolioState>()(
       setError: (isError) => set({ isError }),
       setLastUpdated: (lastUpdated) => set({ lastUpdated }),
       setPortfolioHistory: (portfolioHistory) => set({ portfolioHistory }),
+      upsertPortfolioHistory: (history) =>
+        set((state) => ({
+          portfolioHistory: [
+            history,
+            ...state.portfolioHistory.filter((item) => item.date !== history.date),
+          ],
+        })),
       setLastMonthSnapshot: (lastMonthSnapshot) => set({ lastMonthSnapshot }),
       setComputedData: (computedData) => set({ computedData }),
       setRiskData: (riskData) => set({ riskData }),

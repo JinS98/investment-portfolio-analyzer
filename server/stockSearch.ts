@@ -9,19 +9,32 @@ export function createStockSearch(load: () => Promise<StockSearchItem[]>, now = 
   const results = new Map<string, StockSearchItem[]>();
   function refresh() {
     if (pending) return pending;
-    pending = load().then((items) => {
-      if (!items.length) throw new Error('종목 목록이 비어 있습니다.');
-      index = items.map((item) => ({ item, symbol: normalize(item.symbol), name: normalize(item.name) }));
-      results.clear(); expires = now() + 24 * 60 * 60 * 1000;
-    }).catch((error: unknown) => { retryAfter = now() + 60_000; throw error; })
-      .finally(() => { pending = undefined; });
+    pending = load()
+      .then((items) => {
+        if (!items.length) throw new Error('종목 목록이 비어 있습니다.');
+        index = items.map((item) => ({
+          item,
+          symbol: normalize(item.symbol),
+          name: normalize(item.name),
+        }));
+        results.clear();
+        expires = now() + 24 * 60 * 60 * 1000;
+      })
+      .catch((error: unknown) => {
+        retryAfter = now() + 60_000;
+        throw error;
+      })
+      .finally(() => {
+        pending = undefined;
+      });
     return pending;
   }
   return async (query: string): Promise<StockSearchItem[]> => {
     const key = normalize(query);
     if (!key || key.length > 80) return [];
     if (!index) {
-      if (now() < retryAfter) throw new Error('종목 목록을 불러오지 못했습니다. 잠시 후 다시 검색해주세요.');
+      if (now() < retryAfter)
+        throw new Error('종목 목록을 불러오지 못했습니다. 잠시 후 다시 검색해주세요.');
       await refresh();
     } else if (now() >= expires && now() >= retryAfter) {
       // Serve the previous complete index while refreshing; never expose partial markets.
@@ -31,9 +44,14 @@ export function createStockSearch(load: () => Promise<StockSearchItem[]>, now = 
     if (cached) return cached;
     const buckets: StockSearchItem[][] = [[], [], []];
     for (const row of index!) {
-      const rank = row.symbol === key || row.name === key ? 0
-        : row.symbol.startsWith(key) || row.name.startsWith(key) ? 1
-        : row.symbol.includes(key) || row.name.includes(key) ? 2 : -1;
+      const rank =
+        row.symbol === key || row.name === key
+          ? 0
+          : row.symbol.startsWith(key) || row.name.startsWith(key)
+            ? 1
+            : row.symbol.includes(key) || row.name.includes(key)
+              ? 2
+              : -1;
       if (rank >= 0 && buckets[rank].length < 20) buckets[rank].push(row.item);
     }
     const matches = buckets.flat().slice(0, 20);

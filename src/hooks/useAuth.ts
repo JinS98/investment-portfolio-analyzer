@@ -1,7 +1,13 @@
 import { useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { usePortfolioStore } from '../store/portfolioStore';
-import { subscribeAuthState, signInWithGoogle, signOutUser } from '../services/auth';
+import {
+  subscribeAuthState,
+  signInWithEmail,
+  signInWithGoogle,
+  signOutUser,
+  signUpWithEmail as createEmailAccount,
+} from '../services/auth';
 
 export const useAuth = () => {
   const { user, isAuthLoading, setUser, setAuthLoading } = useAuthStore();
@@ -18,13 +24,9 @@ export const useAuth = () => {
     return unsubscribe;
   }, [setUser, setAuthLoading, reset]);
 
-  const login = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (err) {
-      console.error('[useAuth] login error:', err);
-    }
-  };
+  const login = () => signInWithGoogle();
+  const loginWithEmail = (email: string, password: string) => signInWithEmail(email, password);
+  const signUpWithEmail = (email: string, password: string) => createEmailAccount(email, password);
 
   const logout = async () => {
     try {
@@ -34,5 +36,5 @@ export const useAuth = () => {
     }
   };
 
-  return { user, isAuthLoading, login, logout };
+  return { user, isAuthLoading, login, loginWithEmail, signUpWithEmail, logout };
 };

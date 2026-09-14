@@ -1,14 +1,24 @@
 @use '../../styles/variables' as *;
 
-.section { @include card; margin-bottom: $spacing-xl; }
+.section {
+  @include card;
+  margin-bottom: $spacing-xl;
+  container-type: inline-size;
+}
 
 .header {
   display: flex;
   justify-content: space-between;
   gap: $spacing-md;
   margin-bottom: $spacing-md;
-  h2 { font-size: 1.2rem; margin-bottom: $spacing-xs; }
-  p { color: $color-text-muted; font-size: 0.85rem; }
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: $spacing-xs;
+  }
+  p {
+    color: $color-text-muted;
+    font-size: 0.85rem;
+  }
 }
 
 .rate {
@@ -21,19 +31,49 @@
   white-space: nowrap;
 }
 
-.empty { color: $color-text-muted; padding: $spacing-lg 0; }
+.empty {
+  color: $color-text-muted;
+  padding: $spacing-lg 0;
+}
 
 .content {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(300px, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
   gap: $spacing-xl;
-  @include mobile { grid-template-columns: 1fr; gap: $spacing-md; }
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
 }
 
-.chart { min-width: 0; }
-.total { text-align: center; color: $color-text-muted; font-size: 0.85rem; strong { color: $color-text; margin-left: $spacing-xs; } }
-.list { list-style: none; margin: 0; padding: 0; }
+@container (max-width: 640px) {
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: $spacing-md;
+  }
+  .header {
+    flex-wrap: wrap;
+  }
+}
+
+.chart {
+  min-width: 0;
+}
+.total {
+  text-align: center;
+  color: $color-text-muted;
+  font-size: 0.85rem;
+  strong {
+    color: $color-text;
+    margin-left: $spacing-xs;
+  }
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 
 .list li {
   display: grid;
@@ -42,9 +82,27 @@
   align-items: center;
   border-bottom: 1px solid $color-border;
   padding: $spacing-sm 0;
-  &:last-child { border-bottom: 0; }
+  &:last-child {
+    border-bottom: 0;
+  }
 }
 
-.dot { width: 9px; height: 9px; border-radius: 50%; }
-.name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; small { color: $color-text-muted; } }
-.value { grid-column: 2 / 4; color: $color-text-muted; font-size: 0.8rem; margin-top: 2px; }
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  small {
+    color: $color-text-muted;
+  }
+}
+.value {
+  grid-column: 2 / 4;
+  color: $color-text-muted;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}

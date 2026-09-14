@@ -1,0 +1,80 @@
+@use '../../styles/variables' as *;
+
+.section {
+  @include card;
+  margin-bottom: $spacing-xl;
+  container-type: inline-size;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: $spacing-xs;
+  }
+  p {
+    color: $color-text-muted;
+    font-size: 0.85rem;
+  }
+}
+.rangeButtons {
+  display: inline-flex;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  padding: 2px;
+  button {
+    padding: $spacing-xs $spacing-sm;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.8rem;
+  }
+}
+.active {
+  background: rgba($color-primary, 0.2);
+  color: $color-primary !important;
+}
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  div {
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    padding: $spacing-sm;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+  span {
+    color: $color-text-muted;
+    font-size: 0.78rem;
+  }
+  strong {
+    font-size: 0.95rem;
+  }
+}
+.chart {
+  min-width: 0;
+}
+.empty {
+  color: $color-text-muted;
+  padding: $spacing-lg 0;
+}
+.positive {
+  color: $color-success;
+}
+.negative {
+  color: $color-danger;
+}
+@container (max-width: 560px) {
+  .header {
+    flex-wrap: wrap;
+  }
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

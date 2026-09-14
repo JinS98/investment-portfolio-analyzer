@@ -1,0 +1,83 @@
+@use '../../styles/variables' as *;
+
+.section {
+  @include card;
+  margin-bottom: $spacing-xl;
+  container-type: inline-size;
+}
+.header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: $spacing-xs;
+  }
+  p {
+    color: $color-text-muted;
+    font-size: 0.85rem;
+  }
+  > strong {
+    font-size: 1.45rem;
+    white-space: nowrap;
+  }
+}
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: $spacing-md;
+  align-items: center;
+}
+.value,
+.change {
+  border: 1px solid $color-border;
+  border-radius: 7px;
+  padding: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  span,
+  small {
+    color: $color-text-muted;
+    font-size: 0.8rem;
+  }
+  strong {
+    font-size: 1rem;
+  }
+}
+.change {
+  grid-column: 1 / -1;
+}
+.arrow {
+  color: $color-text-muted;
+  font-size: 1.5rem;
+}
+.empty {
+  color: $color-text-muted;
+  padding: $spacing-lg 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  strong {
+    color: $color-text;
+  }
+}
+.positive {
+  color: $color-success;
+}
+.negative {
+  color: $color-danger;
+}
+@container (max-width: 420px) {
+  .header {
+    flex-wrap: wrap;
+  }
+  .content {
+    grid-template-columns: 1fr;
+  }
+  .arrow {
+    display: none;
+  }
+}
