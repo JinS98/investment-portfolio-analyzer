@@ -53,7 +53,7 @@ export function tossPlugin(env: Record<string, string>): Plugin {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     const endpoint = url.pathname.slice('/api/toss/'.length);
-    if (req.method !== 'GET' || !['search', 'stocks', 'prices', 'candles'].includes(endpoint)) {
+    if (req.method !== 'GET' || !['search', 'stocks', 'prices', 'candles', 'exchange-rate'].includes(endpoint)) {
       res.statusCode = 404; res.end('{}'); return;
     }
     try {
@@ -66,7 +66,10 @@ export function tossPlugin(env: Record<string, string>): Plugin {
         res.end(JSON.stringify({ result: await searchStocks(query) })); return;
       }
       const params = new URLSearchParams();
-      if (endpoint === 'candles') {
+      if (endpoint === 'exchange-rate') {
+        params.set('baseCurrency', 'USD');
+        params.set('quoteCurrency', 'KRW');
+      } else if (endpoint === 'candles') {
         const symbol = url.searchParams.get('symbol') ?? '';
         const count = Number(url.searchParams.get('count') ?? 90);
         if (!/^[A-Za-z0-9.-]+$/.test(symbol) || !Number.isInteger(count) || count < 1 || count > 200) throw new Error('종목 또는 조회 개수가 올바르지 않습니다.');

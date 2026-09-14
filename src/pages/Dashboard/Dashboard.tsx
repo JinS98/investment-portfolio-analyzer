@@ -1,17 +1,44 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import { MarketDataPanel } from '../../components/MarketDataPanel';
 import { PortfolioManager } from '../../components/PortfolioManager';
+import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import styles from './Dashboard.module.scss';
 const Dashboard = () => {
+  const { isPortfolioLoading, portfolioError } = usePortfolioSync();
   const {
     portfolio,
     isLoading,
     isError,
     lastUpdated,
+    exchangeRate,
     refreshPrices,
   } = usePortfolio();
-  useEffect(() => { if (portfolio.length) refreshPrices(); }, [portfolio.length, refreshPrices]);
+  const refreshPricesRef = useRef(refreshPrices);
+  const lastAutoRefreshKey = useRef<string | null>(null);
+  const initialRefreshRequested = useRef(false);
+  const autoRefreshKey = portfolio.map((stock) => stock.id).join('|');
+
+  useEffect(() => {
+    refreshPricesRef.current = refreshPrices;
+  }, [refreshPrices]);
+
+  useEffect(() => {
+    if (isPortfolioLoading || initialRefreshRequested.current) return;
+    initialRefreshRequested.current = true;
+    if (!autoRefreshKey) void refreshPricesRef.current();
+  }, [autoRefreshKey, isPortfolioLoading]);
+
+  useEffect(() => {
+    if (!autoRefreshKey) {
+      lastAutoRefreshKey.current = null;
+      return;
+    }
+    // React StrictMode의 개발용 effect 재실행과 시세 상태 변경으로 인한 중복 요청을 막는다.
+    if (lastAutoRefreshKey.current === autoRefreshKey) return;
+    lastAutoRefreshKey.current = autoRefreshKey;
+    void refreshPricesRef.current();
+  }, [autoRefreshKey]);
 
   return (
     <main className={styles.dashboard}>
@@ -23,6 +50,9 @@ const Dashboard = () => {
               업데이트: {new Date(lastUpdated).toLocaleTimeString('ko-KR')}
             </span>
           )}
+          {exchangeRate && <span className={styles.exchangeRate} title={`유효 시간: ${new Date(exchangeRate.validFrom).toLocaleTimeString('ko-KR')} ~ ${new Date(exchangeRate.validUntil).toLocaleTimeString('ko-KR')}`}>
+            USD/KRW {exchangeRate.rate.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}원
+          </span>}
           <button className={styles.refreshBtn} onClick={refreshPrices} disabled={isLoading}>
             {isLoading ? '로딩 중...' : '새로고침'}
           </button>
@@ -30,6 +60,9 @@ const Dashboard = () => {
       </header>
       <MarketDataPanel />
       <PortfolioManager />
+
+      {isPortfolioLoading && <p className={styles.storageStatus}>저장된 포트폴리오를 불러오는 중...</p>}
+      {portfolioError && <div className={styles.errorBanner}>⚠️ {portfolioError}</div>}
 
       {isError && (
         <div className={styles.errorBanner}>

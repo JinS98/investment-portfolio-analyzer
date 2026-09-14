@@ -1,15 +1,22 @@
 @use '../styles/variables' as *;
 .section { @include card; margin-bottom: $spacing-xl; }
 .section h2 { margin-top: 0; }
-.form { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(110px, 1fr) minmax(100px, .8fr) auto; gap: $spacing-md; align-items: end; }
+.form { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(110px, 1fr) minmax(100px, .8fr) auto; gap: $spacing-md; align-items: end; margin-bottom: 30px; }
 label { display: grid; gap: 6px; font-size: .85rem; color: $color-text-muted; }
 input { padding: 10px; border: 1px solid #64748b; border-radius: 6px; font: inherit; }
 button { padding: 10px 12px; border-radius: 6px; background: $color-primary; color: #fff; font: inherit; }
 .search { position: relative; }
-.search ul { z-index: 3; position: absolute; max-height: 250px; overflow: auto; left: 0; right: 0; padding: 0; margin: 4px 0; list-style: none; border: 1px solid #64748b; border-radius: 6px; background: #fff; color: #172033; box-shadow: 0 8px 24px #0002; }
+.searchInput { position: relative; }
+.searchInput input { width: 100%; box-sizing: border-box; padding-right: 40px; }
+.selectedCheck { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: $color-success; color: #fff; font-weight: 700; }
+.search ul { z-index: 3; position: absolute; top: calc(100% + 25px); max-height: 250px; overflow: auto; left: 0; right: 0; padding: 0; margin: 4px 0; list-style: none; border: 1px solid #64748b; border-radius: 6px; background: #fff; color: #172033; box-shadow: 0 8px 24px #0002; }
 .search li { padding: 10px; cursor: pointer; }
 .search li:hover { background: #e2e8f0; }
+.selectionHint, .selectionConfirmed { position: absolute; z-index: 4; top: 100%; left: 0; width: max-content; max-width: 100%; margin: 6px 0 0; font-size: .78rem; line-height: 1.4; }
+.selectionHint { color: $color-text-muted; }
+.selectionConfirmed { color: $color-success; font-weight: 600; }
 .error { color: $color-danger; margin: $spacing-md 0 0; }
+.currencyGuide { margin: $spacing-sm 0 0; color: $color-text-muted; font-size: .85rem; line-height: 1.5; }
 .empty { padding: $spacing-xl 0 0; color: $color-text-muted; }
 .actions { display: flex; gap: $spacing-md; justify-content: space-between; align-items: center; margin-top: $spacing-xl; color: $color-text-muted; font-size: .85rem; }
 .tableWrap { overflow-x: auto; margin-top: $spacing-lg; }

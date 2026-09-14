@@ -1,16 +1,20 @@
 import { useCallback } from 'react';
 import { usePortfolioStore } from '../store/portfolioStore';
-import { fetchCurrentPrices, fetchCandles } from '../services/tossApi';
+import { fetchCurrentPrices, fetchCandles, fetchUsdKrwExchangeRate } from '../services/tossApi';
 import { calcPortfolio } from '../utils/calculator';
+import { createPortfolioStock, deletePortfolioStock, updatePortfolioStock as updateStoredPortfolioStock } from '../services/portfolioService';
+import { useAuthStore } from '../store/authStore';
 
 /**
  * 포트폴리오 데이터 로드 훅
  * 토스 API 현재가·캔들 → 수익률 계산 → Zustand 저장
  */
 export const usePortfolio = () => {
+  const userId = useAuthStore((state) => state.user?.uid);
   const {
     portfolio,
     prices,
+    exchangeRate,
     computedData,
     isLoading,
     isError,
@@ -19,6 +23,7 @@ export const usePortfolio = () => {
     updateStock,
     removeStock,
     setPrices,
+    setExchangeRate,
     setHistoricalData,
     setLoading,
     setError,
@@ -28,18 +33,19 @@ export const usePortfolio = () => {
 
   /** 현재가 갱신 + 수익률 재계산 */
   const refreshPrices = useCallback(async () => {
-    if (!portfolio.length) return;
-
     setLoading(true);
     setError(false);
 
     try {
       const tickers = portfolio.map((s) => s.ticker);
-      const newPrices = await fetchCurrentPrices(tickers);
-      setPrices({ ...prices, ...newPrices });
-
-      const computed = calcPortfolio(portfolio, { ...prices, ...newPrices });
-      setComputedData(computed);
+      const [newPrices, exchangeRate] = await Promise.all([
+        tickers.length ? fetchCurrentPrices(tickers) : Promise.resolve({}),
+        fetchUsdKrwExchangeRate(),
+      ]);
+      const mergedPrices = { ...prices, ...newPrices };
+      setPrices(mergedPrices);
+      setExchangeRate(exchangeRate);
+      if (portfolio.length) setComputedData(calcPortfolio(portfolio, mergedPrices));
       setLastUpdated(new Date().toISOString());
     } catch (err) {
       console.error('[usePortfolio] refreshPrices error:', err);
@@ -47,29 +53,35 @@ export const usePortfolio = () => {
     } finally {
       setLoading(false);
     }
-  }, [portfolio, prices, setPrices, setComputedData, setLoading, setError, setLastUpdated]);
+  }, [portfolio, prices, setPrices, setExchangeRate, setComputedData, setLoading, setError, setLastUpdated]);
 
-  const addPortfolioStock = useCallback((stock: Parameters<typeof addStock>[0]) => {
-    addStock(stock);
+  const addPortfolioStock = useCallback(async (stock: Parameters<typeof createPortfolioStock>[1]) => {
+    if (!userId) throw new Error('로그인 후 종목을 추가해주세요.');
+    const savedStock = await createPortfolioStock(userId, stock);
+    addStock(savedStock);
     const nextPortfolio = [
       ...portfolio,
-      { ...stock, id: 'preview', addedAt: new Date().toISOString() },
+      savedStock,
     ];
     setComputedData(calcPortfolio(nextPortfolio, prices));
-  }, [addStock, portfolio, prices, setComputedData]);
+  }, [userId, addStock, portfolio, prices, setComputedData]);
 
-  const updatePortfolioStock = useCallback((id: string, updates: Parameters<typeof updateStock>[1]) => {
+  const updatePortfolioStock = useCallback(async (id: string, updates: Parameters<typeof updateStock>[1]) => {
+    if (!userId) throw new Error('로그인 후 종목을 수정해주세요.');
+    await updateStoredPortfolioStock(userId, id, updates);
     updateStock(id, updates);
     setComputedData(calcPortfolio(
       portfolio.map((stock) => stock.id === id ? { ...stock, ...updates } : stock),
       prices,
     ));
-  }, [updateStock, portfolio, prices, setComputedData]);
+  }, [userId, updateStock, portfolio, prices, setComputedData]);
 
-  const removePortfolioStock = useCallback((id: string) => {
+  const removePortfolioStock = useCallback(async (id: string) => {
+    if (!userId) throw new Error('로그인 후 종목을 삭제해주세요.');
+    await deletePortfolioStock(userId, id);
     removeStock(id);
     setComputedData(calcPortfolio(portfolio.filter((stock) => stock.id !== id), prices));
-  }, [removeStock, portfolio, prices, setComputedData]);
+  }, [userId, removeStock, portfolio, prices, setComputedData]);
 
   /**
    * 캔들(일봉) 데이터 로드 — Week 5 리스크 계산용
@@ -97,6 +109,7 @@ export const usePortfolio = () => {
   return {
     portfolio,
     prices,
+    exchangeRate,
     computedData,
     isLoading,
     isError,

@@ -1,6 +1,6 @@
 import type { PriceMap } from '../types';
 import { object, parseStocks, parseQuotes, parseCandles } from './marketParser';
-import type { StockSearchItem } from '../types/market';
+import type { ExchangeRate, StockSearchItem } from '../types/market';
 
 export async function searchStocks(query: string, signal: AbortSignal): Promise<StockSearchItem[]> {
   const response = await fetch('/api/toss/search?' + new URLSearchParams({ q: query }), { signal });
@@ -39,6 +39,16 @@ export async function fetchCurrentPrices(tickers: string[]): Promise<PriceMap> {
   const result = Object.fromEntries(quotes.map((quote) => [quote.symbol, quote.price]));
   if (tickers.some((ticker) => result[ticker.trim().toUpperCase()] === undefined)) throw new Error('?? ??? ???? ???????.');
   return result;
+}
+export async function fetchUsdKrwExchangeRate(): Promise<ExchangeRate> {
+  const result = object(await request('exchange-rate', new URLSearchParams()));
+  const rate = Number(result.rate);
+  const midRate = Number(result.midRate);
+  if (result.baseCurrency !== 'USD' || result.quoteCurrency !== 'KRW' || !Number.isFinite(rate) || rate <= 0
+    || !Number.isFinite(midRate) || midRate <= 0 || typeof result.validFrom !== 'string' || typeof result.validUntil !== 'string') {
+    throw new Error('환율 API 응답이 올바르지 않습니다.');
+  }
+  return { baseCurrency: 'USD', quoteCurrency: 'KRW', rate, midRate, validFrom: result.validFrom, validUntil: result.validUntil };
 }
 export async function fetchCandlePage(ticker: string, count = 90, before?: string) {
   symbols([ticker]);

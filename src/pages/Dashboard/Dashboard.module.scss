@@ -66,6 +66,19 @@
   color: $color-danger;
 }
 
+.exchangeRate {
+  font-size: 0.85rem;
+  padding: $spacing-xs $spacing-sm;
+  border: 1px solid rgba($color-primary, 0.45);
+  border-radius: 4px;
+  color: $color-primary;
+}
+
+.storageStatus {
+  margin: 0 0 $spacing-lg;
+  color: $color-text-muted;
+}
+
 .summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

@@ -1,5 +1,5 @@
 import type { DailyCandle } from './market';
-export type { StockInfo, Quote, DailyCandle, CandlePage, Currency } from './market';
+export type { StockInfo, Quote, DailyCandle, CandlePage, Currency, ExchangeRate } from './market';
 // ────────────────────────────────────────────
 // 종목 정보
 // ────────────────────────────────────────────
@@ -99,6 +99,7 @@ export interface TossHolding {
 export interface PortfolioState {
   portfolio: StockItem[];
   prices: PriceMap;
+  exchangeRate: import('./market').ExchangeRate | null;
   historicalData: Record<string, TossCandleItem[]>;
   lastMonthSnapshot: MonthlyPriceSnapshot | null;
 
@@ -112,10 +113,12 @@ export interface PortfolioState {
   isError: boolean;
   lastUpdated: string | null;
 
-  addStock: (stock: Omit<StockItem, 'id' | 'addedAt'>) => void;
-  updateStock: (id: string, updates: Partial<StockItem>) => void;
+  addStock: (stock: StockItem) => void;
+  updateStock: (id: string, updates: Pick<StockItem, 'buyPrice' | 'quantity'>) => void;
   removeStock: (id: string) => void;
+  replacePortfolio: (portfolio: StockItem[]) => void;
   setPrices: (prices: PriceMap) => void;
+  setExchangeRate: (exchangeRate: import('./market').ExchangeRate | null) => void;
   setHistoricalData: (data: Record<string, TossCandleItem[]>) => void;
   setLoading: (v: boolean) => void;
   setError: (v: boolean) => void;

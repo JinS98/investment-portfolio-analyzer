@@ -31,3 +31,11 @@ export interface CandlePage {
   candles: DailyCandle[];
   nextBefore: string | null;
 }
+export interface ExchangeRate {
+  baseCurrency: 'USD';
+  quoteCurrency: 'KRW';
+  rate: number;
+  midRate: number;
+  validFrom: string;
+  validUntil: string;
+}

@@ -11,6 +11,7 @@ import type {
 const initialState = {
   portfolio: [] as StockItem[],
   prices: {} as PriceMap,
+  exchangeRate: null,
   historicalData: {} as Record<string, TossCandleItem[]>,
   lastMonthSnapshot: null,
   computedData: null,
@@ -27,16 +28,9 @@ export const usePortfolioStore = create<PortfolioState>()(
     (set) => ({
       ...initialState,
 
-      addStock: (stockInput) =>
+      addStock: (stock) =>
         set((state) => ({
-          portfolio: [
-            ...state.portfolio,
-            {
-              ...stockInput,
-              id: `${stockInput.ticker}-${Date.now()}`,
-              addedAt: new Date().toISOString(),
-            },
-          ],
+          portfolio: [...state.portfolio, stock],
         })),
 
       updateStock: (id, updates) =>
@@ -51,7 +45,16 @@ export const usePortfolioStore = create<PortfolioState>()(
           portfolio: state.portfolio.filter((s) => s.id !== id),
         })),
 
+      replacePortfolio: (portfolio) => set({
+        portfolio,
+        prices: {},
+        exchangeRate: null,
+        computedData: null,
+        lastUpdated: null,
+      }),
+
       setPrices: (prices) => set({ prices }),
+      setExchangeRate: (exchangeRate) => set({ exchangeRate }),
       setHistoricalData: (historicalData) => set({ historicalData }),
       setLoading: (isLoading) => set({ isLoading }),
       setError: (isError) => set({ isError }),
