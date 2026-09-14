@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { usePortfolioStore } from '../store/portfolioStore';
 import { fetchCurrentPrices, fetchCandles, fetchUsdKrwExchangeRate } from '../services/tossApi';
 import { calcPortfolio } from '../utils/calculator';
+import { calcRisk } from '../utils/riskCalc';
 import { createPortfolioStock, deletePortfolioStock, updatePortfolioStock as updateStoredPortfolioStock } from '../services/portfolioService';
 import { useAuthStore } from '../store/authStore';
 
@@ -15,7 +16,9 @@ export const usePortfolio = () => {
     portfolio,
     prices,
     exchangeRate,
+    historicalData,
     computedData,
+    riskData,
     isLoading,
     isError,
     lastUpdated,
@@ -25,6 +28,7 @@ export const usePortfolio = () => {
     setPrices,
     setExchangeRate,
     setHistoricalData,
+    setRiskData,
     setLoading,
     setError,
     setLastUpdated,
@@ -89,28 +93,52 @@ export const usePortfolio = () => {
    */
   const loadHistoricalData = useCallback(
     async (days = 90) => {
-      if (!portfolio.length) return;
-
-      try {
-        const result: Record<string, Awaited<ReturnType<typeof fetchCandles>>> = {};
-        await Promise.all(
-          portfolio.map(async (stock) => {
-            result[stock.ticker] = await fetchCandles(stock.ticker, days);
-          }),
-        );
-        setHistoricalData(result);
-      } catch (err) {
-        console.error('[usePortfolio] loadHistoricalData error:', err);
+      if (!portfolio.length) {
+        setHistoricalData({});
+        setRiskData(null);
+        return null;
       }
+
+      const result: Record<string, Awaited<ReturnType<typeof fetchCandles>>> = {};
+      const tickers = [...new Set(portfolio.map((stock) => stock.ticker))];
+      const failures: string[] = [];
+      for (let index = 0; index < tickers.length; index += 4) {
+        const batch = tickers.slice(index, index + 4);
+        const settled = await Promise.allSettled(batch.map(async (ticker) => ({ ticker, candles: await fetchCandles(ticker, days) })));
+        settled.forEach((item, batchIndex) => {
+          if (item.status === 'fulfilled') result[item.value.ticker] = item.value.candles;
+          else failures.push(batch[batchIndex]);
+        });
+      }
+      if (!Object.keys(result).length) throw new Error('일봉 데이터를 불러오지 못했습니다.');
+      if (failures.length) console.warn('[usePortfolio] candle requests failed:', failures);
+
+      const weightedValues = portfolio.map((stock) => {
+        const currentPrice = prices[stock.ticker] ?? stock.buyPrice;
+        const exchangeMultiplier = stock.market === 'US' ? exchangeRate?.rate ?? 0 : 1;
+        return { ticker: stock.ticker, value: currentPrice * stock.quantity * exchangeMultiplier };
+      });
+      const valuesByTicker = weightedValues.reduce<Record<string, number>>((totals, item) => ({
+        ...totals,
+        [item.ticker]: (totals[item.ticker] ?? 0) + item.value,
+      }), {});
+      const totalValue = Object.values(valuesByTicker).reduce((sum, value) => sum + value, 0);
+      const weights = Object.fromEntries(Object.entries(valuesByTicker).map(([ticker, value]) => [ticker, totalValue > 0 ? value / totalValue * 100 : 0]));
+      const risk = calcRisk(result, weights);
+      setHistoricalData(result);
+      setRiskData(risk);
+      return risk;
     },
-    [portfolio, setHistoricalData],
+    [portfolio, prices, exchangeRate, setHistoricalData, setRiskData],
   );
 
   return {
     portfolio,
     prices,
     exchangeRate,
+    historicalData,
     computedData,
+    riskData,
     isLoading,
     isError,
     lastUpdated,

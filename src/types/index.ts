@@ -35,10 +35,21 @@ export interface ComputedData {
 }
 
 // 리스크 데이터
+export interface StockRiskData {
+  ticker: string;
+  observations: number;
+  volatility: number | null;
+  mdd: number | null;
+}
+
 export interface RiskData {
-  volatility: number;
-  mdd: number;
+  volatility: number | null;
+  mdd: number | null;
   concentration: number;
+  maxWeight: number;
+  analyzedTickers: string[];
+  insufficientTickers: string[];
+  stocks: StockRiskData[];
 }
 
 // 월별 투자 시그널
@@ -126,7 +137,7 @@ export interface PortfolioState {
   setPortfolioHistory: (history: PortfolioHistory[]) => void;
   setLastMonthSnapshot: (snap: MonthlyPriceSnapshot) => void;
   setComputedData: (data: ComputedData) => void;
-  setRiskData: (data: RiskData) => void;
+  setRiskData: (data: RiskData | null) => void;
   setSignalData: (data: SignalData) => void;
   reset: () => void;
 }
