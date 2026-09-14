@@ -148,7 +148,11 @@
 
 .componentGrid {
   display: grid;
-  gap: $spacing-xl;
+  // 1,000칸으로 쪼개 0.1% 단위까지 드래그 너비를 즉시 반영합니다.
+  grid-template-columns: repeat(1000, minmax(0, 1fr));
+  // 열마다 gap을 주면 100개의 gap이 화면 폭을 밀어내므로 행 사이에만 여백을 둡니다.
+  column-gap: 0;
+  row-gap: $spacing-xl;
   align-items: stretch;
   margin-bottom: $spacing-xl;
 
@@ -184,6 +188,15 @@
   }
 }
 
+// grid 자체의 열 간격 대신 각 패널 안쪽에 여백을 둬 100칸 레이아웃의 폭을 유지합니다.
+.pairedFirst {
+  padding-right: $spacing-sm;
+}
+
+.pairedSecond {
+  padding-left: $spacing-sm;
+}
+
 .panelDragging {
   opacity: 0.45;
 }
@@ -200,6 +213,37 @@
   font-size: 1rem;
   line-height: 1;
   pointer-events: none;
+}
+
+.resizeHandle {
+  position: absolute;
+  z-index: 10;
+  top: 50%;
+  right: -10px;
+  width: 20px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+  transform: translateY(-50%);
+
+  &::after {
+    position: absolute;
+    inset: 10px 8px;
+    border-radius: 999px;
+    background: rgba($color-primary, 0.7);
+    content: '';
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 1;
+  }
 }
 
 .single {

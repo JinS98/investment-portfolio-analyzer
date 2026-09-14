@@ -21,20 +21,41 @@
   }
 }
 .rangeButtons {
+  position: relative;
   display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
   border: 1px solid $color-border;
-  border-radius: 6px;
-  padding: 2px;
+   border-radius: 100px;
+
   button {
-    padding: $spacing-xs $spacing-sm;
-    border-radius: 4px;
-    color: #fff;
-    font-size: 0.8rem;
+    min-width: 56px;
+    min-height: 32px;
+    padding: 0 14px;
+    border-radius: 999px;
+    color: $color-text-muted;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: transparent;
+    transition:
+      color 0.18s,
+      background 0.18s,
+      box-shadow 0.18s,
+      transform 0.18s;
+
+
+    &:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
+    }
   }
 }
 .active {
-  background: rgba($color-primary, 0.2);
-  color: $color-primary !important;
+  border-color: transparent !important;
+  background: $color-primary !important;
+  color: #fff !important;
+  box-shadow: 0 2px 5px rgba($color-primary, 0.34);
 }
 .summary {
   display: grid;
