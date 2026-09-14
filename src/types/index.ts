@@ -1,3 +1,5 @@
+import type { DailyCandle } from './market';
+export type { StockInfo, Quote, DailyCandle, CandlePage, Currency } from './market';
 // ────────────────────────────────────────────
 // 종목 정보
 // ────────────────────────────────────────────
@@ -78,22 +80,9 @@ export interface TossTokenResponse {
   expires_in: number;
 }
 
-export interface TossPriceItem {
-  code: string;
-  price: number;
-  changeRate: number;   // 전일 대비 등락률 (%)
-  changePrice: number;  // 전일 대비 등락금액
-  marketStatus: string;
-}
+export type TossPriceItem = import('./market').Quote;
 
-export interface TossCandleItem {
-  date: string;         // YYYY-MM-DD
-  openPrice: number;
-  highPrice: number;
-  lowPrice: number;
-  closePrice: number;
-  volume: number;
-}
+export type TossCandleItem = DailyCandle;
 
 export interface TossHolding {
   code: string;

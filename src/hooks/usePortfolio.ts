@@ -36,9 +36,9 @@ export const usePortfolio = () => {
     try {
       const tickers = portfolio.map((s) => s.ticker);
       const newPrices = await fetchCurrentPrices(tickers);
-      setPrices(newPrices);
+      setPrices({ ...prices, ...newPrices });
 
-      const computed = calcPortfolio(portfolio, newPrices);
+      const computed = calcPortfolio(portfolio, { ...prices, ...newPrices });
       setComputedData(computed);
       setLastUpdated(new Date().toISOString());
     } catch (err) {
@@ -47,7 +47,29 @@ export const usePortfolio = () => {
     } finally {
       setLoading(false);
     }
-  }, [portfolio, setPrices, setComputedData, setLoading, setError, setLastUpdated]);
+  }, [portfolio, prices, setPrices, setComputedData, setLoading, setError, setLastUpdated]);
+
+  const addPortfolioStock = useCallback((stock: Parameters<typeof addStock>[0]) => {
+    addStock(stock);
+    const nextPortfolio = [
+      ...portfolio,
+      { ...stock, id: 'preview', addedAt: new Date().toISOString() },
+    ];
+    setComputedData(calcPortfolio(nextPortfolio, prices));
+  }, [addStock, portfolio, prices, setComputedData]);
+
+  const updatePortfolioStock = useCallback((id: string, updates: Parameters<typeof updateStock>[1]) => {
+    updateStock(id, updates);
+    setComputedData(calcPortfolio(
+      portfolio.map((stock) => stock.id === id ? { ...stock, ...updates } : stock),
+      prices,
+    ));
+  }, [updateStock, portfolio, prices, setComputedData]);
+
+  const removePortfolioStock = useCallback((id: string) => {
+    removeStock(id);
+    setComputedData(calcPortfolio(portfolio.filter((stock) => stock.id !== id), prices));
+  }, [removeStock, portfolio, prices, setComputedData]);
 
   /**
    * 캔들(일봉) 데이터 로드 — Week 5 리스크 계산용
@@ -79,9 +101,9 @@ export const usePortfolio = () => {
     isLoading,
     isError,
     lastUpdated,
-    addStock,
-    updateStock,
-    removeStock,
+    addStock: addPortfolioStock,
+    updateStock: updatePortfolioStock,
+    removeStock: removePortfolioStock,
     refreshPrices,
     loadHistoricalData,
   };

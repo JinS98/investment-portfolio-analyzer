@@ -1,31 +1,23 @@
 import { useEffect } from 'react';
 import { usePortfolio } from '../../hooks/usePortfolio';
-import { isTossConfigured } from '../../services/tossApi';
+import { MarketDataPanel } from '../../components/MarketDataPanel';
+import { PortfolioManager } from '../../components/PortfolioManager';
 import styles from './Dashboard.module.scss';
-
 const Dashboard = () => {
   const {
     portfolio,
-    computedData,
     isLoading,
     isError,
     lastUpdated,
     refreshPrices,
   } = usePortfolio();
-
-  useEffect(() => {
-    refreshPrices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [portfolio.length]);
+  useEffect(() => { if (portfolio.length) refreshPrices(); }, [portfolio.length, refreshPrices]);
 
   return (
     <main className={styles.dashboard}>
       <header className={styles.header}>
         <h1 className={styles.title}>📊 포트폴리오 대시보드</h1>
         <div className={styles.meta}>
-          {!isTossConfigured() && (
-            <span className={styles.mockBadge}>Mock 데이터</span>
-          )}
           {lastUpdated && (
             <span className={styles.updated}>
               업데이트: {new Date(lastUpdated).toLocaleTimeString('ko-KR')}
@@ -36,6 +28,8 @@ const Dashboard = () => {
           </button>
         </div>
       </header>
+      <MarketDataPanel />
+      <PortfolioManager />
 
       {isError && (
         <div className={styles.errorBanner}>
@@ -43,35 +37,10 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Summary — Week 3에서 완성 */}
-      {computedData && (
-        <section className={styles.summary}>
-          <div className={styles.summaryCard}>
-            <span className={styles.label}>총 평가금액</span>
-            <span className={styles.value}>
-              ${computedData.totalEvaluatedValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-            </span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.label}>총 수익률</span>
-            <span
-              className={`${styles.value} ${computedData.totalProfitRate >= 0 ? styles.positive : styles.negative}`}
-            >
-              {computedData.totalProfitRate >= 0 ? '+' : ''}
-              {computedData.totalProfitRate.toFixed(2)}%
-            </span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.label}>보유 종목 수</span>
-            <span className={styles.value}>{portfolio.length}개</span>
-          </div>
-        </section>
-      )}
-
       {portfolio.length === 0 && (
         <div className={styles.empty}>
           <p>종목을 추가해 포트폴리오를 시작하세요.</p>
-          <p className={styles.emptyHint}>Week 3에서 종목 추가 UI가 구현됩니다.</p>
+          <p className={styles.emptyHint}>종목을 검색하고 매수가와 수량을 입력하세요.</p>
         </div>
       )}
 

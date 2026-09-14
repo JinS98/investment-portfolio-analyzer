@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { usePortfolioStore } from '../store/portfolioStore';
 import { subscribeAuthState, signInWithGoogle, signOutUser } from '../services/auth';
-import { clearTossToken } from '../services/tossAuth';
 
 export const useAuth = () => {
   const { user, isAuthLoading, setUser, setAuthLoading } = useAuthStore();
@@ -14,7 +13,6 @@ export const useAuth = () => {
       setAuthLoading(false);
       if (!authUser) {
         reset();
-        clearTossToken(); // 로그아웃 시 토스 토큰도 초기화
       }
     });
     return unsubscribe;
