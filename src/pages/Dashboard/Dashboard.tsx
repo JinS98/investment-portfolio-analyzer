@@ -69,7 +69,6 @@ const Dashboard = ({ view }: DashboardProps) => {
   const loadHistoricalDataRef = useRef(loadHistoricalData);
   const lastRiskRefresh = useRef<string | null>(null);
   const [isRiskLoading, setIsRiskLoading] = useState(false);
-  const [layoutMode, setLayoutMode] = useState<'single' | 'double'>('single');
   const [panelRows, setPanelRows] = useState<PanelRow[]>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('dashboard-panel-layout-v2') ?? '[]') as unknown;

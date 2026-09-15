@@ -1,9 +1,25 @@
 import type { DailyCandle } from './market';
 export type { StockInfo, Quote, DailyCandle, CandlePage, Currency, ExchangeRate } from './market';
+export type {
+  PortfolioType,
+  MarketType,
+  HoldingHistoryType,
+  Portfolio,
+  Holding,
+  HoldingHistory,
+  HoldingHistoryInput,
+  CurrencyPortfolioSummary,
+  PortfolioSummary,
+  RecalculatedPortfolio,
+} from './portfolio';
 // ────────────────────────────────────────────
 // 종목 정보
 // ────────────────────────────────────────────
-export interface StockItem {
+/**
+ * Week 6까지 Firestore와 화면에서 사용한 직접 입력형 보유 모델.
+ * Week 8 이관 전까지 유지하며, 새 이력 기반 `Holding`과 섞어 쓰지 않는다.
+ */
+export interface LegacyStockItem {
   id: string;
   ticker: string; // 국내: KRX 코드(005930), 미국: 티커(AAPL)
   market: 'KR' | 'US'; // 국내 / 미국
@@ -12,6 +28,9 @@ export interface StockItem {
   quantity: number;
   addedAt: string;
 }
+
+/** @deprecated Week 8 이관 전 기존 UI·저장 계층과의 호환을 위한 별칭이다. */
+export type StockItem = LegacyStockItem;
 
 // 현재가 맵 { AAPL: 182.3, '005930': 72000 }
 export type PriceMap = Record<string, number>;
