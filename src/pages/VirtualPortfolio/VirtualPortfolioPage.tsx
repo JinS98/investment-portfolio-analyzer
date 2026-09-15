@@ -27,18 +27,34 @@ export function VirtualPortfolioPage() {
 
   useEffect(() => {
     const tickers = [...new Set(virtualHoldings.map((holding) => holding.ticker))].sort();
-    const requestKey = tickers.join('|');
+    const missingTickers = tickers.filter((ticker) => prices[ticker] === undefined);
+    const requestKey = missingTickers.join('|');
     if (!requestKey || lastQuoteRequestKey.current === requestKey) return;
     lastQuoteRequestKey.current = requestKey;
 
-    void fetchCurrentPrices(tickers)
-      .then((nextPrices) => {
-        setPrices({ ...usePortfolioStore.getState().prices, ...nextPrices });
+    void Promise.allSettled(missingTickers.map((ticker) => fetchCurrentPrices([ticker])))
+      .then((results) => {
+        const nextPrices = Object.assign(
+          {},
+          ...results
+            .filter(
+              (result): result is PromiseFulfilledResult<Record<string, number>> =>
+                result.status === 'fulfilled',
+            )
+            .map((result) => result.value),
+        );
+        if (Object.keys(nextPrices).length) {
+          setPrices({ ...usePortfolioStore.getState().prices, ...nextPrices });
+        }
+        if (Object.keys(nextPrices).length !== missingTickers.length) {
+          lastQuoteRequestKey.current = '';
+        }
       })
       .catch(() => {
-        // 조회 실패 시 사용자가 화면의 현재가 갱신 버튼으로 다시 시도할 수 있다.
+        lastQuoteRequestKey.current = '';
+        // 개별 시세 요청은 실패한 종목만 다음 화면 갱신 시 다시 시도한다.
       });
-  }, [setPrices, virtualHoldings]);
+  }, [prices, setPrices, virtualHoldings]);
 
   useEffect(() => {
     if (!virtualHoldings.some((holding) => holding.market === 'US')) return;

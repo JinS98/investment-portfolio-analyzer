@@ -17,9 +17,70 @@ const money = (value: number, market: 'KR' | 'US') => {
 
 const EMPTY_HOLDINGS: Holding[] = [];
 
+interface StockAvatarProps {
+  name?: string;
+  ticker: string;
+  market: Holding['market'];
+}
+
+function StockAvatar({ name, ticker, market }: StockAvatarProps) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const label = (name ?? ticker).trim().charAt(0);
+  const iconUrl = `https://static.toss.im/png-icons/securities/icn-sec-fill-${ticker.toUpperCase()}.png`;
+
+  return (
+    <span className={styles.stockAvatar} data-market={market} aria-hidden="true">
+      {!hasImageError && <img src={iconUrl} alt="" onError={() => setHasImageError(true)} />}
+      {hasImageError && label}
+    </span>
+  );
+}
+
 interface PortfolioManagerProps {
   portfolioType?: PortfolioType;
 }
+
+type ColumnId =
+  | 'averagePrice'
+  | 'currentPrice'
+  | 'quantity'
+  | 'investment'
+  | 'evaluatedValue'
+  | 'profitAmount'
+  | 'profitRate';
+
+const COLUMN_OPTIONS: Array<{ id: ColumnId; label: string }> = [
+  { id: 'averagePrice', label: '평단가' },
+  { id: 'currentPrice', label: '현재가' },
+  { id: 'quantity', label: '보유 수량' },
+  { id: 'investment', label: '투자원금' },
+  { id: 'evaluatedValue', label: '평가금액' },
+  { id: 'profitAmount', label: '평가손익' },
+  { id: 'profitRate', label: '수익률' },
+];
+const DEFAULT_VISIBLE_COLUMNS = COLUMN_OPTIONS.map((column) => column.id);
+const columnStorageKey = (portfolioType?: PortfolioType) =>
+  `portfolio-table-columns-v1-${portfolioType ?? 'all'}`;
+
+const readVisibleColumns = (portfolioType?: PortfolioType): ColumnId[] => {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(columnStorageKey(portfolioType)) ?? '[]',
+    ) as unknown;
+    if (
+      Array.isArray(saved) &&
+      saved.length > 0 &&
+      saved.every((column): column is ColumnId =>
+        COLUMN_OPTIONS.some((option) => option.id === column),
+      )
+    ) {
+      return saved;
+    }
+  } catch {
+    // 기본 열 구성으로 표시한다.
+  }
+  return DEFAULT_VISIBLE_COLUMNS;
+};
 
 export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const userId = useAuthStore((state) => state.user?.uid);
@@ -43,6 +104,10 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const addHoldingHistory = usePortfolioStore((state) => state.addHoldingHistory);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
+  const [columnMenuMarket, setColumnMenuMarket] = useState<'KR' | 'US' | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(() =>
+    readVisibleColumns(portfolioType),
+  );
   const activePortfolio = portfolioType
     ? portfolios.find((portfolio) => portfolio.type === portfolioType)
     : portfolios.find((portfolio) => portfolio.id === activePortfolioId);
@@ -118,6 +183,19 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
     if (!userId) throw new Error('로그인 후 거래 기록을 추가해주세요.');
     await addHoldingHistory(userId, input);
   };
+
+  const updateVisibleColumns = (nextColumns: ColumnId[]) => {
+    setVisibleColumns(nextColumns);
+    localStorage.setItem(columnStorageKey(portfolioType), JSON.stringify(nextColumns));
+  };
+
+  const toggleColumn = (column: ColumnId) =>
+    updateVisibleColumns(
+      visibleColumns.includes(column)
+        ? visibleColumns.filter((item) => item !== column)
+        : [...visibleColumns, column],
+    );
+  const isColumnVisible = (column: ColumnId) => visibleColumns.includes(column);
 
   return (
     <section className={styles.section}>
@@ -249,7 +327,45 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
 
             return (
               <div className={styles.tableWrap} key={market}>
-                <h3>{market === 'KR' ? '국내 주식 (KRW)' : '미국 주식 (USD)'}</h3>
+                <div className={styles.tableHeader}>
+                  <h3>{market === 'KR' ? '국내 주식 (KRW)' : '미국 주식 (USD)'}</h3>
+                  <div className={styles.columnSettings}>
+                    <button
+                      type="button"
+                      className={styles.settingsButton}
+                      aria-label="표시 항목 설정"
+                      aria-expanded={columnMenuMarket === market}
+                      onClick={() =>
+                        setColumnMenuMarket((current) => (current === market ? null : market))
+                      }
+                    >
+                      ⚙
+                    </button>
+                    {columnMenuMarket === market && (
+                      <div className={styles.columnMenu}>
+                        <div className={styles.columnMenuHeader}>
+                          <strong>표시 항목</strong>
+                          <button
+                            type="button"
+                            onClick={() => updateVisibleColumns(DEFAULT_VISIBLE_COLUMNS)}
+                          >
+                            모두 보기
+                          </button>
+                        </div>
+                        {COLUMN_OPTIONS.map((column) => (
+                          <label key={column.id}>
+                            <input
+                              type="checkbox"
+                              checked={isColumnVisible(column.id)}
+                              onChange={() => toggleColumn(column.id)}
+                            />
+                            {column.label}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className={styles.marketSummary}>
                   <span>
                     투자원금 <strong>{money(totalInvestment, market)}</strong>
@@ -283,13 +399,13 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
                   <thead>
                     <tr>
                       <th>종목</th>
-                      <th>평단가</th>
-                      <th>현재가</th>
-                      <th>보유 수량</th>
-                      <th>투자원금</th>
-                      <th>평가금액</th>
-                      <th>평가손익</th>
-                      <th>수익률</th>
+                      {isColumnVisible('averagePrice') && <th>평단가</th>}
+                      {isColumnVisible('currentPrice') && <th>현재가</th>}
+                      {isColumnVisible('quantity') && <th>보유 수량</th>}
+                      {isColumnVisible('investment') && <th>투자원금</th>}
+                      {isColumnVisible('evaluatedValue') && <th>평가금액</th>}
+                      {isColumnVisible('profitAmount') && <th>평가손익</th>}
+                      {isColumnVisible('profitRate') && <th>수익률</th>}
                       <th>기록</th>
                     </tr>
                   </thead>
@@ -307,38 +423,63 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
                       return (
                         <tr key={`${holding.market}-${holding.ticker}`}>
                           <td>
-                            <strong>{holding.name ?? holding.ticker}</strong>
-                            <small>{holding.ticker}</small>
+                            <div className={styles.stockCell}>
+                              <StockAvatar
+                                name={holding.name}
+                                ticker={holding.ticker}
+                                market={holding.market}
+                              />
+                              <span>
+                                <strong>{holding.name ?? holding.ticker}</strong>
+                                <small>{holding.ticker}</small>
+                              </span>
+                            </div>
                           </td>
-                          <td>{money(holding.averagePrice, holding.market)}</td>
-                          <td>
-                            {currentPrice === undefined
-                              ? '시세 미조회'
-                              : money(currentPrice, holding.market)}
-                          </td>
-                          <td>{holding.quantity.toLocaleString('ko-KR')}</td>
-                          <td>{money(holding.investedAmount, holding.market)}</td>
-                          <td>
-                            {evaluatedValue === null ? '—' : money(evaluatedValue, holding.market)}
-                          </td>
-                          <td
-                            className={
-                              profitAmount === null || profitAmount >= 0
-                                ? styles.positive
-                                : styles.negative
-                            }
-                          >
-                            {profitAmount === null ? '—' : money(profitAmount, holding.market)}
-                          </td>
-                          <td
-                            className={
-                              profitRate === null || profitRate >= 0
-                                ? styles.positive
-                                : styles.negative
-                            }
-                          >
-                            {profitRate === null ? '—' : formatRate(profitRate)}
-                          </td>
+                          {isColumnVisible('averagePrice') && (
+                            <td>{money(holding.averagePrice, holding.market)}</td>
+                          )}
+                          {isColumnVisible('currentPrice') && (
+                            <td>
+                              {currentPrice === undefined
+                                ? '시세 미조회'
+                                : money(currentPrice, holding.market)}
+                            </td>
+                          )}
+                          {isColumnVisible('quantity') && (
+                            <td>{holding.quantity.toLocaleString('ko-KR')}</td>
+                          )}
+                          {isColumnVisible('investment') && (
+                            <td>{money(holding.investedAmount, holding.market)}</td>
+                          )}
+                          {isColumnVisible('evaluatedValue') && (
+                            <td>
+                              {evaluatedValue === null
+                                ? '—'
+                                : money(evaluatedValue, holding.market)}
+                            </td>
+                          )}
+                          {isColumnVisible('profitAmount') && (
+                            <td
+                              className={
+                                profitAmount === null || profitAmount >= 0
+                                  ? styles.positive
+                                  : styles.negative
+                              }
+                            >
+                              {profitAmount === null ? '—' : money(profitAmount, holding.market)}
+                            </td>
+                          )}
+                          {isColumnVisible('profitRate') && (
+                            <td
+                              className={
+                                profitRate === null || profitRate >= 0
+                                  ? styles.positive
+                                  : styles.negative
+                              }
+                            >
+                              {profitRate === null ? '—' : formatRate(profitRate)}
+                            </td>
+                          )}
                           <td>
                             <button
                               type="button"
