@@ -101,6 +101,8 @@ netPnL = totalPnL - 매수 비용 합계
 
 대상 경로는 `users/{userId}/portfolios/{portfolioId}` 아래 `holdings`, `holdingHistories`, `snapshots`다.
 
+Firestore 규칙은 [firestore.rules](../firestore.rules)에서 기존 `portfolios/{userId}` 경로와 새 `users/{userId}/portfolios/{portfolioId}` 경로를 함께 보호한다.
+
 - 기존 보유는 REAL에만 이관한다. 기본 VIRTUAL은 빈 상태로 만든다.
 - 각 기존 행의 수량·매수가로 초기 보유용 BUY 이력을 생성한다. `source: 'LEGACY_IMPORT'`, `legacyStockId`, `importedAt` 메타데이터로 일반 거래와 구분한다.
 - 기존 `addedAt`은 실제 거래일 증거가 아니다. 초기 기록 날짜는 이관 기준일이며 UI에서 '초기 보유 이관'으로 표시한다. 원래 `addedAt`은 별도 메타데이터로 보존한다.

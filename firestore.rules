@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Week 4~6: 기존 직접 입력형 보유 종목 및 일별 자산 이력
+    match /portfolios/{userId}/stocks/{stockId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /portfolios/{userId}/history/{historyId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Week 8+: 포트폴리오 메타데이터와 거래 원장 기반 하위 데이터
+    match /users/{userId}/portfolios/{portfolioId} {
+      allow read, write: if isOwner(userId);
+
+      match /{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}

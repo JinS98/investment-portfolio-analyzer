@@ -7,6 +7,9 @@ export type MarketType = 'KR' | 'US';
 /** 보유 수량을 변경하는 이력의 종류. */
 export type HoldingHistoryType = 'BUY' | 'SELL';
 
+/** 거래 이력이 생성된 경로. 기존 직접 입력형 보유 데이터 이관도 구분해 보관한다. */
+export type HoldingHistorySource = 'MANUAL' | 'LEGACY_IMPORT';
+
 /**
  * 사용자별 포트폴리오 메타데이터.
  * MVP에서는 사용자당 REAL 1개와 VIRTUAL 1개를 사용한다.
@@ -53,6 +56,10 @@ export interface HoldingHistory {
   date: string;
   createdAt: number;
   updatedAt?: number;
+  source?: HoldingHistorySource;
+  legacyStockId?: string;
+  importedAt?: number;
+  legacyAddedAt?: string;
 }
 
 /** UI와 저장 계층이 받는 거래 입력값. 계산 필드는 엔진이 생성한다. */
@@ -91,6 +98,14 @@ export interface PortfolioSummary {
 
 /** 재계산 엔진의 반환 형태. */
 export interface RecalculatedPortfolio {
+  holdings: Holding[];
+  histories: HoldingHistory[];
+  summary: PortfolioSummary;
+}
+
+/** 포트폴리오 하나의 원장·보유 상태·요약을 함께 전달하는 읽기 모델. */
+export interface PortfolioLedger {
+  portfolio: Portfolio;
   holdings: Holding[];
   histories: HoldingHistory[];
   summary: PortfolioSummary;

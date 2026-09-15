@@ -4,6 +4,7 @@ export type {
   PortfolioType,
   MarketType,
   HoldingHistoryType,
+  HoldingHistorySource,
   Portfolio,
   Holding,
   HoldingHistory,
@@ -11,6 +12,7 @@ export type {
   CurrencyPortfolioSummary,
   PortfolioSummary,
   RecalculatedPortfolio,
+  PortfolioLedger,
 } from './portfolio';
 // ────────────────────────────────────────────
 // 종목 정보
@@ -142,6 +144,15 @@ export interface PortfolioState {
 
   portfolioHistory: PortfolioHistory[];
 
+  portfolios: import('./portfolio').Portfolio[];
+  activePortfolioId: string | null;
+  holdings: import('./portfolio').Holding[];
+  holdingHistories: import('./portfolio').HoldingHistory[];
+  portfolioSummary: import('./portfolio').PortfolioSummary | null;
+  portfolioLedgers: Record<string, import('./portfolio').PortfolioLedger>;
+  isSaving: boolean;
+  ledgerError: string | null;
+
   isLoading: boolean;
   isError: boolean;
   lastUpdated: string | null;
@@ -162,6 +173,14 @@ export interface PortfolioState {
   setComputedData: (data: ComputedData) => void;
   setRiskData: (data: RiskData | null) => void;
   setSignalData: (data: SignalData) => void;
+  loadPortfolioLedgers: (userId: string, shouldApply?: () => boolean) => Promise<void>;
+  addHoldingHistory: (
+    userId: string,
+    input: import('./portfolio').HoldingHistoryInput,
+  ) => Promise<void>;
+  deleteHoldingHistory: (userId: string, portfolioId: string, historyId: string) => Promise<void>;
+  setActivePortfolioId: (portfolioId: string) => void;
+  resetPortfolioLedgers: () => void;
   reset: () => void;
 }
 

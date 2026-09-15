@@ -8,6 +8,8 @@ export function usePortfolioSync() {
   const userId = useAuthStore((state) => state.user?.uid);
   const replacePortfolio = usePortfolioStore((state) => state.replacePortfolio);
   const setPortfolioHistory = usePortfolioStore((state) => state.setPortfolioHistory);
+  const loadPortfolioLedgers = usePortfolioStore((state) => state.loadPortfolioLedgers);
+  const resetPortfolioLedgers = usePortfolioStore((state) => state.resetPortfolioLedgers);
   const [state, dispatch] = useReducer(
     (
       _current: { loading: boolean; error: string },
@@ -29,6 +31,7 @@ export function usePortfolioSync() {
       if (active) {
         replacePortfolio([]);
         setPortfolioHistory([]);
+        resetPortfolioLedgers();
       }
     });
     if (!userId) {
@@ -38,7 +41,11 @@ export function usePortfolioSync() {
       };
     }
     dispatch({ type: 'start' });
-    Promise.all([loadPortfolioStocks(userId), loadPortfolioHistory(userId)])
+    Promise.all([
+      loadPortfolioStocks(userId),
+      loadPortfolioHistory(userId),
+      loadPortfolioLedgers(userId, () => active),
+    ])
       .then(([stocks, history]) => {
         if (active) {
           replacePortfolio(stocks);
@@ -53,7 +60,7 @@ export function usePortfolioSync() {
     return () => {
       active = false;
     };
-  }, [userId, replacePortfolio, setPortfolioHistory]);
+  }, [userId, replacePortfolio, setPortfolioHistory, loadPortfolioLedgers, resetPortfolioLedgers]);
 
   return { isPortfolioLoading: state.loading, portfolioError: state.error };
 }
