@@ -32,6 +32,9 @@ const initialState = {
   portfolioLedgers: {} as Record<string, PortfolioLedger>,
   isSaving: false,
   ledgerError: null,
+  isTransactionModalOpen: false,
+  transactionModalType: 'BUY' as const,
+  transactionModalPreset: null,
   isLoading: false,
   isError: false,
   lastUpdated: null,
@@ -197,7 +200,39 @@ export const usePortfolioStore = create<PortfolioState>()(
           portfolioLedgers: {},
           isSaving: false,
           ledgerError: null,
+          isTransactionModalOpen: false,
+          transactionModalType: 'BUY',
+          transactionModalPreset: null,
         }),
+
+      openTransactionModal: (params = {}) =>
+        set((state) => {
+          const nextPortfolioId = params.portfolioId ?? state.activePortfolioId;
+          const selected = nextPortfolioId ? state.portfolioLedgers[nextPortfolioId] : undefined;
+          return {
+            ...(selected
+              ? {
+                  activePortfolioId: nextPortfolioId,
+                  holdings: selected.holdings,
+                  holdingHistories: selected.histories,
+                  portfolioSummary: selected.summary,
+                }
+              : {}),
+            isTransactionModalOpen: true,
+            transactionModalType: params.type ?? 'BUY',
+            transactionModalPreset: params,
+            ledgerError: null,
+          };
+        }),
+
+      closeTransactionModal: () =>
+        set({
+          isTransactionModalOpen: false,
+          transactionModalType: 'BUY',
+          transactionModalPreset: null,
+        }),
+
+      setTransactionModalType: (transactionModalType) => set({ transactionModalType }),
 
       reset: () => set(initialState),
     }),

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEvent, PointerEvent } from 'react';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import { MarketDataPanel } from '../../components/MarketDataPanel/MarketDataPanel';
@@ -9,11 +9,13 @@ import { RiskGuidePanel } from '../../components/RiskGuidePanel/RiskGuidePanel';
 import { PortfolioHistoryPanel } from '../../components/PortfolioHistoryPanel/PortfolioHistoryPanel';
 import { MonthlyComparisonPanel } from '../../components/MonthlyComparisonPanel/MonthlyComparisonPanel';
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
+import { usePortfolioStore } from '../../store/portfolioStore';
 import styles from './Dashboard.module.scss';
 
 type PanelId =
   'market' | 'manager' | 'allocation' | 'performance' | 'history' | 'monthly' | 'guide' | 'risk';
 type DashboardView = 'dashboard' | 'analysis';
+const EMPTY_HOLDINGS: import('../../types').Holding[] = [];
 const DEFAULT_PANEL_ORDER: PanelId[] = [
   'market',
   'manager',
@@ -49,6 +51,14 @@ interface DashboardProps {
 
 const Dashboard = ({ view }: DashboardProps) => {
   const { isPortfolioLoading, portfolioError } = usePortfolioSync();
+  const portfolios = usePortfolioStore((state) => state.portfolios);
+  const portfolioLedgers = usePortfolioStore((state) => state.portfolioLedgers);
+  const realHoldings = useMemo(() => {
+    const realPortfolio = portfolios.find((portfolio) => portfolio.type === 'REAL');
+    return realPortfolio
+      ? (portfolioLedgers[realPortfolio.id]?.holdings ?? EMPTY_HOLDINGS)
+      : EMPTY_HOLDINGS;
+  }, [portfolioLedgers, portfolios]);
   const {
     portfolio,
     prices,
@@ -71,7 +81,9 @@ const Dashboard = ({ view }: DashboardProps) => {
   const [isRiskLoading, setIsRiskLoading] = useState(false);
   const [panelRows, setPanelRows] = useState<PanelRow[]>(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('dashboard-panel-layout-v2') ?? '[]') as unknown;
+      const saved = JSON.parse(
+        localStorage.getItem('dashboard-panel-layout-v2') ?? '[]',
+      ) as unknown;
       if (isValidPanelRows(saved)) return saved;
 
       const previousOrder = JSON.parse(
@@ -114,8 +126,7 @@ const Dashboard = ({ view }: DashboardProps) => {
 
     setPanelRows((rows) => {
       const sourceRow = rows.find((row) => row.ids.includes(source));
-      const wasPairedWithTarget =
-        sourceRow?.ids.length === 2 && sourceRow.ids.includes(target);
+      const wasPairedWithTarget = sourceRow?.ids.length === 2 && sourceRow.ids.includes(target);
       const withoutSource = rows
         .map((row) => ({ ...row, ids: row.ids.filter((id) => id !== source) }))
         .filter((row) => row.ids.length > 0);
@@ -147,7 +158,10 @@ const Dashboard = ({ view }: DashboardProps) => {
     const bounds = grid.getBoundingClientRect();
 
     const resize = (pointerEvent: globalThis.PointerEvent) => {
-      const split = Math.min(80, Math.max(20, ((pointerEvent.clientX - bounds.left) / bounds.width) * 100));
+      const split = Math.min(
+        80,
+        Math.max(20, ((pointerEvent.clientX - bounds.left) / bounds.width) * 100),
+      );
       setPanelRows((rows) =>
         rows.map((row) => (row.ids[0] === id && row.ids.length === 2 ? { ...row, split } : row)),
       );
@@ -163,40 +177,36 @@ const Dashboard = ({ view }: DashboardProps) => {
   const panelProps = (id: PanelId) => {
     const row = panelRows.find((item) => item.ids.includes(id));
     const pairPosition =
-      row?.ids.length === 2
-        ? row.ids[0] === id
-          ? styles.pairedFirst
-          : styles.pairedSecond
-        : '';
+      row?.ids.length === 2 ? (row.ids[0] === id ? styles.pairedFirst : styles.pairedSecond) : '';
 
     return {
       className: `${styles.panelItem} ${pairPosition} ${draggingPanel === id ? styles.panelDragging : ''} ${(view === 'dashboard' && ['market', 'manager', 'allocation'].includes(id)) || (view === 'analysis' && !['market', 'manager', 'allocation'].includes(id)) ? '' : styles.hiddenPanel}`,
-    style: getPanelPosition(id),
-    draggable: true,
-    onDragStart: (event: DragEvent<HTMLDivElement>) => {
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', id);
-      setDraggingPanel(id);
-    },
-    onDragOver: (event: DragEvent<HTMLDivElement>) => event.preventDefault(),
-    onDrop: (event: DragEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      const source = event.dataTransfer.getData('text/plain') as PanelId;
-      if (!DEFAULT_PANEL_ORDER.includes(source) || source === id) return;
-      const targetBounds = event.currentTarget.getBoundingClientRect();
-      const verticalPosition = (event.clientY - targetBounds.top) / targetBounds.height;
-      const position: DropPosition =
-        verticalPosition < 0.25
-          ? 'before'
-          : verticalPosition > 0.75
-            ? 'after'
-            : event.clientX > targetBounds.left + targetBounds.width / 2
-              ? 'right'
-              : 'left';
-      movePanel(source, id, position);
-      setDraggingPanel(null);
-    },
-    onDragEnd: () => setDraggingPanel(null),
+      style: getPanelPosition(id),
+      draggable: true,
+      onDragStart: (event: DragEvent<HTMLDivElement>) => {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', id);
+        setDraggingPanel(id);
+      },
+      onDragOver: (event: DragEvent<HTMLDivElement>) => event.preventDefault(),
+      onDrop: (event: DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        const source = event.dataTransfer.getData('text/plain') as PanelId;
+        if (!DEFAULT_PANEL_ORDER.includes(source) || source === id) return;
+        const targetBounds = event.currentTarget.getBoundingClientRect();
+        const verticalPosition = (event.clientY - targetBounds.top) / targetBounds.height;
+        const position: DropPosition =
+          verticalPosition < 0.25
+            ? 'before'
+            : verticalPosition > 0.75
+              ? 'after'
+              : event.clientX > targetBounds.left + targetBounds.width / 2
+                ? 'right'
+                : 'left';
+        movePanel(source, id, position);
+        setDraggingPanel(null);
+      },
+      onDragEnd: () => setDraggingPanel(null),
     };
   };
 
@@ -317,7 +327,7 @@ const Dashboard = ({ view }: DashboardProps) => {
             ⠿
           </span>
           {renderResizeHandle('manager')}
-          <PortfolioManager />
+          <PortfolioManager portfolioType="REAL" />
         </div>
         <div {...panelProps('allocation')}>
           <span className={styles.dragHandle} aria-hidden="true">
@@ -325,7 +335,7 @@ const Dashboard = ({ view }: DashboardProps) => {
           </span>
           {renderResizeHandle('allocation')}
           <PortfolioAllocationChart
-            portfolio={portfolio}
+            portfolio={realHoldings}
             prices={prices}
             exchangeRate={exchangeRate}
           />

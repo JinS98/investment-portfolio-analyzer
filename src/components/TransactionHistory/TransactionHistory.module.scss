@@ -1,0 +1,196 @@
+@use '../../styles/variables' as *;
+
+.section {
+  margin-top: $spacing-xl;
+  padding: $spacing-lg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  background: rgba($color-bg, 0.24);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+  }
+
+  p,
+  > span {
+    color: $color-text-muted;
+    font-size: 0.85rem;
+  }
+
+  p {
+    margin-top: $spacing-xs;
+  }
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-top: $spacing-lg;
+
+  input,
+  select {
+    height: 38px;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    background: $color-bg;
+    color: $color-text;
+    font: inherit;
+    font-size: 0.82rem;
+  }
+
+  input[placeholder] {
+    width: 180px;
+  }
+}
+
+.typeFilters {
+  display: flex;
+  gap: $spacing-xs;
+
+  button {
+    padding: 8px 10px;
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    background: transparent;
+    color: $color-text-muted;
+    font: inherit;
+    font-size: 0.82rem;
+  }
+
+  button.active {
+    border-color: $color-primary;
+    background: rgba($color-primary, 0.15);
+    color: $color-primary;
+  }
+}
+
+.dateSeparator {
+  color: $color-text-muted;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin-top: $spacing-md;
+}
+
+table {
+  width: 100%;
+  min-width: 950px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba($color-text-muted, 0.25);
+  text-align: right;
+  white-space: nowrap;
+}
+
+th {
+  color: $color-text-muted;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+th:nth-child(2),
+td:nth-child(2),
+th:nth-child(3),
+td:nth-child(3) {
+  text-align: left;
+}
+
+td strong {
+  font-size: 0.9rem;
+}
+
+td small {
+  display: block;
+  margin-top: 3px;
+  color: $color-text-muted;
+}
+
+.buyBadge,
+.sellBadge {
+  display: inline-flex;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.buyBadge {
+  background: rgba($color-success, 0.16);
+  color: $color-success;
+}
+
+.sellBadge {
+  background: rgba($color-danger, 0.16);
+  color: $color-danger;
+}
+
+.positive {
+  color: $color-success;
+}
+
+.negative {
+  color: $color-danger;
+}
+
+.deleteButton {
+  padding: 6px 9px;
+  border: 1px solid rgba($color-danger, 0.6);
+  border-radius: 5px;
+  background: transparent;
+  color: $color-danger;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.empty {
+  margin: $spacing-lg 0 0;
+  padding: $spacing-lg 0;
+  color: $color-text-muted;
+  text-align: center;
+}
+
+.error {
+  margin: $spacing-md 0 0;
+  color: $color-danger;
+  font-size: 0.85rem;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@include mobile {
+  .section {
+    padding: $spacing-md;
+  }
+
+  .filters input[placeholder] {
+    width: min(100%, 220px);
+  }
+}

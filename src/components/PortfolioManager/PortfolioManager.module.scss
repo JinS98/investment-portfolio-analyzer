@@ -9,6 +9,45 @@
   margin-bottom: $spacing-xs;
   font-size: 1.35rem;
 }
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+.description {
+  margin: 0;
+  color: $color-text-muted;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.portfolioType {
+  flex: 0 0 auto;
+  padding: $spacing-xs $spacing-sm;
+  border: 1px solid $color-primary;
+  border-radius: 999px;
+  color: $color-primary;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.portfolioTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin: $spacing-lg 0 $spacing-md;
+
+  button {
+    background: transparent;
+    border: 1px solid $color-border;
+    color: $color-text-muted;
+  }
+
+  button.activeTab {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: #fff;
+  }
+}
 .portfolioIntro {
   display: flex;
   flex-wrap: wrap;
@@ -28,24 +67,43 @@
     margin-left: 2px;
   }
 }
-.form {
-  display: grid;
-  grid-template-columns: minmax(220px, 2fr) minmax(110px, 1fr) minmax(100px, 0.8fr) auto;
+.combinedSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   gap: $spacing-md;
-  align-items: end;
-  margin-bottom: 30px;
-}
-label {
-  display: grid;
-  gap: 6px;
-  font-size: 0.85rem;
-  color: $color-text-muted;
-}
-input {
-  padding: 10px;
-  border: 1px solid #64748b;
-  border-radius: 6px;
-  font: inherit;
+  margin: 0 0 $spacing-lg;
+
+  > span {
+    display: flex;
+    flex: 1 1 220px;
+    flex-direction: column;
+    gap: $spacing-xs;
+    padding: $spacing-sm $spacing-md;
+    border-radius: 6px;
+    background: rgba($color-primary, 0.08);
+    color: $color-text-muted;
+    font-size: 0.8rem;
+  }
+
+  strong {
+    color: $color-text;
+    font-size: 1.05rem;
+  }
+
+  strong.positive {
+    color: $color-success;
+  }
+
+  strong.negative {
+    color: $color-danger;
+  }
+
+  small {
+    align-self: center;
+    color: $color-text-muted;
+    font-size: 0.78rem;
+  }
 }
 button {
   padding: 10px 12px;
@@ -54,87 +112,33 @@ button {
   color: #fff;
   font: inherit;
 }
-.search {
-  position: relative;
-}
-.searchInput {
-  position: relative;
-}
-.searchInput input {
-  width: 100%;
-  box-sizing: border-box;
-  padding-right: 40px;
-}
-.selectedCheck {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: $color-success;
-  color: #fff;
-  font-weight: 700;
-}
-.search ul {
-  z-index: 3;
-  position: absolute;
-  top: calc(100% + 25px);
-  max-height: 250px;
-  overflow: auto;
-  left: 0;
-  right: 0;
-  padding: 0;
-  margin: 4px 0;
-  list-style: none;
-  border: 1px solid #64748b;
-  border-radius: 6px;
-  background: #fff;
-  color: #172033;
-  box-shadow: 0 8px 24px #0002;
-}
-.search li {
-  padding: 10px;
-  cursor: pointer;
-}
-.search li:hover {
-  background: #e2e8f0;
-}
-.selectionHint,
-.selectionConfirmed {
-  position: absolute;
-  z-index: 4;
-  top: 100%;
-  left: 0;
-  width: max-content;
-  max-width: 100%;
-  margin: 6px 0 0;
-  font-size: 0.78rem;
-  line-height: 1.4;
-}
-.selectionHint {
-  color: $color-text-muted;
-}
-.selectionConfirmed {
-  color: $color-success;
-  font-weight: 600;
-}
 .error {
   color: $color-danger;
   margin: $spacing-md 0 0;
 }
-.currencyGuide {
-  margin: $spacing-sm 0 0;
-  color: $color-text-muted;
+.notice {
+  margin: $spacing-md 0 0;
+  color: $color-primary;
   font-size: 0.85rem;
-  line-height: 1.5;
 }
 .empty {
   padding: $spacing-xl 0 0;
   color: $color-text-muted;
+}
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  margin-top: $spacing-xl;
+  padding: $spacing-lg;
+  border: 1px dashed $color-border;
+  border-radius: 8px;
+  color: $color-text-muted;
+
+  p {
+    margin: 0;
+  }
 }
 .actions {
   display: flex;
@@ -157,6 +161,11 @@ button {
   button {
     flex: 0 0 auto;
   }
+}
+.actionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
 }
 .tableWrap {
   overflow-x: auto;
@@ -208,7 +217,7 @@ button {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 850px;
+  min-width: 940px;
 }
 th,
 td {
@@ -240,20 +249,6 @@ td small {
   color: $color-text-muted;
   margin-top: 3px;
 }
-td input {
-  width: 90px;
-  padding: 7px;
-}
-td button + button {
-  margin-left: 5px;
-  background: transparent;
-  color: $color-text;
-  border: 1px solid #64748b;
-}
-tfoot {
-  font-weight: 700;
-  background: rgba($color-primary, 0.08);
-}
 .positive {
   color: $color-success;
 }
@@ -261,24 +256,27 @@ tfoot {
   color: $color-danger;
 }
 @container (max-width: 680px) {
-  .form {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-  .search {
-    grid-column: 1 / -1;
-  }
-  .form > button {
-    grid-column: 1 / -1;
-    justify-self: end;
-  }
   .marketSummary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @include mobile {
+  .titleRow,
+  .emptyState {
+    align-items: flex-start;
+    flex-direction: column;
+  }
   .actions {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .actionButtons {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
   }
 }

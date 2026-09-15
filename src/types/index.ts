@@ -9,6 +9,7 @@ export type {
   Holding,
   HoldingHistory,
   HoldingHistoryInput,
+  OpenTransactionModalParams,
   CurrencyPortfolioSummary,
   PortfolioSummary,
   RecalculatedPortfolio,
@@ -152,6 +153,9 @@ export interface PortfolioState {
   portfolioLedgers: Record<string, import('./portfolio').PortfolioLedger>;
   isSaving: boolean;
   ledgerError: string | null;
+  isTransactionModalOpen: boolean;
+  transactionModalType: import('./portfolio').HoldingHistoryType;
+  transactionModalPreset: import('./portfolio').OpenTransactionModalParams | null;
 
   isLoading: boolean;
   isError: boolean;
@@ -181,6 +185,9 @@ export interface PortfolioState {
   deleteHoldingHistory: (userId: string, portfolioId: string, historyId: string) => Promise<void>;
   setActivePortfolioId: (portfolioId: string) => void;
   resetPortfolioLedgers: () => void;
+  openTransactionModal: (params?: import('./portfolio').OpenTransactionModalParams) => void;
+  closeTransactionModal: () => void;
+  setTransactionModalType: (type: import('./portfolio').HoldingHistoryType) => void;
   reset: () => void;
 }
 

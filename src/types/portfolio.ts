@@ -77,6 +77,16 @@ export interface HoldingHistoryInput {
   date: string;
 }
 
+/** 거래 모달을 열 때 채워 넣을 선택 항목이다. 시장 탐색 화면에서도 같은 형태로 사용한다. */
+export interface OpenTransactionModalParams {
+  type?: HoldingHistoryType;
+  portfolioId?: string;
+  ticker?: string;
+  name?: string;
+  market?: MarketType;
+  price?: number;
+}
+
 /** 시장 통화별 손익 요약. 서로 다른 통화는 이 단계에서 합산하지 않는다. */
 export interface CurrencyPortfolioSummary {
   market: MarketType;

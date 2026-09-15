@@ -1,11 +1,13 @@
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import type { ExchangeRate, PriceMap, StockItem } from '../../types';
+import type { ExchangeRate, Holding, PriceMap, StockItem } from '../../types';
 import styles from './PortfolioAllocationChart.module.scss';
 
 interface PortfolioAllocationChartProps {
-  portfolio: StockItem[];
+  portfolio: Array<StockItem | Holding>;
   prices: PriceMap;
   exchangeRate: ExchangeRate | null;
+  title?: string;
+  description?: string;
 }
 
 const COLORS = ['#4f9cff', '#38c172', '#f5a524', '#a78bfa', '#ec6a5c', '#22c5c9'];
@@ -14,11 +16,14 @@ export function PortfolioAllocationChart({
   portfolio,
   prices,
   exchangeRate,
+  title = '포트폴리오 비중',
+  description = '현재가 기준 평가금액을 원화로 환산해 표시합니다.',
 }: PortfolioAllocationChartProps) {
   const byTicker = portfolio.reduce<
-    Record<string, { ticker: string; name: string; value: number; market: StockItem['market'] }>
+    Record<string, { ticker: string; name: string; value: number; market: Holding['market'] }>
   >((stocks, stock) => {
-    const currentPrice = prices[stock.ticker] ?? stock.buyPrice;
+    const fallbackPrice = 'averagePrice' in stock ? stock.averagePrice : stock.buyPrice;
+    const currentPrice = prices[stock.ticker] ?? fallbackPrice;
     const exchangeMultiplier = stock.market === 'US' ? (exchangeRate?.rate ?? 0) : 1;
     const existing = stocks[stock.ticker];
     stocks[stock.ticker] = {
@@ -42,8 +47,8 @@ export function PortfolioAllocationChart({
     <section className={styles.section} aria-labelledby="allocation-title">
       <div className={styles.header}>
         <div>
-          <h2 id="allocation-title">포트폴리오 비중</h2>
-          <p>현재가 기준 평가금액을 원화로 환산해 표시합니다.</p>
+          <h2 id="allocation-title">{title}</h2>
+          <p>{description}</p>
         </div>
         {exchangeRate && (
           <span className={styles.rate}>

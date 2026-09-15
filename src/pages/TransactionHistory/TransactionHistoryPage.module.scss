@@ -1,0 +1,74 @@
+@use '../../styles/variables' as *;
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-xl $spacing-lg;
+
+  @include mobile {
+    padding: $spacing-lg $spacing-md;
+  }
+}
+
+.header {
+  margin-bottom: $spacing-xl;
+
+  p,
+  h1,
+  span {
+    margin: 0;
+  }
+
+  p {
+    margin-bottom: $spacing-xs;
+    color: $color-primary;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  span {
+    display: block;
+    margin-top: $spacing-sm;
+    color: $color-text-muted;
+    font-size: 0.9rem;
+  }
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-lg;
+
+  button {
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    background: transparent;
+    color: $color-text-muted;
+    font: inherit;
+  }
+
+  button.activeTab {
+    border-color: $color-primary;
+    background: rgba($color-primary, 0.15);
+    color: $color-primary;
+  }
+}
+
+.status,
+.error {
+  padding: $spacing-lg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  color: $color-text-muted;
+}
+
+.error {
+  border-color: $color-danger;
+  color: $color-danger;
+}

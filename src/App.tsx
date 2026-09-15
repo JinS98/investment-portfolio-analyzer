@@ -1,18 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import Dashboard from './pages/Dashboard';
+import { TransactionHistoryPage } from './pages/TransactionHistory/TransactionHistoryPage';
+import { VirtualPortfolioPage } from './pages/VirtualPortfolio/VirtualPortfolioPage';
 import { AuthDialog } from './components/AuthDialog/AuthDialog';
 import styles from './App.module.scss';
 
 function App() {
   const { user, isAuthLoading, login, loginWithEmail, signUpWithEmail, logout } = useAuth();
-  const [page, setPage] = useState<'dashboard' | 'analysis'>(() =>
-    window.location.hash === '#analysis' ? 'analysis' : 'dashboard',
-  );
+  const [page, setPage] = useState<'dashboard' | 'analysis' | 'transactions' | 'virtual'>(() => {
+    if (window.location.hash === '#analysis') return 'analysis';
+    if (window.location.hash === '#transactions') return 'transactions';
+    if (window.location.hash === '#virtual') return 'virtual';
+    return 'dashboard';
+  });
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
   useEffect(() => {
-    const syncPage = () => setPage(window.location.hash === '#analysis' ? 'analysis' : 'dashboard');
+    const syncPage = () => {
+      if (window.location.hash === '#analysis') setPage('analysis');
+      else if (window.location.hash === '#transactions') setPage('transactions');
+      else if (window.location.hash === '#virtual') setPage('virtual');
+      else setPage('dashboard');
+    };
     window.addEventListener('hashchange', syncPage);
     return () => window.removeEventListener('hashchange', syncPage);
   }, []);
@@ -36,6 +46,15 @@ function App() {
           <a href="#analysis" className={page === 'analysis' ? styles.navMenuActive : undefined}>
             투자 분석
           </a>
+          <a
+            href="#transactions"
+            className={page === 'transactions' ? styles.navMenuActive : undefined}
+          >
+            거래 내역
+          </a>
+          <a href="#virtual" className={page === 'virtual' ? styles.navMenuActive : undefined}>
+            가상 포트폴리오
+          </a>
         </div>
         <div className={styles.navRight}>
           {user ? (
@@ -52,7 +71,13 @@ function App() {
           )}
         </div>
       </nav>
-      <Dashboard view={page} />
+      {page === 'transactions' ? (
+        <TransactionHistoryPage />
+      ) : page === 'virtual' ? (
+        <VirtualPortfolioPage />
+      ) : (
+        <Dashboard view={page} />
+      )}
       {isAuthDialogOpen && (
         <AuthDialog
           onClose={() => setIsAuthDialogOpen(false)}
