@@ -28,6 +28,16 @@ export function PortfolioHistoryPanel({ history }: PortfolioHistoryPanelProps) {
   const [range, setRange] = useState<HistoryRange>('1M');
   const data = useMemo(() => selectHistoryRange(history, range), [history, range]);
   const summary = useMemo(() => calcHistorySummary(data), [data]);
+  const chartDomain = useMemo<[number, number] | undefined>(() => {
+    if (!data.length) return undefined;
+    const values = data.map((item) => item.totalValue);
+    const minimum = Math.min(...values);
+    const maximum = Math.max(...values);
+    const range = maximum - minimum;
+    const padding = range > 0 ? Math.max(range * 0.25, maximum * 0.0005) : maximum * 0.005;
+
+    return [Math.max(0, minimum - padding), maximum + padding];
+  }, [data]);
 
   return (
     <section className={styles.section} aria-labelledby="saved-history-title">
@@ -98,6 +108,9 @@ export function PortfolioHistoryPanel({ history }: PortfolioHistoryPanelProps) {
                   />
                   <YAxis
                     dataKey="totalValue"
+                    domain={chartDomain}
+                    tickCount={5}
+                    allowDataOverflow
                     tickFormatter={(value) =>
                       Number(value).toLocaleString('ko-KR', { notation: 'compact' })
                     }

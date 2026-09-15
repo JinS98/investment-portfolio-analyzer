@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEvent, PointerEvent } from 'react';
+import { FiRefreshCw } from 'react-icons/fi';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import { MarketDataPanel } from '../../components/MarketDataPanel/MarketDataPanel';
 import { PortfolioManager } from '../../components/PortfolioManager/PortfolioManager';
@@ -289,7 +290,15 @@ const Dashboard = ({ view }: DashboardProps) => {
               원
             </span>
           )}
-          <button className={styles.refreshBtn} onClick={refreshPrices} disabled={isLoading}>
+          <button
+            type="button"
+            className={styles.refreshBtn}
+            onClick={refreshPrices}
+            disabled={isLoading}
+            aria-label={isLoading ? '현재가를 새로고침하는 중' : '현재가 새로고침'}
+            title={isLoading ? '새로고침 중' : '현재가 새로고침'}
+          >
+            <FiRefreshCw className={isLoading ? styles.refreshIconSpinning : undefined} aria-hidden="true" />
             {isLoading ? '로딩 중...' : '새로고침'}
           </button>
           {/* <button

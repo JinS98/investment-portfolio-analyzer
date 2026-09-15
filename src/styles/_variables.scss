@@ -1,27 +1,21 @@
-// ────────────────────────────────────────────
-// 컬러 팔레트
-// ────────────────────────────────────────────
-$color-bg: #0d1117;
-$color-surface: #161b22;
-$color-border: #30363d;
-$color-text: #e6edf3;
-$color-text-muted: #8b949e;
+$color-bg: #f2f4f6;
+$color-surface: #ffffff;
+$color-border: #e5e8eb;
+$color-text: #191f28;
+$color-text-muted: #6b7684;
 
-$color-primary: #58a6ff;
-$color-success: #3fb950;
-$color-danger: #f85149;
-$color-warning: #d29922;
+$color-primary: #3182f6;
+$color-success: #16a34a;
+$color-danger: #e5484d;
+$color-warning: #f59e0b;
 
-// 시그널 컬러
-$color-bear: #f85149;
-$color-flat: #d29922;
-$color-bull: #3fb950;
-$color-hot: #ff7b72;
+$color-bear: #e5484d;
+$color-flat: #f59e0b;
+$color-bull: #16a34a;
+$color-hot: #f97316;
 
-// ────────────────────────────────────────────
-// 타이포그래피
-// ────────────────────────────────────────────
 $font-family:
+  'Pretendard',
   'Inter',
   -apple-system,
   BlinkMacSystemFont,
@@ -29,9 +23,6 @@ $font-family:
   sans-serif;
 $font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-// ────────────────────────────────────────────
-// 스페이싱
-// ────────────────────────────────────────────
 $spacing-xs: 4px;
 $spacing-sm: 8px;
 $spacing-md: 16px;
@@ -39,14 +30,8 @@ $spacing-lg: 24px;
 $spacing-xl: 32px;
 $spacing-2xl: 48px;
 
-// ────────────────────────────────────────────
-// 반응형 브레이크포인트
-// ────────────────────────────────────────────
 $bp-tablet: 768px;
 
-// ────────────────────────────────────────────
-// 믹스인
-// ────────────────────────────────────────────
 @mixin flex-center {
   display: flex;
   align-items: center;
@@ -54,10 +39,11 @@ $bp-tablet: 768px;
 }
 
 @mixin card {
-  background: $color-surface;
-  border: 1px solid $color-border;
-  border-radius: 8px;
   padding: $spacing-lg;
+  border: 0;
+  border-radius: 20px;
+  background: $color-surface;
+  box-shadow: 0 1px 3px rgba(25, 31, 40, 0.04);
 }
 
 @mixin mobile {

@@ -17,7 +17,7 @@ body {
   font-family: $font-family;
   background-color: $color-bg;
   color: $color-text;
-  line-height: 1.6;
+  line-height: 1.5;
   min-height: 100vh;
 }
 
@@ -34,6 +34,163 @@ button {
   border: none;
   background: none;
   font-family: inherit;
+}
+
+button,
+a,
+input,
+select,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a {
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+button:active,
+a:active {
+  transform: scale(0.98);
+}
+
+:focus-visible {
+  outline: 3px solid rgba($color-primary, 0.32);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+:root[data-theme='dark'] body {
+  background: #10131a;
+  color: #f2f4f6;
+}
+
+:root[data-theme='dark'] [class*='app'] {
+  background: #10131a;
+}
+
+:root[data-theme='dark'] nav {
+  background: #171b24;
+  color: #f2f4f6;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] nav a,
+:root[data-theme='dark'] nav span,
+:root[data-theme='dark'] nav button {
+  color: #f2f4f6;
+}
+
+:root[data-theme='dark'] [class*='navMenuActive'] {
+  background: rgba(49, 130, 246, 0.22);
+  color: #7ab5ff !important;
+}
+
+:root[data-theme='dark'] [class*='themeToggle'] {
+  background: #252b37;
+}
+
+// Page-level cards use semantic sections. Targeting the element keeps nested
+// headers and controls transparent in the dark theme.
+:root[data-theme='dark'] section,
+:root[data-theme='dark'] [class*='tableWrap'],
+:root[data-theme='dark'] [class*='status'] {
+  background: #171b24;
+  color: #f2f4f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme='dark'] [class*='page'] {
+  color: #f2f4f6;
+}
+
+:root[data-theme='dark'] h1,
+:root[data-theme='dark'] h2,
+:root[data-theme='dark'] h3,
+:root[data-theme='dark'] strong,
+:root[data-theme='dark'] td {
+  color: #f2f4f6;
+}
+
+// Keep financial direction immediately recognisable on dark surfaces.
+:root[data-theme='dark'] [class*='positive'] {
+  color: #4ade80 !important;
+}
+
+:root[data-theme='dark'] [class*='negative'] {
+  color: #fb7185 !important;
+}
+
+:root[data-theme='dark'] p,
+:root[data-theme='dark'] th,
+:root[data-theme='dark'] small,
+:root[data-theme='dark'] label,
+:root[data-theme='dark'] [class*='description'] {
+  color: #aeb8c7;
+}
+
+:root[data-theme='dark'] input,
+:root[data-theme='dark'] select,
+:root[data-theme='dark'] textarea {
+  border-color: #363e4d !important;
+  background: #252b37 !important;
+  color: #f2f4f6 !important;
+}
+
+:root[data-theme='dark'] [class*='marketSummary'] > span,
+:root[data-theme='dark'] [class*='combinedSummary'] > span,
+:root[data-theme='dark'] [class*='preview'],
+:root[data-theme='dark'] [class*='actions'],
+:root[data-theme='dark'] [class*='typeTabs'],
+:root[data-theme='dark'] [class*='scroll'] {
+  background: #252b37;
+}
+
+:root[data-theme='dark'] th,
+:root[data-theme='dark'] td,
+:root[data-theme='dark'] [class*='columnMenuHeader'] {
+  border-color: #363e4d !important;
+}
+
+:root[data-theme='dark'] [class*='settingsButton'],
+:root[data-theme='dark'] [class*='columnMenu'],
+:root[data-theme='dark'] [class*='suggestions'] {
+  background: #252b37;
+  color: #f2f4f6;
+}
+
+:root[data-theme='dark'] [class*='emptyState'] {
+  background: #252b37;
+}
+
+:root[data-theme='dark'] option {
+  background: #252b37;
+  color: #f2f4f6;
+}
+
+:root[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: #10131a;
+}
+
+:root[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #4a5363;
 }
 
 input,

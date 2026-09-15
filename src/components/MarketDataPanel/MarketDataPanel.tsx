@@ -1,8 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { fetchStocks, fetchQuotes, fetchCandlePage, searchStocks } from '../../services/tossApi';
 import type { StockInfo, Quote, CandlePage, StockSearchItem } from '../../types/market';
 import styles from './MarketDataPanel.module.scss';
+
+function formatMoney(value: number, currency: string) {
+  const formatted = value.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+  return currency === 'KRW' ? `${formatted}원` : `$${formatted}`;
+}
+
+function formatTurnover(value: number, currency: string) {
+  if (currency !== 'KRW') return formatMoney(value, currency);
+  const units = [
+    { value: 1_000_000_000_000, suffix: '조원' },
+    { value: 100_000_000, suffix: '억원' },
+    { value: 10_000_000, suffix: '천만원' },
+  ];
+  const unit = units.find((candidate) => value >= candidate.value);
+  if (!unit) return formatMoney(value, currency);
+  return `${Number((value / unit.value).toFixed(2)).toLocaleString('ko-KR')}${unit.suffix}`;
+}
 
 export function MarketDataPanel() {
   const [symbol, setSymbol] = useState('005930');
@@ -13,6 +30,11 @@ export function MarketDataPanel() {
   const [open, setOpen] = useState(false);
   const [composing, setComposing] = useState(false);
   const [active, setActive] = useState(-1);
+  const [isCandleDialogOpen, setIsCandleDialogOpen] = useState(false);
+  const [visibleCandleCount, setVisibleCandleCount] = useState(10);
+  const [newRowsStartIndex, setNewRowsStartIndex] = useState<number | null>(null);
+  const candleScrollRef = useRef<HTMLDivElement>(null);
+  const newRowsStartRef = useRef<HTMLTableRowElement>(null);
   useEffect(() => {
     if (!open || selected || composing || !symbol.trim()) return;
     const controller = new AbortController();
@@ -53,6 +75,30 @@ export function MarketDataPanel() {
   const [result, setResult] = useState<{ stock: StockInfo; quote: Quote; page: CandlePage } | null>(
     null,
   );
+
+  useEffect(() => {
+    if (!isCandleDialogOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsCandleDialogOpen(false);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isCandleDialogOpen]);
+
+  useEffect(() => {
+    if (newRowsStartIndex === null || !candleScrollRef.current || !newRowsStartRef.current) return;
+    const container = candleScrollRef.current;
+    const row = newRowsStartRef.current;
+    const offset = row.getBoundingClientRect().top - container.getBoundingClientRect().top;
+    container.scrollTo({ top: container.scrollTop + offset, behavior: 'smooth' });
+    setNewRowsStartIndex(null);
+  }, [newRowsStartIndex, visibleCandleCount]);
+
   async function search(event: FormEvent) {
     event.preventDefault();
     if (composing) return;
@@ -64,6 +110,9 @@ export function MarketDataPanel() {
     setLoading(true);
     setError('');
     setResult(null);
+    setIsCandleDialogOpen(false);
+    setVisibleCandleCount(10);
+    setNewRowsStartIndex(null);
     try {
       const ticker = selected?.symbol ?? symbol.trim().toUpperCase();
       const [stocks, quotes, page] = await Promise.all([
@@ -84,7 +133,7 @@ export function MarketDataPanel() {
   }
   return (
     <section className={styles.panel} aria-busy={loading}>
-      <h2>종목·현재가·일봉 조회</h2>
+      <h2>종목 · 현재가 · 일봉 조회</h2>
       <form onSubmit={search} className={styles.form}>
         <label htmlFor="stock-symbol">종목명 또는 코드</label>
         <div
@@ -192,7 +241,7 @@ export function MarketDataPanel() {
             {result.stock.englishName} · {result.stock.market}
           </p>
           <p>
-            현재가: {result.quote.price.toLocaleString('ko-KR')} {result.quote.currency}
+            현재가: {formatMoney(result.quote.price, result.quote.currency)}
           </p>
           <p>
             시세 기준:{' '}
@@ -201,11 +250,98 @@ export function MarketDataPanel() {
               : '제공되지 않음'}
           </p>
           <p>일봉 {result.page.candles.length}개 조회 · 최근 10개 표시</p>
-          {result.page.candles.length === 0 ? (
+          <button
+            type="button"
+            className={styles.candleButton}
+            onClick={() => {
+              setVisibleCandleCount(10);
+              setIsCandleDialogOpen(true);
+            }}
+          >
+            일봉 보기
+          </button>
+          {isCandleDialogOpen && (
+            <div className={styles.dialogOverlay} onMouseDown={() => setIsCandleDialogOpen(false)}>
+              <section
+                className={styles.candleDialog}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="candle-dialog-title"
+                onMouseDown={(event) => event.stopPropagation()}
+              >
+                <div className={styles.dialogHeader}>
+                  <div>
+                    <h3 id="candle-dialog-title">{result.stock.name} 일봉</h3>
+                    <p>최근 10개 일봉을 확인할 수 있습니다.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.closeButton}
+                    onClick={() => setIsCandleDialogOpen(false)}
+                    aria-label="일봉 모달 닫기"
+                  >
+                    ×
+                  </button>
+                </div>
+                {result.page.candles.length === 0 ? (
             <p>일봉 데이터가 없습니다.</p>
           ) : (
-            <div className={styles.scroll}>
-              <table>
+            <>
+              <div ref={candleScrollRef} className={styles.scroll}>
+              <table className={styles.candleTable}>
+                <thead>
+                  <tr>
+                    <th>날짜</th>
+                    <th>종가</th>
+                    <th>등락률</th>
+                    <th>거래량(주)</th>
+                    <th>거래대금</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.page.candles
+                    .slice(-visibleCandleCount)
+                    .reverse()
+                    .map((candle, index) => {
+                      const candleIndex = result.page.candles.findIndex(
+                        (item) => item.timestamp === candle.timestamp,
+                      );
+                      const previousClose =
+                        candleIndex > 0 ? result.page.candles[candleIndex - 1]?.closePrice : null;
+                      const changeRate =
+                        previousClose && previousClose > 0
+                          ? ((candle.closePrice - previousClose) / previousClose) * 100
+                          : null;
+                      const turnover = candle.closePrice * candle.volume;
+
+                      return (
+                          <tr
+                            key={candle.timestamp}
+                            ref={index === newRowsStartIndex ? newRowsStartRef : undefined}
+                          >
+                          <td>{candle.date}</td>
+                          <td>{formatMoney(candle.closePrice, candle.currency)}</td>
+                          <td
+                            className={
+                              changeRate === null
+                                ? undefined
+                                : changeRate >= 0
+                                  ? styles.positiveChange
+                                  : styles.negativeChange
+                            }
+                          >
+                            {changeRate === null
+                              ? '—'
+                              : `${changeRate > 0 ? '+' : ''}${changeRate.toFixed(2)}%`}
+                          </td>
+                          <td>{candle.volume.toLocaleString('ko-KR')}</td>
+                          <td>{formatTurnover(turnover, candle.currency)}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+              <table className={styles.legacyCandleTable}>
                 <thead>
                   <tr>
                     <th>거래일</th>
@@ -219,7 +355,7 @@ export function MarketDataPanel() {
                 </thead>
                 <tbody>
                   {result.page.candles
-                    .slice(-10)
+                    .slice(-visibleCandleCount)
                     .reverse()
                     .map((candle) => (
                       <tr key={candle.timestamp}>
@@ -231,13 +367,33 @@ export function MarketDataPanel() {
                           candle.closePrice,
                           candle.volume,
                         ].map((value, index) => (
-                          <td key={index}>{value.toLocaleString('ko-KR')}</td>
+                          <td key={index}>
+                            {index === 4
+                              ? value.toLocaleString('ko-KR')
+                              : formatMoney(value, candle.currency)}
+                          </td>
                         ))}
                         <td>{candle.currency}</td>
                       </tr>
                     ))}
                 </tbody>
               </table>
+              </div>
+              {visibleCandleCount < result.page.candles.length && (
+              <button
+                type="button"
+                className={styles.loadMoreButton}
+                onClick={() => {
+                  setNewRowsStartIndex(visibleCandleCount);
+                  setVisibleCandleCount((count) => count + 10);
+                }}
+              >
+                10개 더보기
+              </button>
+              )}
+            </>
+          )}
+              </section>
             </div>
           )}
         </>

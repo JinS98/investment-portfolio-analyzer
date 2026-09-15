@@ -2,10 +2,11 @@
 
 .section {
   margin-top: $spacing-xl;
-  padding: $spacing-lg;
-  border: 1px solid $color-border;
-  border-radius: 8px;
-  background: rgba($color-bg, 0.24);
+  padding: 28px;
+  border: 0;
+  border-radius: 20px;
+  background: $color-surface;
+  box-shadow: 0 1px 3px rgba(25, 31, 40, 0.04);
 }
 
 .header {
@@ -43,12 +44,12 @@
 
   input,
   select {
-    height: 38px;
+    height: 42px;
     box-sizing: border-box;
     padding: 8px 10px;
-    border: 1px solid $color-border;
-    border-radius: 6px;
-    background: $color-bg;
+    border: 1px solid #e5e8eb;
+    border-radius: 10px;
+    background: #f9fafb;
     color: $color-text;
     font: inherit;
     font-size: 0.82rem;
@@ -64,18 +65,18 @@
   gap: $spacing-xs;
 
   button {
-    padding: 8px 10px;
-    border: 1px solid $color-border;
-    border-radius: 6px;
-    background: transparent;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: #f2f4f6;
     color: $color-text-muted;
     font: inherit;
     font-size: 0.82rem;
   }
 
   button.active {
-    border-color: $color-primary;
-    background: rgba($color-primary, 0.15);
+    background: #edf5ff;
     color: $color-primary;
   }
 }
@@ -97,8 +98,8 @@ table {
 
 th,
 td {
-  padding: 12px 8px;
-  border-bottom: 1px solid rgba($color-text-muted, 0.25);
+  padding: 14px 8px;
+  border-bottom: 1px solid $color-border;
   text-align: right;
   white-space: nowrap;
 }

@@ -1,13 +1,15 @@
 @use '../../styles/variables' as *;
 .section {
   @include card;
-  margin-bottom: $spacing-xl;
+  margin-bottom: 32px;
   container-type: inline-size;
 }
 .section h2 {
   margin-top: 0;
   margin-bottom: $spacing-xs;
-  font-size: 1.35rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
 }
 .titleRow {
   display: flex;
@@ -16,7 +18,7 @@
   gap: $spacing-md;
 }
 .description {
-  margin: 0;
+  margin-bottom: 7px;
   color: $color-text-muted;
   font-size: 0.85rem;
   line-height: 1.5;
@@ -24,11 +26,12 @@
 .portfolioType {
   flex: 0 0 auto;
   padding: $spacing-xs $spacing-sm;
-  border: 1px solid $color-primary;
+  border: 0;
   border-radius: 999px;
   color: $color-primary;
   font-size: 0.78rem;
   font-weight: 700;
+  background: #edf5ff;
 }
 .portfolioTabs {
   display: flex;
@@ -37,8 +40,9 @@
   margin: $spacing-lg 0 $spacing-md;
 
   button {
-    background: transparent;
-    border: 1px solid $color-border;
+    min-height: 40px;
+    background: #f2f4f6;
+    border: 0;
     color: $color-text-muted;
   }
 
@@ -58,7 +62,8 @@
 
   span {
     padding: $spacing-xs $spacing-sm;
-    border: 1px solid $color-border;
+    border: 0;
+    background: #f7f8fa;
     border-radius: 999px;
   }
 
@@ -79,16 +84,17 @@
     flex: 1 1 220px;
     flex-direction: column;
     gap: $spacing-xs;
-    padding: $spacing-sm $spacing-md;
-    border-radius: 6px;
-    background: rgba($color-primary, 0.08);
+    padding: $spacing-md;
+    border-radius: 16px;
+    background: #f7f8fa;
     color: $color-text-muted;
     font-size: 0.8rem;
   }
 
   strong {
     color: $color-text;
-    font-size: 1.05rem;
+    font-size: 1.25rem;
+    letter-spacing: -0.025em;
   }
 
   strong.positive {
@@ -106,8 +112,9 @@
   }
 }
 button {
-  padding: 10px 12px;
-  border-radius: 6px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
   background: $color-primary;
   color: #fff;
   font: inherit;
@@ -121,6 +128,39 @@ button {
   color: $color-primary;
   font-size: 0.85rem;
 }
+
+:global(:root[data-theme='dark']) .section {
+  background: #171b24;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+:global(:root[data-theme='dark']) .description,
+:global(:root[data-theme='dark']) .portfolioIntro {
+  color: #aeb8c7;
+}
+
+:global(:root[data-theme='dark']) .portfolioIntro span,
+:global(:root[data-theme='dark']) .combinedSummary > span,
+:global(:root[data-theme='dark']) .marketSummary > span {
+  background: #252b37;
+  color: #aeb8c7;
+}
+
+:global(:root[data-theme='dark']) .portfolioTabs button {
+  background: #252b37;
+  color: #aeb8c7;
+}
+
+:global(:root[data-theme='dark']) .portfolioTabs button.activeTab {
+  background: $color-primary;
+  color: #fff;
+}
+
+:global(:root[data-theme='dark']) .combinedSummary strong,
+:global(:root[data-theme='dark']) .marketSummary strong,
+:global(:root[data-theme='dark']) .tableWrap td {
+  color: #f2f4f6;
+}
 .empty {
   padding: $spacing-xl 0 0;
   color: $color-text-muted;
@@ -132,8 +172,9 @@ button {
   gap: $spacing-md;
   margin-top: $spacing-xl;
   padding: $spacing-lg;
-  border: 1px dashed $color-border;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 16px;
+  background: #f7f8fa;
   color: $color-text-muted;
 
   p {
@@ -146,11 +187,11 @@ button {
   gap: $spacing-md;
   justify-content: space-between;
   align-items: center;
-  margin-top: $spacing-xl;
+  margin-top: 28px;
   padding: $spacing-md;
-  border: 1px solid $color-border;
-  border-radius: 8px;
-  background: rgba($color-primary, 0.05);
+  border: 0;
+  border-radius: 16px;
+  background: #f2f7ff;
   color: $color-text-muted;
   font-size: 0.85rem;
 
@@ -170,11 +211,11 @@ button {
 .tableWrap {
   position: relative;
   overflow-x: auto;
-  margin-top: $spacing-xl;
+  margin-top: 28px;
   padding: $spacing-md;
-  border: 1px solid $color-border;
-  border-radius: 8px;
-  background: rgba($color-bg, 0.24);
+  border: 0;
+  border-radius: 16px;
+  background: #f7f8fa;
 }
 .tableHeader {
   display: flex;
@@ -193,11 +234,13 @@ button {
 }
 .settingsButton {
   width: 34px;
+  min-height: 34px;
   height: 34px;
+  aspect-ratio: 1;
   padding: 0;
-  border: 1px solid $color-border;
-  border-radius: 6px;
-  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
   color: $color-text-muted;
   font-size: 1.1rem;
 
@@ -215,10 +258,10 @@ button {
   right: 0;
   width: 180px;
   padding: $spacing-sm;
-  border: 1px solid $color-border;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 14px;
   background: $color-surface;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 12px 28px rgba(25, 31, 40, 0.14);
 
   label {
     display: flex;
@@ -302,8 +345,8 @@ button {
     gap: $spacing-xs;
     min-width: 0;
     padding: $spacing-sm $spacing-md;
-    border-radius: 6px;
-    background: rgba($color-text-muted, 0.07);
+    border-radius: 14px;
+    background: #fff;
     color: $color-text-muted;
     font-size: 0.8rem;
   }
@@ -324,13 +367,13 @@ button {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 940px;
+  min-width: 860px;
 }
 th,
 td {
-  padding: 12px 8px;
+  padding: 14px 10px;
   text-align: right;
-  border-bottom: 1px solid rgba($color-text-muted, 0.25);
+  border-bottom: 1px solid $color-border;
   white-space: nowrap;
 }
 thead th {

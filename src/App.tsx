@@ -8,6 +8,11 @@ import styles from './App.module.scss';
 
 function App() {
   const { user, isAuthLoading, login, loginWithEmail, signUpWithEmail, logout } = useAuth();
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const savedTheme = localStorage.getItem('portfolio-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
   const [page, setPage] = useState<'dashboard' | 'analysis' | 'transactions' | 'virtual'>(() => {
     if (window.location.hash === '#analysis') return 'analysis';
     if (window.location.hash === '#transactions') return 'transactions';
@@ -27,6 +32,11 @@ function App() {
     return () => window.removeEventListener('hashchange', syncPage);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('portfolio-theme', theme);
+  }, [theme]);
+
   if (isAuthLoading) {
     return (
       <div className={styles.loading}>
@@ -38,7 +48,7 @@ function App() {
   return (
     <div className={styles.app}>
       <nav className={styles.nav}>
-        <span className={styles.navBrand}>📊 Portfolio Platform</span>
+        <span className={styles.navBrand}><img className={styles.navLogo} src='/portfolio-logo.png' alt='' />Portfolio Platform</span>
         <div className={styles.navMenu} aria-label="주요 메뉴">
           <a href="#dashboard" className={page === 'dashboard' ? styles.navMenuActive : undefined}>
             대시보드
@@ -57,6 +67,15 @@ function App() {
           </a>
         </div>
         <div className={styles.navRight}>
+          <button
+            type="button"
+            className={styles.themeToggle}
+            onClick={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
+            aria-label={theme === 'light' ? '어두운 테마로 변경' : '밝은 테마로 변경'}
+            title={theme === 'light' ? '어두운 테마' : '밝은 테마'}
+          >
+            {theme === 'light' ? '◐' : '☼'}
+          </button>
           {user ? (
             <>
               <span className={styles.navUser}>{user.displayName ?? user.email}</span>

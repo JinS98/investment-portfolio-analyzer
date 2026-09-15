@@ -1,100 +1,310 @@
+@use '../../styles/variables' as *;
+
 .panel {
+  @include card;
   container-type: inline-size;
-  padding: 24px;
-  margin: 24px 0;
-  border: 1px solid #64748b;
-  border-radius: 12px;
+  min-height: 280px;
+
   h2 {
-    margin-top: 0;
-    margin-bottom: 12px;
+    margin: 0 0 8px;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
   }
-  th,
-  td {
-    padding: 10px;
-    text-align: right;
-    white-space: nowrap;
+
+  h3 {
+    margin-top: 28px;
+    font-size: 1.05rem;
   }
-  table {
-    width: 100%;
-    border-collapse: collapse;
+
+  > p {
+    margin-top: 8px;
+    color: $color-text-muted;
+    font-size: 0.9rem;
   }
-  th {
-    border-bottom: 1px solid #64748b;
-  }
+
   [role='alert'] {
-    color: #ef4444;
-  }
-}
-.form {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  input,
-  button {
-    padding: 10px 14px;
-    border-radius: 6px;
-  }
-}
-.scroll {
-  overflow-x: auto;
-}
-.searchBox {
-  position: relative;
-  flex: 1;
-  min-width: 200px;
-  input {
-    width: 100%;
-    box-sizing: border-box;
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #fff1f1;
+    color: $color-danger;
+    font-size: 0.86rem;
   }
 }
 
-@container (max-width: 480px) {
-  .form {
-    align-items: stretch;
-  }
-  .searchBox {
-    flex-basis: 100%;
-    min-width: 0;
-  }
-  .form button {
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin-top: 22px;
+
+  > label {
+    display: block;
     width: 100%;
+    color: $color-text-muted;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  input,
+  button {
+    height: 48px;
+    border-radius: 12px;
+    font: inherit;
+  }
+
+  input {
+    width: 100%;
+    padding: 0 14px;
+    border: 1px solid $color-border;
+    background: #f9fafb;
+    color: $color-text;
+  }
+
+  button {
+    min-width: 106px;
+    border: 0;
+    background: $color-primary;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  button:disabled {
+    background: #b8c9df;
+    cursor: not-allowed;
   }
 }
+
+.searchBox {
+  position: relative;
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.scroll {
+  overflow-x: auto;
+  margin-top: 16px;
+  border-radius: 12px;
+  background: #f7f8fa;
+}
+
+table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.legacyCandleTable {
+  display: none;
+}
+
+.candleTable {
+  min-width: 740px;
+}
+
+.positiveChange {
+  color: $color-success !important;
+}
+
+.negativeChange {
+  color: $color-danger !important;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid $color-border;
+  text-align: right;
+  white-space: nowrap;
+}
+
+th {
+  color: $color-text-muted;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .suggestions {
   position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
   z-index: 10;
-  background: #fff;
-  color: #172033;
-  border: 1px solid #94a3b8;
-  border-radius: 8px;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
   max-height: 320px;
   overflow-y: auto;
-  box-shadow: 0 8px 24px #0002;
+  border-radius: 14px;
+  background: $color-surface;
+  box-shadow: 0 12px 28px rgba(25, 31, 40, 0.14);
+
   p {
-    padding: 8px 12px;
-    font-size: 13px;
+    padding: 12px 14px;
+    color: $color-text-muted;
+    font-size: 0.82rem;
   }
+
   ul {
-    list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 6px;
+    list-style: none;
   }
+
   li {
     padding: 12px;
+    border-radius: 10px;
     cursor: pointer;
   }
+
   li:hover,
   li[aria-selected='true'] {
-    background: #e2e8f0;
+    background: #edf5ff;
   }
+
   span {
     display: block;
-    font-size: 12px;
-    color: #475569;
+    margin-top: 3px;
+    color: $color-text-muted;
+    font-size: 0.78rem;
+  }
+}
+
+.candleButton {
+  min-height: 44px;
+  margin-top: 18px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: #edf5ff;
+  color: $color-primary;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.dialogOverlay {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(25, 31, 40, 0.52);
+}
+
+.candleDialog {
+  width: min(940px, 100%);
+  max-height: min(760px, calc(100vh - 40px));
+  overflow: hidden;
+  padding: 24px;
+  border-radius: 20px;
+  background: $color-surface;
+  box-shadow: 0 16px 44px rgba(25, 31, 40, 0.24);
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  h3 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+
+  p {
     margin-top: 4px;
+    color: $color-text-muted;
+    font-size: 0.86rem;
+  }
+}
+
+.closeButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 50%;
+  background: #f2f4f6;
+  color: $color-text;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.candleDialog .scroll {
+  max-height: calc(min(760px, 100vh - 40px) - 190px);
+  overflow: auto;
+  margin-top: 0;
+}
+
+.loadMoreButton {
+  display: block;
+  min-height: 44px;
+  margin: 16px auto 0;
+  padding: 0 18px;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  background: transparent;
+  color: $color-primary;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+:global(:root[data-theme='dark']) .candleButton {
+  background: rgba($color-primary, 0.18);
+  color: #7ab5ff;
+}
+
+:global(:root[data-theme='dark']) .suggestions li:hover,
+:global(:root[data-theme='dark']) .suggestions li[aria-selected='true'] {
+  background: rgba($color-primary, 0.24);
+}
+
+:global(:root[data-theme='dark']) .suggestions li:hover strong,
+:global(:root[data-theme='dark']) .suggestions li[aria-selected='true'] strong {
+  color: #fff;
+}
+
+:global(:root[data-theme='dark']) .suggestions li:hover span,
+:global(:root[data-theme='dark']) .suggestions li[aria-selected='true'] span {
+  color: #c7d8f3;
+}
+
+:global(:root[data-theme='dark']) .candleDialog {
+  background: #171b24;
+}
+
+:global(:root[data-theme='dark']) .candleDialog .scroll {
+  background: #252b37;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .closeButton {
+  border: 0;
+  background: transparent;
+  color: #f2f4f6;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+:global(:root[data-theme='dark']) .loadMoreButton {
+  border-color: #475166;
+  background: #252b37;
+  color: #7ab5ff;
+}
+
+@container (max-width: 480px) {
+  .form button {
+    width: 100%;
   }
 }
