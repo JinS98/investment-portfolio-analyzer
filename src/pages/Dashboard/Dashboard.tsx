@@ -10,6 +10,7 @@ import { RiskGuidePanel } from '../../components/RiskGuidePanel/RiskGuidePanel';
 import { PortfolioHistoryPanel } from '../../components/PortfolioHistoryPanel/PortfolioHistoryPanel';
 import { MonthlyComparisonPanel } from '../../components/MonthlyComparisonPanel/MonthlyComparisonPanel';
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
+import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import styles from './Dashboard.module.scss';
 
@@ -54,12 +55,27 @@ const Dashboard = ({ view }: DashboardProps) => {
   const { isPortfolioLoading, portfolioError } = usePortfolioSync();
   const portfolios = usePortfolioStore((state) => state.portfolios);
   const portfolioLedgers = usePortfolioStore((state) => state.portfolioLedgers);
+  const openTransactionModal = usePortfolioStore((state) => state.openTransactionModal);
+  const userId = useAuthStore((state) => state.user?.uid);
+  const realPortfolio = useMemo(
+    () => portfolios.find((portfolio) => portfolio.type === 'REAL'),
+    [portfolios],
+  );
   const realHoldings = useMemo(() => {
-    const realPortfolio = portfolios.find((portfolio) => portfolio.type === 'REAL');
     return realPortfolio
       ? (portfolioLedgers[realPortfolio.id]?.holdings ?? EMPTY_HOLDINGS)
       : EMPTY_HOLDINGS;
-  }, [portfolioLedgers, portfolios]);
+  }, [portfolioLedgers, realPortfolio]);
+
+  const addMarketSearchBuyRecord = userId && realPortfolio
+    ? (preset: { ticker: string; name: string; market: 'KR' | 'US'; price: number }) => {
+        openTransactionModal({
+          ...preset,
+          type: 'BUY',
+          portfolioId: realPortfolio.id,
+        });
+      }
+    : undefined;
   const {
     portfolio,
     prices,
@@ -327,7 +343,10 @@ const Dashboard = ({ view }: DashboardProps) => {
             ⠿
           </span>
           {renderResizeHandle('market')}
-          <MarketDataPanel />
+          <MarketDataPanel
+            holdings={realHoldings}
+            onAddBuyRecord={addMarketSearchBuyRecord}
+          />
         </div>
         <div {...panelProps('manager')}>
           <span className={styles.dragHandle} aria-hidden="true">

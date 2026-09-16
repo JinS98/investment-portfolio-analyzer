@@ -17,6 +17,46 @@ export interface Quote {
   currency: Currency;
   timestamp: string | null;
 }
+
+export type RankingMarketCountry = 'KR' | 'US';
+
+export interface StockRankingItem {
+  rank: number;
+  symbol: string;
+  currency: Currency;
+  price: number;
+  basePrice: number;
+  changeRate: number;
+  tradingVolume: number;
+  tradingAmount: number;
+}
+
+export interface StockRankingResponse {
+  rankedAt: string | null;
+  rankings: StockRankingItem[];
+}
+
+export type MarketIndicatorSymbol = 'KOSPI' | 'KOSDAQ';
+
+export interface MarketIndicatorQuote {
+  symbol: MarketIndicatorSymbol;
+  timestamp: string | null;
+  price: number;
+}
+
+export interface MarketIndicatorCandle {
+  timestamp: string;
+  closePrice: number;
+}
+
+export type MarketIndexSymbol = 'KOSPI' | 'KOSDAQ' | 'NASDAQ' | 'SP500';
+
+export interface MarketIndexData {
+  symbol: MarketIndexSymbol;
+  price: number;
+  changeRate: number | null;
+  candles: MarketIndicatorCandle[];
+}
 export interface DailyCandle {
   date: string;
   timestamp: string;

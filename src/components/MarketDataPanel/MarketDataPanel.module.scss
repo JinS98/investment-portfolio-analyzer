@@ -144,6 +144,14 @@ th {
     font-size: 0.82rem;
   }
 
+  .suggestionTitle {
+    margin: 0;
+    padding-bottom: 4px;
+    color: $color-text;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
   ul {
     margin: 0;
     padding: 6px;
@@ -179,6 +187,40 @@ th {
   font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.resultActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-top: 16px;
+}
+
+.addRecordButton {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: $color-primary;
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.holdingNotice,
+.loginNotice {
+  margin: 0 !important;
+  font-size: 0.84rem !important;
+}
+
+.holdingNotice {
+  color: $color-success !important;
+}
+
+.loginNotice {
+  color: $color-text-muted !important;
 }
 
 .dialogOverlay {
@@ -261,6 +303,10 @@ th {
 :global(:root[data-theme='dark']) .candleButton {
   background: rgba($color-primary, 0.18);
   color: #7ab5ff;
+}
+
+:global(:root[data-theme='dark']) .holdingNotice {
+  color: #46d98b !important;
 }
 
 :global(:root[data-theme='dark']) .suggestions li:hover,

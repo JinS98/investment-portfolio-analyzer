@@ -5,6 +5,7 @@ import type { Holding, HoldingHistoryInput, MarketType, Portfolio } from '../../
 import type { StockSearchItem } from '../../types/market';
 import { validateBuyInput, validateSellInput } from '../../utils/calculator';
 import { formatNumericInput, parseNumericInput } from '../../utils/numericInput';
+import { loadRecentStockSearches, saveRecentStockSearch } from '../../utils/recentStockSearches';
 import styles from './TransactionModal.module.scss';
 
 export type TransactionModalType = 'BUY' | 'SELL';
@@ -115,6 +116,9 @@ function TransactionModalDialog({
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [recentSearches, setRecentSearches] = useState<StockSearchItem[]>(() =>
+    loadRecentStockSearches(),
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -230,6 +234,7 @@ function TransactionModalDialog({
     setSearchQuery(`${item.name} (${item.symbol})`);
     setMatches([]);
     setHasSearched(false);
+    setRecentSearches(saveRecentStockSearch(item));
   };
 
   const changeType = (nextType: TransactionModalType) => {
@@ -384,6 +389,27 @@ function TransactionModalDialog({
                   <small className={styles.searchHint}>일치하는 종목이 없습니다.</small>
                 )}
                 {isSearching && <small className={styles.searchHint}>종목 검색 중…</small>}
+                {!searchQuery.trim() && recentSearches.length > 0 && (
+                  <ul className={styles.searchResults} aria-label="최근 검색 종목">
+                    <li className={styles.searchResultsTitle}>최근 검색</li>
+                    {recentSearches.map((item) => (
+                      <li key={`recent-${item.market}-${item.symbol}`}>
+                        <button
+                          type="button"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => selectSearchResult(item)}
+                        >
+                          <strong>{item.name}</strong>
+                          <span>
+                            {item.symbol} ·{' '}
+                            {['KOSPI', 'KOSDAQ', 'KR_ETC'].includes(item.market) ? '국내' : '미국'}{' '}
+                            · {item.market}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {!!matches.length && (
                   <ul className={styles.searchResults} role="listbox">
                     {matches.map((item) => (
@@ -393,7 +419,12 @@ function TransactionModalDialog({
                           onMouseDown={(event) => event.preventDefault()}
                           onClick={() => selectSearchResult(item)}
                         >
-                          <strong>{item.name}</strong> {item.symbol} · {item.market}
+                          <strong>{item.name}</strong>
+                          <span>
+                            {item.symbol} ·{' '}
+                            {['KOSPI', 'KOSDAQ', 'KR_ETC'].includes(item.market) ? '국내' : '미국'}{' '}
+                            · {item.market}
+                          </span>
                         </button>
                       </li>
                     ))}

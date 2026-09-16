@@ -1,0 +1,919 @@
+@use '../../styles/variables' as *;
+
+.page {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 48px 0 72px;
+}
+
+.header {
+  margin-bottom: 32px;
+
+  > p {
+    margin-bottom: 8px;
+    color: $color-text-muted;
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 2.7rem);
+    letter-spacing: -0.06em;
+  }
+
+  > span {
+    display: block;
+    margin-top: 10px;
+    color: $color-text-muted;
+  }
+}
+
+.indicatorSection {
+  @include card;
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h2 {
+    font-size: 1.05rem;
+    letter-spacing: -0.03em;
+  }
+
+  span {
+    color: $color-text-muted;
+    font-size: 0.82rem;
+  }
+}
+
+.indicatorCards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+
+  button {
+    min-height: 86px;
+    padding: 14px;
+    border: 1px solid $color-border;
+    border-radius: 12px;
+    background: transparent;
+    text-align: left;
+    transition:
+      border-color 180ms ease,
+      transform 180ms ease,
+      box-shadow 180ms ease;
+
+    &:hover {
+      border-color: #aeb8c7;
+      box-shadow: 0 4px 12px rgba(25, 31, 40, 0.06);
+      transform: translateY(-1px);
+    }
+
+    span,
+    strong {
+      display: block;
+    }
+
+    span {
+      color: $color-text-muted;
+      font-size: 0.82rem;
+    }
+
+    strong {
+      margin-top: 8px;
+      color: $color-text;
+      font-size: 1.12rem;
+      letter-spacing: -0.03em;
+    }
+  }
+}
+
+.selectedIndicator {
+  border-color: $color-text !important;
+}
+
+.miniChart {
+  width: 100%;
+  height: 250px;
+
+  polyline {
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  line {
+    stroke: $color-border;
+    stroke-dasharray: 4 6;
+  }
+
+  circle {
+    fill: $color-surface;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+
+  text {
+    fill: $color-text-muted;
+    font-size: 11px;
+  }
+}
+
+.chartWrap {
+  &.positiveChart {
+    color: #159a5b;
+  }
+
+  &.negativeChart {
+    color: #d9575f;
+  }
+}
+
+.chartStats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+  color: $color-text-muted;
+  font-size: 0.82rem;
+
+  b {
+    margin-left: 4px;
+    color: $color-text;
+  }
+
+  strong {
+    margin-left: auto;
+  }
+}
+
+.dialogOverlay {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(25, 31, 40, 0.52);
+}
+
+.indicatorDialog {
+  width: min(680px, 100%);
+  padding: 24px;
+  border-radius: 20px;
+  background: $color-surface;
+  box-shadow: 0 16px 44px rgba(25, 31, 40, 0.24);
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  p {
+    margin-top: 4px;
+    color: $color-text-muted;
+    font-size: 0.86rem;
+  }
+
+  button {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f2f4f6;
+    color: $color-text;
+    font-size: 1.5rem;
+  }
+}
+
+.chartLoading {
+  display: grid;
+  height: 250px;
+  place-items: center;
+  color: $color-text-muted;
+}
+
+.searchSection,
+.listSection {
+  @include card;
+}
+
+.searchSection {
+  label {
+    display: block;
+    margin-bottom: 10px;
+    color: $color-text-muted;
+    font-size: 0.86rem;
+    font-weight: 700;
+  }
+}
+
+.searchField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid $color-border;
+  border-radius: 14px;
+  background: #f9fafb;
+  color: $color-text-muted;
+
+  input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: $color-text;
+    font: inherit;
+  }
+
+  span {
+    flex: 0 0 auto;
+    color: $color-text-muted;
+    font-size: 0.78rem;
+  }
+}
+
+.listSection {
+  display: flex;
+  height: min(720px, 72dvh);
+  flex-direction: column;
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+
+  h2 {
+    font-size: 1.18rem;
+    letter-spacing: -0.03em;
+  }
+
+  p {
+    margin-top: 4px;
+    color: $color-text-muted;
+    font-size: 0.86rem;
+  }
+}
+
+.filters {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+
+  button {
+    min-width: 42px;
+    height: 32px;
+    padding: 0 9px;
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    background: transparent;
+    color: $color-text-muted;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+}
+
+.activeFilter {
+  border-color: $color-text !important;
+  background: transparent !important;
+  color: $color-text !important;
+}
+
+.stockList {
+  min-height: 0;
+  flex: 1;
+  margin: 0;
+  padding: 0 6px 0 0;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  list-style: none;
+
+  li + li {
+    border-top: 1px solid $color-border;
+  }
+
+  button {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 4px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+
+    &:hover .stockName strong {
+      color: $color-text-muted;
+    }
+  }
+}
+
+.stockRank {
+  width: 22px;
+  flex: 0 0 22px;
+  color: $color-text-muted;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.stockAvatar {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f2f4f6;
+  color: $color-text-muted;
+  font-size: 0.92rem;
+  font-weight: 800;
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+  }
+}
+
+.stockName {
+  min-width: 0;
+
+  strong,
+  small {
+    display: block;
+  }
+
+  strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    margin-top: 2px;
+    color: $color-text-muted;
+  }
+}
+
+.stockPrice {
+  margin-left: auto;
+  color: $color-text;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stockMeta {
+  min-width: 108px;
+  color: $color-text-muted;
+  font-size: 0.82rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.positive,
+.negative {
+  min-width: 68px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.positive {
+  color: $color-success;
+}
+
+.negative {
+  color: $color-danger;
+}
+
+.skeletonList {
+  display: grid;
+  gap: 10px;
+}
+
+.skeletonRow {
+  height: 66px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f2f4f6 25%, #e9edf2 37%, #f2f4f6 63%);
+  background-size: 400% 100%;
+  animation: pulse 1.25s ease infinite;
+}
+
+.empty,
+.error {
+  display: grid;
+  gap: 6px;
+  padding: 28px;
+  border-radius: 14px;
+  background: #f7f8fa;
+  text-align: center;
+
+  span {
+    color: $color-text-muted;
+    font-size: 0.9rem;
+  }
+}
+
+.error {
+  background: #fff1f1;
+  color: $color-danger;
+
+  button {
+    justify-self: center;
+    min-height: 40px;
+    margin-top: 8px;
+    padding: 0 14px;
+    border: 1px solid currentColor;
+    border-radius: 10px;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+  }
+}
+
+.drawerOverlay {
+  position: fixed;
+  z-index: 210;
+  inset: 0;
+  background: rgba(25, 31, 40, 0.48);
+}
+
+.stockDrawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(520px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  background: $color-surface;
+  box-shadow: -14px 0 36px rgba(25, 31, 40, 0.18);
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid $color-border;
+
+}
+
+.drawerActions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.addStockButton {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: $color-primary;
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.drawerCloseButton {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: #f2f4f6;
+  color: $color-text;
+  line-height: 0;
+
+  svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.drawerTitle {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+
+  h2 {
+    overflow: hidden;
+    font-size: 1.2rem;
+    letter-spacing: -0.03em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  p {
+    margin-top: 3px;
+    color: $color-text-muted;
+    font-size: 0.84rem;
+  }
+}
+
+.drawerContent {
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+}
+
+.portfolioActionNotice {
+  margin: 0;
+  padding: 10px 24px;
+  border-bottom: 1px solid $color-border;
+  color: $color-text-muted;
+  font-size: 0.84rem;
+}
+
+.currentQuote,
+.dailyChartSection,
+.fundamentalsSection,
+.newsSection {
+  padding: 20px;
+  border-radius: 16px;
+  background: #f7f8fa;
+}
+
+.currentQuote {
+  span,
+  strong,
+  small {
+    display: block;
+  }
+
+  span,
+  small {
+    color: $color-text-muted;
+    font-size: 0.84rem;
+  }
+
+  strong {
+    margin: 8px 0;
+    color: $color-text;
+    font-size: clamp(1.65rem, 5vw, 2.1rem);
+    letter-spacing: -0.05em;
+  }
+}
+
+.dailyChartSection {
+  h3 {
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  > div > p {
+    margin-top: 4px;
+    color: $color-text-muted;
+    font-size: 0.84rem;
+  }
+
+  .miniChart {
+    height: 220px;
+    margin-top: 12px;
+  }
+}
+
+.fundamentalsSection,
+.newsSection {
+  h3 {
+    font-size: 1rem;
+  }
+
+  > div > p {
+    margin-top: 4px;
+    color: $color-text-muted;
+    font-size: 0.84rem;
+  }
+}
+
+.fundamentalsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0 0;
+
+  div {
+    padding: 12px;
+    border-radius: 12px;
+    background: $color-surface;
+  }
+
+  dt {
+    color: $color-text-muted;
+    font-size: 0.78rem;
+  }
+
+  dd {
+    margin: 5px 0 0;
+    color: $color-text;
+    font-weight: 800;
+  }
+}
+
+.insightUnavailable {
+  margin: 16px 0 0;
+  color: $color-text-muted;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.newsList {
+  display: grid;
+  gap: 2px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+
+  li + li {
+    border-top: 1px solid $color-border;
+  }
+
+  a {
+    display: grid;
+    gap: 5px;
+    padding: 13px 0;
+    color: $color-text;
+    text-decoration: none;
+
+    &:hover strong {
+      text-decoration: underline;
+    }
+  }
+
+  strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    color: $color-text-muted;
+    font-size: 0.78rem;
+  }
+}
+
+.detailSkeleton {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+
+  div {
+    border-radius: 16px;
+    background: linear-gradient(90deg, #f2f4f6 25%, #e9edf2 37%, #f2f4f6 63%);
+    background-size: 400% 100%;
+    animation: pulse 1.25s ease infinite;
+  }
+
+  div:nth-child(1) {
+    height: 126px;
+  }
+
+  div:nth-child(2) {
+    height: 260px;
+  }
+
+  div:nth-child(3) {
+    height: 72px;
+  }
+}
+
+.detailError {
+  display: grid;
+  gap: 8px;
+  margin: 24px;
+  padding: 24px;
+  border-radius: 16px;
+  background: #fff1f1;
+  color: $color-danger;
+
+  span {
+    color: $color-text-muted;
+    font-size: 0.9rem;
+  }
+
+  button {
+    width: fit-content;
+    min-height: 40px;
+    margin-top: 6px;
+    padding: 0 14px;
+    border: 1px solid currentColor;
+    border-radius: 10px;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+  }
+}
+
+.noChart {
+  display: grid;
+  height: 220px;
+  margin-top: 12px;
+  place-items: center;
+  color: $color-text-muted;
+  font-size: 0.9rem;
+}
+
+@keyframes pulse {
+  to {
+    background-position: -135% 0;
+  }
+}
+
+:global(:root[data-theme='dark']) .searchField,
+:global(:root[data-theme='dark']) .empty,
+:global(:root[data-theme='dark']) .indicatorDialog,
+:global(:root[data-theme='dark']) .stockDrawer,
+:global(:root[data-theme='dark']) .currentQuote,
+:global(:root[data-theme='dark']) .dailyChartSection {
+  background: #252b37;
+}
+
+:global(:root[data-theme='dark']) .stockAvatar {
+  background: #252b37;
+  color: #aeb8c7;
+}
+
+:global(:root[data-theme='dark']) .activeFilter {
+  border-color: #aeb8c7 !important;
+  background: transparent;
+  color: #f2f4f6 !important;
+  box-shadow: none;
+}
+
+:global(:root[data-theme='dark']) .selectedIndicator {
+  border-color: #aeb8c7 !important;
+}
+
+:global(:root[data-theme='dark']) .indicatorCards button strong {
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .miniChart polyline {
+  stroke: currentColor;
+}
+
+:global(:root[data-theme='dark']) .chartWrap,
+:global(:root[data-theme='dark']) .miniChart {
+  color: inherit;
+}
+
+:global(:root[data-theme='dark']) .positiveChart {
+  color: #4ade80;
+}
+
+:global(:root[data-theme='dark']) .negativeChart {
+  color: #fb7185;
+}
+
+:global(:root[data-theme='dark']) .miniChart line {
+  stroke: #363e4d;
+}
+
+:global(:root[data-theme='dark']) .miniChart circle {
+  fill: #252b37;
+}
+
+:global(:root[data-theme='dark']) .chartStats b {
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .dialogHeader button {
+  background: transparent;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .drawerCloseButton {
+  background: transparent;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .drawerHeader {
+  border-color: #363e4d;
+}
+
+:global(:root[data-theme='dark']) .currentQuote strong {
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .fundamentalsGrid div {
+  background: #30394a;
+}
+
+:global(:root[data-theme='dark']) .detailSkeleton div {
+  background: linear-gradient(90deg, #252b37 25%, #30394a 37%, #252b37 63%);
+  background-size: 400% 100%;
+}
+
+:global(:root[data-theme='dark']) .detailError {
+  background: #38272d;
+}
+
+:global(:root[data-theme='dark']) .stockList button {
+  background: transparent;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .skeletonRow {
+  background: linear-gradient(90deg, #252b37 25%, #30394a 37%, #252b37 63%);
+  background-size: 400% 100%;
+}
+
+@include mobile {
+  .page {
+    width: min(100% - 40px, 1180px);
+    padding-top: 28px;
+  }
+
+  .listHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .indicatorCards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .listSection {
+    height: min(640px, 62dvh);
+  }
+
+  .sectionTitle {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .filters {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
+
+  .stockList button {
+    display: grid;
+    grid-template-columns: 22px 38px minmax(0, 1fr) auto;
+  }
+
+  .stockPrice {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  .positive,
+  .negative,
+  .stockMeta {
+    grid-column: 3 / -1;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .drawerHeader {
+    padding: 20px;
+  }
+
+  .drawerContent {
+    padding: 20px;
+  }
+
+  .currentQuote,
+  .dailyChartSection {
+    padding: 16px;
+  }
+}

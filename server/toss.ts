@@ -4,6 +4,7 @@ import type { StockSearchItem } from '../src/types/market.ts';
 
 const BASE = 'https://openapi.tossinvest.com';
 const HISTORICAL_FX_BASE = 'https://api.frankfurter.dev/v2';
+const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const historicalFxCache = new Map<string, { resolvedDate: string; rate: number }>();
 
 function isCalendarDate(value: string): boolean {
@@ -45,6 +46,115 @@ async function historicalUsdKrwRate(requestedDate: string) {
     candidate = previousDate(candidate);
   }
   throw new Error('거래일 기준 7일 이내의 환율을 찾지 못했습니다.');
+}
+
+async function usIndexData(symbol: 'NASDAQ' | 'SP500') {
+  const yahooSymbol = symbol === 'NASDAQ' ? '^IXIC' : '^GSPC';
+  const response = await fetch(
+    `${YAHOO_CHART_BASE}/${encodeURIComponent(yahooSymbol)}?range=1mo&interval=1d`,
+    { signal: AbortSignal.timeout(15_000) },
+  );
+  if (!response.ok) throw new Error(`미국 지수 조회에 실패했습니다. (${response.status})`);
+  const payload = (await response.json()) as {
+    chart?: { result?: Array<{ meta?: { regularMarketPrice?: unknown; chartPreviousClose?: unknown }; timestamp?: unknown; indicators?: { quote?: Array<{ close?: unknown }> } }> };
+  };
+  const result = payload.chart?.result?.[0];
+  const timestamps = Array.isArray(result?.timestamp) ? result.timestamp : [];
+  const closes = Array.isArray(result?.indicators?.quote?.[0]?.close)
+    ? result.indicators.quote[0].close
+    : [];
+  const candles = timestamps.flatMap((timestamp, index) => {
+    const closePrice = Number(closes[index]);
+    if (typeof timestamp !== 'number' || !Number.isFinite(closePrice)) return [];
+    return [{ timestamp: new Date(timestamp * 1000).toISOString(), closePrice }];
+  });
+  const price = Number(result?.meta?.regularMarketPrice ?? candles.at(-1)?.closePrice);
+  const basePrice = Number(result?.meta?.chartPreviousClose);
+  if (!Number.isFinite(price) || !candles.length) throw new Error('미국 지수 응답이 올바르지 않습니다.');
+  return {
+    symbol,
+    price,
+    changeRate: Number.isFinite(basePrice) && basePrice > 0 ? (price - basePrice) / basePrice : null,
+    candles,
+  };
+}
+
+const insightCache = new Map<string, { expiresAt: number; value: unknown }>();
+
+const asFinite = (value: unknown) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '').replaceAll('&quot;', '"').replaceAll('&amp;', '&').trim();
+
+async function stockInsights(env: Record<string, string>, symbol: string, name: string, market: 'KR' | 'US') {
+  const cacheKey = `${market}:${symbol}:${name}`;
+  const cached = insightCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const externalSymbol = market === 'KR' ? `${symbol}.KO` : `${symbol}.US`;
+  const eodToken = env.EODHD_API_TOKEN;
+  const naverId = env.NAVER_CLIENT_ID;
+  const naverSecret = env.NAVER_CLIENT_SECRET;
+  const marketauxToken = env.MARKETAUX_API_TOKEN;
+  const [fundamentals, news] = await Promise.all([
+    eodToken
+      ? fetch(`https://eodhd.com/api/fundamentals/${encodeURIComponent(externalSymbol)}?${new URLSearchParams({ api_token: eodToken, fmt: 'json' })}`, { signal: AbortSignal.timeout(15_000) })
+          .then(async (response) => {
+            if (!response.ok) return { data: null, message: '재무 지표 API를 사용할 수 없습니다.' };
+            const data = (await response.json()) as { Highlights?: Record<string, unknown> };
+            const values = data.Highlights;
+            if (!values) return { data: null, message: '해당 종목의 재무 지표가 없습니다.' };
+            return {
+              data: {
+                per: asFinite(values.PERatio),
+                pbr: asFinite(values.PriceBookMRQ),
+                roe: asFinite(values.ReturnOnEquityTTM),
+                dividendYield: asFinite(values.DividendYield),
+                marketCap: asFinite(values.MarketCapitalization),
+              },
+              message: null,
+            };
+          })
+          .catch(() => ({ data: null, message: '재무 지표를 불러오지 못했습니다.' }))
+      : Promise.resolve({ data: null, message: 'EODHD_API_TOKEN을 설정하면 재무 지표를 볼 수 있습니다.' }),
+    market === 'KR'
+      ? naverId && naverSecret
+        ? fetch(`https://openapi.naver.com/v1/search/news.json?${new URLSearchParams({ query: name, display: '3', sort: 'date' })}`, {
+            headers: { 'X-Naver-Client-Id': naverId, 'X-Naver-Client-Secret': naverSecret },
+            signal: AbortSignal.timeout(15_000),
+          }).then(async (response) => {
+            if (!response.ok) return { items: [], message: '국내 뉴스 API를 사용할 수 없습니다.' };
+            const data = (await response.json()) as { items?: Array<Record<string, unknown>> };
+            return {
+              items: (data.items ?? []).flatMap((item) =>
+                typeof item.title === 'string' && typeof item.link === 'string'
+                  ? [{ title: stripHtml(item.title), url: typeof item.originallink === 'string' ? item.originallink : item.link, publishedAt: typeof item.pubDate === 'string' ? item.pubDate : null, source: '네이버 뉴스', summary: typeof item.description === 'string' ? stripHtml(item.description) : null }]
+                  : [],
+              ),
+              message: null,
+            };
+          }).catch(() => ({ items: [], message: '국내 뉴스를 불러오지 못했습니다.' }))
+        : Promise.resolve({ items: [], message: 'NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET을 설정하면 국내 뉴스를 볼 수 있습니다.' })
+      : marketauxToken
+        ? fetch(`https://api.marketaux.com/v1/news/all?${new URLSearchParams({ symbols: symbol, filter_entities: 'true', limit: '3', api_token: marketauxToken })}`, { signal: AbortSignal.timeout(15_000) })
+            .then(async (response) => {
+              if (!response.ok) return { items: [], message: '해외 뉴스 API를 사용할 수 없습니다.' };
+              const data = (await response.json()) as { data?: Array<Record<string, unknown>> };
+              return {
+                items: (data.data ?? []).flatMap((item) =>
+                  typeof item.title === 'string' && typeof item.url === 'string'
+                    ? [{ title: item.title, url: item.url, publishedAt: typeof item.published_at === 'string' ? item.published_at : null, source: typeof item.source === 'string' ? item.source : 'Marketaux', summary: typeof item.description === 'string' ? item.description : null }]
+                    : [],
+                ),
+                message: null,
+              };
+            }).catch(() => ({ items: [], message: '해외 뉴스를 불러오지 못했습니다.' }))
+        : Promise.resolve({ items: [], message: 'MARKETAUX_API_TOKEN을 설정하면 해외 뉴스를 볼 수 있습니다.' }),
+  ]);
+  const value = { fundamentals: fundamentals.data, fundamentalsMessage: fundamentals.message, news: news.items, newsMessage: news.message };
+  insightCache.set(cacheKey, { expiresAt: Date.now() + 15 * 60 * 1000, value });
+  return value;
 }
 
 export function tossPlugin(env: Record<string, string>): Plugin {
@@ -129,6 +239,11 @@ export function tossPlugin(env: Record<string, string>): Plugin {
         'candles',
         'exchange-rate',
         'historical-exchange-rate',
+        'rankings',
+        'indicator-prices',
+        'indicator-candles',
+        'us-indices',
+        'stock-insights',
       ].includes(endpoint)
     ) {
       res.statusCode = 404;
@@ -173,7 +288,24 @@ export function tossPlugin(env: Record<string, string>): Plugin {
         );
         return;
       }
+      if (endpoint === 'stock-insights') {
+        const symbol = url.searchParams.get('symbol') ?? '';
+        const name = url.searchParams.get('name')?.trim() ?? '';
+        const market = url.searchParams.get('market');
+        if (!/^[A-Za-z0-9.-]+$/.test(symbol) || !name || !['KR', 'US'].includes(market ?? '')) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ message: '종목 정보를 확인해 주세요.' }));
+          return;
+        }
+        res.end(JSON.stringify({ result: await stockInsights(env, symbol, name, market as 'KR' | 'US') }));
+        return;
+      }
+      if (endpoint === 'us-indices') {
+        res.end(JSON.stringify({ result: await Promise.all([usIndexData('NASDAQ'), usIndexData('SP500')]) }));
+        return;
+      }
       const params = new URLSearchParams();
+      let upstreamEndpoint = endpoint;
       if (endpoint === 'exchange-rate') {
         params.set('baseCurrency', 'USD');
         params.set('quoteCurrency', 'KRW');
@@ -197,6 +329,32 @@ export function tossPlugin(env: Record<string, string>): Plugin {
             throw new Error('조회 시각이 올바르지 않습니다.');
           params.set('before', before);
         }
+      } else if (endpoint === 'rankings') {
+        const marketCountry = url.searchParams.get('marketCountry');
+        const count = Number(url.searchParams.get('count') ?? 20);
+        if (!['KR', 'US'].includes(marketCountry ?? '') || !Number.isInteger(count) || count < 1 || count > 100) {
+          throw new Error('랭킹 시장과 조회 개수를 확인해 주세요.');
+        }
+        params.set('type', 'MARKET_TRADING_AMOUNT');
+        params.set('marketCountry', marketCountry!);
+        params.set('duration', 'realtime');
+        params.set('count', String(count));
+      } else if (endpoint === 'indicator-prices') {
+        const symbols = url.searchParams.get('symbols') ?? '';
+        if (!/^(KOSPI|KOSDAQ)(,(KOSPI|KOSDAQ))*$/.test(symbols)) {
+          throw new Error('지원하는 지수 심볼을 입력해 주세요.');
+        }
+        params.set('symbols', symbols);
+        upstreamEndpoint = 'market-indicators/prices';
+      } else if (endpoint === 'indicator-candles') {
+        const symbol = url.searchParams.get('symbol') ?? '';
+        const count = Number(url.searchParams.get('count') ?? 30);
+        if (!['KOSPI', 'KOSDAQ'].includes(symbol) || !Number.isInteger(count) || count < 2 || count > 200) {
+          throw new Error('지원하는 지수와 조회 개수를 확인해 주세요.');
+        }
+        params.set('interval', '1d');
+        params.set('count', String(count));
+        upstreamEndpoint = `market-indicators/${symbol}/candles`;
       } else {
         const symbols = url.searchParams.get('symbols') ?? '';
         if (!/^[A-Za-z0-9.-]+(,[A-Za-z0-9.-]+)*$/.test(symbols) || symbols.split(',').length > 200)
@@ -204,7 +362,7 @@ export function tossPlugin(env: Record<string, string>): Plugin {
         params.set('symbols', symbols);
       }
       const request = async () =>
-        fetch(`${BASE}/api/v1/${endpoint}?${params}`, {
+        fetch(`${BASE}/api/v1/${upstreamEndpoint}?${params}`, {
           headers: { Authorization: `Bearer ${await accessToken()}` },
           signal: AbortSignal.timeout(15_000),
         });

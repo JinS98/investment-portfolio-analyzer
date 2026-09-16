@@ -183,6 +183,24 @@ select {
   button:hover {
     background: rgba($color-primary, 0.1);
   }
+
+  button strong,
+  button span {
+    display: block;
+  }
+
+  button span {
+    margin-top: 3px;
+    color: $color-text-muted;
+    font-size: 0.75rem;
+  }
+}
+
+.searchResultsTitle {
+  padding: 7px $spacing-sm 4px;
+  color: $color-text-muted;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .searchHint {

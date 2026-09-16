@@ -2,7 +2,26 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { fetchStocks, fetchQuotes, fetchCandlePage, searchStocks } from '../../services/tossApi';
 import type { StockInfo, Quote, CandlePage, StockSearchItem } from '../../types/market';
+import type { Holding, MarketType } from '../../types';
+import { loadRecentStockSearches, saveRecentStockSearch } from '../../utils/recentStockSearches';
 import styles from './MarketDataPanel.module.scss';
+
+const KOREAN_MARKETS = new Set(['KOSPI', 'KOSDAQ', 'KR_ETC']);
+
+export interface MarketDataPanelBuyPreset {
+  ticker: string;
+  name: string;
+  market: MarketType;
+  price: number;
+}
+
+interface MarketDataPanelProps {
+  holdings?: Holding[];
+  onAddBuyRecord?: (preset: MarketDataPanelBuyPreset) => void;
+}
+
+const toPortfolioMarket = (market: string): MarketType =>
+  KOREAN_MARKETS.has(market) ? 'KR' : 'US';
 
 function formatMoney(value: number, currency: string) {
   const formatted = value.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
@@ -21,7 +40,7 @@ function formatTurnover(value: number, currency: string) {
   return `${Number((value / unit.value).toFixed(2)).toLocaleString('ko-KR')}${unit.suffix}`;
 }
 
-export function MarketDataPanel() {
+export function MarketDataPanel({ holdings = [], onAddBuyRecord }: MarketDataPanelProps) {
   const [symbol, setSymbol] = useState('005930');
   const [selected, setSelected] = useState<StockSearchItem | null>(null);
   const [suggestions, setSuggestions] = useState<StockSearchItem[]>([]);
@@ -30,6 +49,9 @@ export function MarketDataPanel() {
   const [open, setOpen] = useState(false);
   const [composing, setComposing] = useState(false);
   const [active, setActive] = useState(-1);
+  const [recentSearches, setRecentSearches] = useState<StockSearchItem[]>(() =>
+    loadRecentStockSearches(),
+  );
   const [isCandleDialogOpen, setIsCandleDialogOpen] = useState(false);
   const [visibleCandleCount, setVisibleCandleCount] = useState(10);
   const [newRowsStartIndex, setNewRowsStartIndex] = useState<number | null>(null);
@@ -69,6 +91,7 @@ export function MarketDataPanel() {
     setSearching(false);
     setActive(-1);
     setSearchError('');
+    setRecentSearches(saveRecentStockSearch(item));
   }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -206,6 +229,27 @@ export function MarketDataPanel() {
                 </p>
               )}
               {searchError && <p role="alert">{searchError}</p>}
+              {!searching && !searchError && !symbol.trim() && recentSearches.length > 0 && (
+                <>
+                  <p className={styles.suggestionTitle}>최근 조회</p>
+                  <ul role="listbox" aria-label="최근 조회 종목">
+                    {recentSearches.map((item) => (
+                      <li
+                        key={`recent-${item.market}-${item.symbol}`}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => choose(item)}
+                      >
+                        <strong>{item.name}</strong>
+                        <span>
+                          {item.symbol} ·{' '}
+                          {['KOSPI', 'KOSDAQ', 'KR_ETC'].includes(item.market) ? '국내' : '미국'} ·{' '}
+                          {item.market}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
               <ul id="stock-suggestions" role="listbox" aria-label="종목 검색 결과">
                 {suggestions.map((item, index) => (
                   <li
@@ -218,7 +262,9 @@ export function MarketDataPanel() {
                   >
                     <strong>{item.name}</strong>{' '}
                     <span>
-                      {item.symbol} · {item.market}
+                      {item.symbol} ·{' '}
+                      {['KOSPI', 'KOSDAQ', 'KR_ETC'].includes(item.market) ? '국내' : '미국'} ·{' '}
+                      {item.market}
                     </span>
                   </li>
                 ))}
@@ -247,6 +293,40 @@ export function MarketDataPanel() {
               ? new Date(result.quote.timestamp).toLocaleString('ko-KR')
               : '제공되지 않음'}
           </p>
+          {(() => {
+            const market = toPortfolioMarket(result.stock.market);
+            const isAlreadyHeld = holdings.some(
+              (holding) => holding.ticker === result.stock.symbol && holding.market === market,
+            );
+
+            return (
+              <div className={styles.resultActions}>
+                {isAlreadyHeld && (
+                  <p className={styles.holdingNotice} role="status">
+                    이미 보유한 종목입니다. 추가 매수 기록을 남길 수 있어요.
+                  </p>
+                )}
+                {onAddBuyRecord ? (
+                  <button
+                    type="button"
+                    className={styles.addRecordButton}
+                    onClick={() =>
+                      onAddBuyRecord({
+                        ticker: result.stock.symbol,
+                        name: result.stock.name,
+                        market,
+                        price: result.quote.price,
+                      })
+                    }
+                  >
+                    매수 기록 추가
+                  </button>
+                ) : (
+                  <p className={styles.loginNotice}>로그인 후 매수 기록을 추가할 수 있어요.</p>
+                )}
+              </div>
+            );
+          })()}
           <p>일봉 {result.page.candles.length}개 조회 · 최근 10개 표시</p>
           <button
             type="button"

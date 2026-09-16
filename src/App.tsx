@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth';
 import Dashboard from './pages/Dashboard';
 import { TransactionHistoryPage } from './pages/TransactionHistory/TransactionHistoryPage';
 import { VirtualPortfolioPage } from './pages/VirtualPortfolio/VirtualPortfolioPage';
+import { MarketExplorePage } from './pages/MarketExplore';
 import { AuthDialog } from './components/AuthDialog/AuthDialog';
 import styles from './App.module.scss';
 
@@ -13,9 +14,10 @@ function App() {
     if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
-  const [page, setPage] = useState<'dashboard' | 'analysis' | 'transactions' | 'virtual'>(() => {
+  const [page, setPage] = useState<'dashboard' | 'analysis' | 'transactions' | 'market' | 'virtual'>(() => {
     if (window.location.hash === '#analysis') return 'analysis';
     if (window.location.hash === '#transactions') return 'transactions';
+    if (window.location.hash === '#market') return 'market';
     if (window.location.hash === '#virtual') return 'virtual';
     return 'dashboard';
   });
@@ -25,6 +27,7 @@ function App() {
     const syncPage = () => {
       if (window.location.hash === '#analysis') setPage('analysis');
       else if (window.location.hash === '#transactions') setPage('transactions');
+      else if (window.location.hash === '#market') setPage('market');
       else if (window.location.hash === '#virtual') setPage('virtual');
       else setPage('dashboard');
     };
@@ -65,6 +68,9 @@ function App() {
           >
             거래 내역
           </a>
+          <a href="#market" className={page === 'market' ? styles.navMenuActive : undefined}>
+            시장 탐색
+          </a>
           <a href="#virtual" className={page === 'virtual' ? styles.navMenuActive : undefined}>
             가상 포트폴리오
           </a>
@@ -95,6 +101,8 @@ function App() {
       </nav>
       {page === 'transactions' ? (
         <TransactionHistoryPage />
+      ) : page === 'market' ? (
+        <MarketExplorePage />
       ) : page === 'virtual' ? (
         <VirtualPortfolioPage />
       ) : (
