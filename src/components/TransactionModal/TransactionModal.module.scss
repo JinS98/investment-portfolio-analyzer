@@ -294,11 +294,23 @@ select {
 }
 
 @include mobile {
+  .backdrop {
+    align-items: flex-end;
+    padding: $spacing-sm;
+  }
+
   .dialog {
-    padding: $spacing-lg;
+    width: 100%;
+    margin: 0;
+    padding: $spacing-lg $spacing-md max($spacing-lg, env(safe-area-inset-bottom));
+    border-radius: 20px;
   }
 
   .numericFields {
     grid-template-columns: 1fr;
+  }
+
+  .footer button {
+    flex: 1;
   }
 }

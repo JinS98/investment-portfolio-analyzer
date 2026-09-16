@@ -48,7 +48,10 @@ function App() {
   return (
     <div className={styles.app}>
       <nav className={styles.nav}>
-        <span className={styles.navBrand}><img className={styles.navLogo} src='/portfolio-logo.png' alt='' />Portfolio Platform</span>
+        <span className={styles.navBrand}>
+          <img className={styles.navLogo} src="/portfolio-logo.png" alt="" />
+          Portfolio Platform
+        </span>
         <div className={styles.navMenu} aria-label="주요 메뉴">
           <a href="#dashboard" className={page === 'dashboard' ? styles.navMenuActive : undefined}>
             대시보드

@@ -17,6 +17,37 @@
   justify-content: space-between;
   gap: $spacing-md;
 }
+.summaryControls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: $spacing-sm;
+}
+.currencyToggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 9px;
+  background: #f2f4f6;
+
+  button {
+    width: 28px;
+    min-height: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: $color-text-muted;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  button.activeCurrency {
+    background: $color-text;
+    color: #fff;
+  }
+}
 .description {
   margin-bottom: 7px;
   color: $color-text-muted;
@@ -105,6 +136,10 @@
     color: $color-danger;
   }
 
+  strong.accountValue {
+    color: $color-text;
+  }
+
   small {
     align-self: center;
     color: $color-text-muted;
@@ -149,6 +184,19 @@ button {
 :global(:root[data-theme='dark']) .portfolioTabs button {
   background: #252b37;
   color: #aeb8c7;
+}
+
+:global(:root[data-theme='dark']) .currencyToggle {
+  background: #252b37;
+
+  button {
+    color: #aeb8c7;
+  }
+
+  button.activeCurrency {
+    background: #f2f4f6;
+    color: #171b24;
+  }
 }
 
 :global(:root[data-theme='dark']) .portfolioTabs button.activeTab {
@@ -447,6 +495,15 @@ td small {
 }
 
 @include mobile {
+  .summaryControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .section {
+    padding: $spacing-md;
+  }
+
   .titleRow,
   .emptyState {
     align-items: flex-start;
@@ -462,6 +519,31 @@ td small {
 
     button {
       flex: 1;
+      min-height: 48px;
     }
+  }
+
+  .tableWrap {
+    margin-right: -$spacing-md;
+    margin-left: -$spacing-md;
+    padding: $spacing-md;
+    border-radius: 0;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .settingsButton {
+    width: 40px;
+    min-height: 40px;
+    height: 40px;
+  }
+
+  .columnMenu {
+    position: absolute;
+    right: 0;
+    left: auto;
+    width: min(260px, calc(100vw - #{$spacing-xl}));
+    max-height: min(420px, calc(100dvh - 32px));
+    overflow-y: auto;
   }
 }

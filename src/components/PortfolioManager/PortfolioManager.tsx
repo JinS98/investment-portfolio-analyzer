@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TransactionModal } from '../TransactionModal/TransactionModal';
 import { fetchCurrentPrices } from '../../services/tossApi';
 import { useAuthStore } from '../../store/authStore';
@@ -48,6 +48,7 @@ type ColumnId =
   | 'evaluatedValue'
   | 'profitAmount'
   | 'profitRate';
+type SummaryCurrency = 'KRW' | 'USD';
 
 const COLUMN_OPTIONS: Array<{ id: ColumnId; label: string }> = [
   { id: 'averagePrice', label: '평단가' },
@@ -61,6 +62,7 @@ const COLUMN_OPTIONS: Array<{ id: ColumnId; label: string }> = [
 const DEFAULT_VISIBLE_COLUMNS = COLUMN_OPTIONS.map((column) => column.id);
 const columnStorageKey = (portfolioType?: PortfolioType) =>
   `portfolio-table-columns-v1-${portfolioType ?? 'all'}`;
+const summaryCurrencyStorageKey = 'portfolio-summary-currency';
 
 const readVisibleColumns = (portfolioType?: PortfolioType): ColumnId[] => {
   try {
@@ -108,6 +110,9 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(() =>
     readVisibleColumns(portfolioType),
   );
+  const [summaryCurrency, setSummaryCurrency] = useState<SummaryCurrency>(() =>
+    localStorage.getItem(summaryCurrencyStorageKey) === 'USD' ? 'USD' : 'KRW',
+  );
   const activePortfolio = portfolioType
     ? portfolios.find((portfolio) => portfolio.type === portfolioType)
     : portfolios.find((portfolio) => portfolio.id === activePortfolioId);
@@ -128,11 +133,19 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const combinedSummary = useMemo(() => {
     const hasMissingPrice = holdings.some((holding) => prices[holding.ticker] === undefined);
     const hasUsHolding = holdings.some((holding) => holding.market === 'US');
-    if (hasMissingPrice || (hasUsHolding && !exchangeRate)) return null;
+    const exchangeRateValue = exchangeRate?.rate;
+
+    if (hasMissingPrice || (hasUsHolding && !exchangeRateValue)) {
+      return {
+        evaluatedValue: null,
+        unrealizedPnL: null,
+        profitRate: null,
+      };
+    }
 
     const totalInvestment = holdings.reduce(
       (sum, holding) =>
-        sum + holding.investedAmount * (holding.market === 'US' ? (exchangeRate?.rate ?? 1) : 1),
+        sum + holding.investedAmount * (holding.market === 'US' ? (exchangeRateValue ?? 1) : 1),
       0,
     );
     const totalEvaluated = holdings.reduce(
@@ -140,15 +153,26 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
         sum +
         (prices[holding.ticker] ?? holding.averagePrice) *
           holding.quantity *
-          (holding.market === 'US' ? (exchangeRate?.rate ?? 1) : 1),
+          (holding.market === 'US' ? (exchangeRateValue ?? 1) : 1),
       0,
     );
-    const profit = totalEvaluated - totalInvestment;
+    const unrealizedPnL = totalEvaluated - totalInvestment;
     return {
-      profit,
-      profitRate: totalInvestment > 0 ? (profit / totalInvestment) * 100 : 0,
+      evaluatedValue: totalEvaluated,
+      unrealizedPnL,
+      profitRate: totalInvestment > 0 ? (unrealizedPnL / totalInvestment) * 100 : 0,
     };
-  }, [exchangeRate, holdings, prices]);
+  }, [exchangeRate?.rate, holdings, prices]);
+  const isSummaryCurrencyAvailable = summaryCurrency === 'KRW' || Boolean(exchangeRate?.rate);
+  const summaryMoney = (value: number) =>
+    money(
+      summaryCurrency === 'USD' ? value / exchangeRate!.rate : value,
+      summaryCurrency === 'USD' ? 'US' : 'KR',
+    );
+
+  useEffect(() => {
+    localStorage.setItem(summaryCurrencyStorageKey, summaryCurrency);
+  }, [summaryCurrency]);
 
   const refreshPrices = async () => {
     if (!holdings.length) return;
@@ -207,9 +231,29 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
           </p>
         </div>
         {activePortfolio && (
-          <span className={styles.portfolioType}>
-            {activePortfolio.type === 'REAL' ? '실제 포트폴리오' : '가상 포트폴리오'}
-          </span>
+          <div className={styles.summaryControls}>
+            <div className={styles.currencyToggle} role="group" aria-label="포트폴리오 요약 통화">
+              <button
+                type="button"
+                className={summaryCurrency === 'USD' ? styles.activeCurrency : undefined}
+                aria-pressed={summaryCurrency === 'USD'}
+                onClick={() => setSummaryCurrency('USD')}
+              >
+                $
+              </button>
+              <button
+                type="button"
+                className={summaryCurrency === 'KRW' ? styles.activeCurrency : undefined}
+                aria-pressed={summaryCurrency === 'KRW'}
+                onClick={() => setSummaryCurrency('KRW')}
+              >
+                원
+              </button>
+            </div>
+            <span className={styles.portfolioType}>
+              {activePortfolio.type === 'REAL' ? '실제 포트폴리오' : '가상 포트폴리오'}
+            </span>
+          </div>
         )}
       </div>
 
@@ -240,36 +284,47 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
         </span>
       </div>
 
-      <div className={styles.combinedSummary} aria-label="통합 원화 손익">
+      <div className={styles.combinedSummary} aria-label="포트폴리오 요약">
         <span>
-          통합 평가손익 (원화)
+          현재 계좌 금액 ({summaryCurrency === 'USD' ? '$' : '원'})
+          <strong className={styles.accountValue}>
+            {!isSummaryCurrencyAvailable || combinedSummary.evaluatedValue === null
+              ? summaryCurrency === 'USD'
+                ? '환율 미조회'
+                : '시세 미조회'
+              : summaryMoney(combinedSummary.evaluatedValue)}
+          </strong>
+        </span>
+        <span>
+          통합 평가손익 ({summaryCurrency === 'USD' ? '$' : '원'})
           <strong
             className={
-              combinedSummary === null || combinedSummary.profit >= 0
+              combinedSummary.unrealizedPnL === null || combinedSummary.unrealizedPnL >= 0
                 ? styles.positive
                 : styles.negative
             }
           >
-            {combinedSummary === null ? '시세 미조회' : money(combinedSummary.profit, 'KR')}
+            {!isSummaryCurrencyAvailable || combinedSummary.unrealizedPnL === null
+              ? summaryCurrency === 'USD'
+                ? '환율 미조회'
+                : '시세 미조회'
+              : summaryMoney(combinedSummary.unrealizedPnL)}
           </strong>
         </span>
         <span>
-          통합 수익률
+          통합 평가 수익률
           <strong
             className={
-              combinedSummary === null || combinedSummary.profitRate >= 0
+              combinedSummary.profitRate === null || combinedSummary.profitRate >= 0
                 ? styles.positive
                 : styles.negative
             }
           >
-            {combinedSummary === null ? '시세 미조회' : formatRate(combinedSummary.profitRate)}
+            {combinedSummary.profitRate === null
+              ? '시세 미조회'
+              : formatRate(combinedSummary.profitRate)}
           </strong>
         </span>
-        {exchangeRate && holdings.some((holding) => holding.market === 'US') && (
-          <small>
-            USD/KRW {exchangeRate.rate.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}
-          </small>
-        )}
       </div>
 
       {ledgerError && (

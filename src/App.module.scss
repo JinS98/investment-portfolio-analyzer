@@ -56,6 +56,26 @@
       background: rgba($color-text-muted, 0.12);
     }
   }
+
+  @include mobile {
+    width: 100%;
+    max-width: 100%;
+    gap: $spacing-xs;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    a {
+      flex: 0 0 auto;
+      min-height: 44px;
+      padding: 11px 12px;
+      white-space: nowrap;
+    }
+  }
 }
 
 .navMenuActive {
@@ -70,7 +90,10 @@
   justify-self: end;
 
   @include mobile {
-    justify-self: start;
+    width: 100%;
+    justify-content: space-between;
+    justify-self: stretch;
+    gap: $spacing-sm;
   }
 }
 
@@ -92,6 +115,13 @@
 .navUser {
   font-size: 0.9rem;
   color: $color-text-muted;
+
+  @include mobile {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .navBtn {

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { calcDailyPortfolioSnapshot } from '../src/utils/portfolioSnapshot.ts';
-import type { StockItem } from '../src/types/index.ts';
+import type { Holding, StockItem } from '../src/types/index.ts';
 
 const portfolio: StockItem[] = [
   {
@@ -44,4 +44,34 @@ test('daily snapshot saves KRW-converted purchase value, current value, and retu
 
 test('a portfolio with US stocks waits for an exchange rate before saving', () => {
   assert.equal(calcDailyPortfolioSnapshot(portfolio, {}, null), null);
+});
+
+test('a snapshot waits until every held stock has a current price', () => {
+  assert.equal(calcDailyPortfolioSnapshot(portfolio, { '005930': 120 }, exchangeRate), null);
+});
+
+test('a ledger holding uses its moving average as the purchase value', () => {
+  const holdings: Holding[] = [
+    {
+      portfolioId: 'real-portfolio',
+      ticker: '005930',
+      name: 'Samsung Electronics',
+      market: 'KR',
+      quantity: 2,
+      averagePrice: 100,
+      investedAmount: 200,
+    },
+  ];
+
+  assert.deepEqual(
+    calcDailyPortfolioSnapshot(holdings, { '005930': 125 }, null, new Date('2026-09-14T01:00:00Z')),
+    {
+      date: '2026-09-14',
+      totalBuyValue: 200,
+      totalValue: 250,
+      totalProfitAmount: 50,
+      totalProfitRate: 25,
+      exchangeRate: null,
+    },
+  );
 });

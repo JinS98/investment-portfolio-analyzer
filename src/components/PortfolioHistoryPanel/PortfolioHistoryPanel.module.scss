@@ -20,6 +20,12 @@
     font-size: 0.85rem;
   }
 }
+.latestSavedAt {
+  display: block;
+  margin-top: 4px;
+  color: $color-text-muted;
+  font-size: 0.75rem;
+}
 .rangeButtons {
   position: relative;
   display: inline-flex;
@@ -27,7 +33,7 @@
   gap: 4px;
   padding: 6px;
   border: 1px solid $color-border;
-   border-radius: 100px;
+  border-radius: 100px;
 
   button {
     min-width: 56px;
@@ -43,7 +49,6 @@
       background 0.18s,
       box-shadow 0.18s,
       transform 0.18s;
-
 
     &:focus-visible {
       outline: 2px solid $color-primary;

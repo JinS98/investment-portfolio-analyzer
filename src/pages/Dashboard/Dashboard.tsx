@@ -76,7 +76,6 @@ const Dashboard = ({ view }: DashboardProps) => {
   } = usePortfolio();
   const refreshPricesRef = useRef(refreshPrices);
   const lastAutoRefreshKey = useRef<string | null>(null);
-  const initialRefreshRequested = useRef(false);
   const loadHistoricalDataRef = useRef(loadHistoricalData);
   const lastRiskRefresh = useRef<string | null>(null);
   const [isRiskLoading, setIsRiskLoading] = useState(false);
@@ -99,7 +98,9 @@ const Dashboard = ({ view }: DashboardProps) => {
     }
   });
   const [draggingPanel, setDraggingPanel] = useState<PanelId | null>(null);
-  const autoRefreshKey = portfolio.map((stock) => stock.id).join('|');
+  const autoRefreshKey = realHoldings
+    .map((holding) => `${holding.market}:${holding.ticker}:${holding.lastTransactionAt ?? ''}`)
+    .join('|');
   const stockLabel = (ticker: string) => {
     const stock = portfolio.find((item) => item.ticker === ticker);
     return stock?.name ? `${stock.name} (${ticker})` : ticker;
@@ -237,13 +238,7 @@ const Dashboard = ({ view }: DashboardProps) => {
   }, [panelRows]);
 
   useEffect(() => {
-    if (isPortfolioLoading || initialRefreshRequested.current) return;
-    initialRefreshRequested.current = true;
-    if (!autoRefreshKey) void refreshPricesRef.current();
-  }, [autoRefreshKey, isPortfolioLoading]);
-
-  useEffect(() => {
-    if (!autoRefreshKey) {
+    if (isPortfolioLoading || !autoRefreshKey) {
       lastAutoRefreshKey.current = null;
       return;
     }
@@ -251,7 +246,7 @@ const Dashboard = ({ view }: DashboardProps) => {
     if (lastAutoRefreshKey.current === autoRefreshKey) return;
     lastAutoRefreshKey.current = autoRefreshKey;
     void refreshPricesRef.current();
-  }, [autoRefreshKey]);
+  }, [autoRefreshKey, isPortfolioLoading]);
 
   useEffect(() => {
     if (!lastUpdated || lastRiskRefresh.current === lastUpdated) return;
@@ -298,7 +293,10 @@ const Dashboard = ({ view }: DashboardProps) => {
             aria-label={isLoading ? '현재가를 새로고침하는 중' : '현재가 새로고침'}
             title={isLoading ? '새로고침 중' : '현재가 새로고침'}
           >
-            <FiRefreshCw className={isLoading ? styles.refreshIconSpinning : undefined} aria-hidden="true" />
+            <FiRefreshCw
+              className={isLoading ? styles.refreshIconSpinning : undefined}
+              aria-hidden="true"
+            />
             {isLoading ? '로딩 중...' : '새로고침'}
           </button>
           {/* <button

@@ -240,9 +240,7 @@ export function MarketDataPanel() {
           <p>
             {result.stock.englishName} · {result.stock.market}
           </p>
-          <p>
-            현재가: {formatMoney(result.quote.price, result.quote.currency)}
-          </p>
+          <p>현재가: {formatMoney(result.quote.price, result.quote.currency)}</p>
           <p>
             시세 기준:{' '}
             {result.quote.timestamp
@@ -284,115 +282,117 @@ export function MarketDataPanel() {
                   </button>
                 </div>
                 {result.page.candles.length === 0 ? (
-            <p>일봉 데이터가 없습니다.</p>
-          ) : (
-            <>
-              <div ref={candleScrollRef} className={styles.scroll}>
-              <table className={styles.candleTable}>
-                <thead>
-                  <tr>
-                    <th>날짜</th>
-                    <th>종가</th>
-                    <th>등락률</th>
-                    <th>거래량(주)</th>
-                    <th>거래대금</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.page.candles
-                    .slice(-visibleCandleCount)
-                    .reverse()
-                    .map((candle, index) => {
-                      const candleIndex = result.page.candles.findIndex(
-                        (item) => item.timestamp === candle.timestamp,
-                      );
-                      const previousClose =
-                        candleIndex > 0 ? result.page.candles[candleIndex - 1]?.closePrice : null;
-                      const changeRate =
-                        previousClose && previousClose > 0
-                          ? ((candle.closePrice - previousClose) / previousClose) * 100
-                          : null;
-                      const turnover = candle.closePrice * candle.volume;
+                  <p>일봉 데이터가 없습니다.</p>
+                ) : (
+                  <>
+                    <div ref={candleScrollRef} className={styles.scroll}>
+                      <table className={styles.candleTable}>
+                        <thead>
+                          <tr>
+                            <th>날짜</th>
+                            <th>종가</th>
+                            <th>등락률</th>
+                            <th>거래량(주)</th>
+                            <th>거래대금</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {result.page.candles
+                            .slice(-visibleCandleCount)
+                            .reverse()
+                            .map((candle, index) => {
+                              const candleIndex = result.page.candles.findIndex(
+                                (item) => item.timestamp === candle.timestamp,
+                              );
+                              const previousClose =
+                                candleIndex > 0
+                                  ? result.page.candles[candleIndex - 1]?.closePrice
+                                  : null;
+                              const changeRate =
+                                previousClose && previousClose > 0
+                                  ? ((candle.closePrice - previousClose) / previousClose) * 100
+                                  : null;
+                              const turnover = candle.closePrice * candle.volume;
 
-                      return (
-                          <tr
-                            key={candle.timestamp}
-                            ref={index === newRowsStartIndex ? newRowsStartRef : undefined}
-                          >
-                          <td>{candle.date}</td>
-                          <td>{formatMoney(candle.closePrice, candle.currency)}</td>
-                          <td
-                            className={
-                              changeRate === null
-                                ? undefined
-                                : changeRate >= 0
-                                  ? styles.positiveChange
-                                  : styles.negativeChange
-                            }
-                          >
-                            {changeRate === null
-                              ? '—'
-                              : `${changeRate > 0 ? '+' : ''}${changeRate.toFixed(2)}%`}
-                          </td>
-                          <td>{candle.volume.toLocaleString('ko-KR')}</td>
-                          <td>{formatTurnover(turnover, candle.currency)}</td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-              <table className={styles.legacyCandleTable}>
-                <thead>
-                  <tr>
-                    <th>거래일</th>
-                    <th>시가</th>
-                    <th>고가</th>
-                    <th>저가</th>
-                    <th>종가</th>
-                    <th>거래량</th>
-                    <th>통화</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.page.candles
-                    .slice(-visibleCandleCount)
-                    .reverse()
-                    .map((candle) => (
-                      <tr key={candle.timestamp}>
-                        <td>{candle.date}</td>
-                        {[
-                          candle.openPrice,
-                          candle.highPrice,
-                          candle.lowPrice,
-                          candle.closePrice,
-                          candle.volume,
-                        ].map((value, index) => (
-                          <td key={index}>
-                            {index === 4
-                              ? value.toLocaleString('ko-KR')
-                              : formatMoney(value, candle.currency)}
-                          </td>
-                        ))}
-                        <td>{candle.currency}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-              </div>
-              {visibleCandleCount < result.page.candles.length && (
-              <button
-                type="button"
-                className={styles.loadMoreButton}
-                onClick={() => {
-                  setNewRowsStartIndex(visibleCandleCount);
-                  setVisibleCandleCount((count) => count + 10);
-                }}
-              >
-                10개 더보기
-              </button>
-              )}
-            </>
-          )}
+                              return (
+                                <tr
+                                  key={candle.timestamp}
+                                  ref={index === newRowsStartIndex ? newRowsStartRef : undefined}
+                                >
+                                  <td>{candle.date}</td>
+                                  <td>{formatMoney(candle.closePrice, candle.currency)}</td>
+                                  <td
+                                    className={
+                                      changeRate === null
+                                        ? undefined
+                                        : changeRate >= 0
+                                          ? styles.positiveChange
+                                          : styles.negativeChange
+                                    }
+                                  >
+                                    {changeRate === null
+                                      ? '—'
+                                      : `${changeRate > 0 ? '+' : ''}${changeRate.toFixed(2)}%`}
+                                  </td>
+                                  <td>{candle.volume.toLocaleString('ko-KR')}</td>
+                                  <td>{formatTurnover(turnover, candle.currency)}</td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                      <table className={styles.legacyCandleTable}>
+                        <thead>
+                          <tr>
+                            <th>거래일</th>
+                            <th>시가</th>
+                            <th>고가</th>
+                            <th>저가</th>
+                            <th>종가</th>
+                            <th>거래량</th>
+                            <th>통화</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {result.page.candles
+                            .slice(-visibleCandleCount)
+                            .reverse()
+                            .map((candle) => (
+                              <tr key={candle.timestamp}>
+                                <td>{candle.date}</td>
+                                {[
+                                  candle.openPrice,
+                                  candle.highPrice,
+                                  candle.lowPrice,
+                                  candle.closePrice,
+                                  candle.volume,
+                                ].map((value, index) => (
+                                  <td key={index}>
+                                    {index === 4
+                                      ? value.toLocaleString('ko-KR')
+                                      : formatMoney(value, candle.currency)}
+                                  </td>
+                                ))}
+                                <td>{candle.currency}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {visibleCandleCount < result.page.candles.length && (
+                      <button
+                        type="button"
+                        className={styles.loadMoreButton}
+                        onClick={() => {
+                          setNewRowsStartIndex(visibleCandleCount);
+                          setVisibleCandleCount((count) => count + 10);
+                        }}
+                      >
+                        10개 더보기
+                      </button>
+                    )}
+                  </>
+                )}
               </section>
             </div>
           )}

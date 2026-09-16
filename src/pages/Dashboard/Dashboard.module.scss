@@ -107,12 +107,12 @@
 }
 
 .exchangeRate {
-  font-size: 0.90rem;
-    min-height: 44px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  padding:0 $spacing-md;
+  font-size: 0.9rem;
+  min-height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 $spacing-md;
   border: 0;
   border-radius: 12px;
   background: #edf5ff;
@@ -288,11 +288,38 @@
 }
 
 @include mobile {
-  .double {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .meta {
+    width: 100%;
     justify-content: flex-start;
+  }
+
+  .componentGrid {
+    display: block;
+    margin-bottom: 0;
+  }
+
+  .panelItem {
+    height: auto;
+    margin-bottom: $spacing-xl;
+    cursor: default;
+
+    > :not(.dragHandle) {
+      height: auto;
+    }
+  }
+
+  .panelItem.hiddenPanel {
+    display: none;
+  }
+
+  .pairedFirst,
+  .pairedSecond {
+    padding: 0;
+  }
+
+  .dragHandle,
+  .resizeHandle {
+    display: none;
   }
 }
 

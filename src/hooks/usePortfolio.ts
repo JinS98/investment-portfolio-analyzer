@@ -21,6 +21,8 @@ export const usePortfolio = () => {
   const [historySaveError, setHistorySaveError] = useState('');
   const {
     portfolio,
+    portfolios,
+    portfolioLedgers,
     prices,
     exchangeRate,
     historicalData,
@@ -43,6 +45,9 @@ export const usePortfolio = () => {
     setLastUpdated,
     setComputedData,
   } = usePortfolioStore();
+  const realPortfolio = portfolios.find((item) => item.type === 'REAL');
+  const realLedger = realPortfolio ? portfolioLedgers[realPortfolio.id] : undefined;
+  const snapshotPositions = realLedger ? realLedger.holdings : portfolio;
 
   /** 현재가 갱신 + 수익률 재계산 */
   const refreshPrices = useCallback(async () => {
@@ -50,7 +55,7 @@ export const usePortfolio = () => {
     setError(false);
 
     try {
-      const tickers = portfolio.map((s) => s.ticker);
+      const tickers = snapshotPositions.map((position) => position.ticker);
       const [newPrices, exchangeRate] = await Promise.all([
         tickers.length ? fetchCurrentPrices(tickers) : Promise.resolve({}),
         fetchUsdKrwExchangeRate(),
@@ -62,7 +67,7 @@ export const usePortfolio = () => {
       setLastUpdated(new Date().toISOString());
       setHistorySaveError('');
       if (userId) {
-        const snapshot = calcDailyPortfolioSnapshot(portfolio, mergedPrices, exchangeRate);
+        const snapshot = calcDailyPortfolioSnapshot(snapshotPositions, mergedPrices, exchangeRate);
         if (snapshot) {
           try {
             const savedHistory = await saveDailyPortfolioHistory(userId, snapshot);
@@ -84,6 +89,7 @@ export const usePortfolio = () => {
   }, [
     userId,
     portfolio,
+    snapshotPositions,
     prices,
     setPrices,
     setExchangeRate,

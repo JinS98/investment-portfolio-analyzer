@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { calcHistorySummary, selectHistoryRange } from '../src/utils/historyAnalysis.ts';
+import {
+  calcHistoryChartDomain,
+  calcHistorySummary,
+  normalizePortfolioHistory,
+  selectHistoryRange,
+} from '../src/utils/historyAnalysis.ts';
 import type { PortfolioHistory } from '../src/types/index.ts';
 
 const history = (date: string, totalValue: number): PortfolioHistory => ({
@@ -41,5 +46,31 @@ test('history range keeps only snapshots within the selected recent period', () 
   assert.deepEqual(
     selected.map((item) => item.date),
     ['2026-08-20', '2026-09-14'],
+  );
+});
+
+test('history normalization keeps the latest saved snapshot for each date', () => {
+  const normalized = normalizePortfolioHistory([
+    { ...history('2026-09-14', 1000), savedAt: '2026-09-14T09:00:00.000Z' },
+    { ...history('2026-09-14', 1200), savedAt: '2026-09-14T10:00:00.000Z' },
+    { ...history('2026-09-13', 900), savedAt: '2026-09-13T10:00:00.000Z' },
+  ]);
+
+  assert.deepEqual(
+    normalized.map((item) => [item.date, item.totalValue]),
+    [
+      ['2026-09-13', 900],
+      ['2026-09-14', 1200],
+    ],
+  );
+});
+
+test('history chart domain pads a narrow value range so daily movement remains visible', () => {
+  assert.deepEqual(
+    calcHistoryChartDomain([
+      history('2026-09-14', 160_435_017),
+      history('2026-09-15', 160_235_308),
+    ]),
+    [160_155_090.4915, 160_515_234.5085],
   );
 });

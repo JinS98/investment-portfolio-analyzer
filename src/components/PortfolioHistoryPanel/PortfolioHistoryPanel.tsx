@@ -9,7 +9,11 @@ import {
   YAxis,
 } from 'recharts';
 import type { PortfolioHistory } from '../../types';
-import { calcHistorySummary, selectHistoryRange } from '../../utils/historyAnalysis';
+import {
+  calcHistoryChartDomain,
+  calcHistorySummary,
+  selectHistoryRange,
+} from '../../utils/historyAnalysis';
 import type { HistoryRange } from '../../utils/historyAnalysis';
 import styles from './PortfolioHistoryPanel.module.scss';
 
@@ -28,16 +32,8 @@ export function PortfolioHistoryPanel({ history }: PortfolioHistoryPanelProps) {
   const [range, setRange] = useState<HistoryRange>('1M');
   const data = useMemo(() => selectHistoryRange(history, range), [history, range]);
   const summary = useMemo(() => calcHistorySummary(data), [data]);
-  const chartDomain = useMemo<[number, number] | undefined>(() => {
-    if (!data.length) return undefined;
-    const values = data.map((item) => item.totalValue);
-    const minimum = Math.min(...values);
-    const maximum = Math.max(...values);
-    const range = maximum - minimum;
-    const padding = range > 0 ? Math.max(range * 0.25, maximum * 0.0005) : maximum * 0.005;
-
-    return [Math.max(0, minimum - padding), maximum + padding];
-  }, [data]);
+  const chartDomain = useMemo(() => calcHistoryChartDomain(data), [data]);
+  const latestSavedAt = data.at(-1)?.savedAt;
 
   return (
     <section className={styles.section} aria-labelledby="saved-history-title">
@@ -45,6 +41,11 @@ export function PortfolioHistoryPanel({ history }: PortfolioHistoryPanelProps) {
         <div>
           <h2 id="saved-history-title">실제 평가금액 이력</h2>
           <p>새로고침 시 저장된 일별 평가금액을 기준으로 표시합니다.</p>
+          {latestSavedAt && (
+            <small className={styles.latestSavedAt}>
+              최근 저장 {new Date(latestSavedAt).toLocaleString('ko-KR')}
+            </small>
+          )}
         </div>
         <div className={styles.rangeButtons} role="group" aria-label="이력 조회 기간">
           {ranges.map((item) => (
@@ -119,7 +120,19 @@ export function PortfolioHistoryPanel({ history }: PortfolioHistoryPanelProps) {
                   />
                   <Tooltip
                     labelFormatter={(date) => `${date}`}
-                    formatter={(value) => [money(Number(value)), '평가금액']}
+                    formatter={(value, name) => {
+                      const numericValue = Number(value);
+                      if (name === 'totalProfitRate') {
+                        return [
+                          `${numericValue >= 0 ? '+' : ''}${numericValue.toFixed(2)}%`,
+                          '수익률',
+                        ];
+                      }
+                      return [
+                        money(numericValue),
+                        name === 'totalProfitAmount' ? '평가손익' : '평가금액',
+                      ];
+                    }}
                   />
                   <Line
                     type="monotone"
@@ -129,6 +142,8 @@ export function PortfolioHistoryPanel({ history }: PortfolioHistoryPanelProps) {
                     dot={false}
                     activeDot={{ r: 4 }}
                   />
+                  <Line type="monotone" dataKey="totalProfitAmount" hide />
+                  <Line type="monotone" dataKey="totalProfitRate" hide />
                 </LineChart>
               </ResponsiveContainer>
             </div>
