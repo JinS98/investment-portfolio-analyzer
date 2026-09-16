@@ -39,3 +39,15 @@ export interface ExchangeRate {
   validFrom: string;
   validUntil: string;
 }
+
+/** A USD/KRW daily reference rate resolved for a portfolio transaction date. */
+export interface HistoricalExchangeRate {
+  baseCurrency: 'USD';
+  quoteCurrency: 'KRW';
+  /** The calendar date requested by the user. */
+  requestedDate: string;
+  /** The business date that supplied the rate. Can precede requestedDate on holidays. */
+  resolvedDate: string;
+  rate: number;
+  source: string;
+}

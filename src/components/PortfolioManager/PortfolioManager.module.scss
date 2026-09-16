@@ -146,6 +146,30 @@
     font-size: 0.78rem;
   }
 }
+.performanceGuide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm $spacing-md;
+  margin: -$spacing-md 0 $spacing-lg;
+  color: $color-text-muted;
+  font-size: 0.8rem;
+
+  span {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f2f4f6;
+  }
+
+  strong {
+    font-weight: 700;
+  }
+
+  small {
+    flex-basis: 100%;
+    color: $color-text-muted;
+  }
+}
 button {
   min-height: 44px;
   padding: 10px 14px;
@@ -176,6 +200,7 @@ button {
 
 :global(:root[data-theme='dark']) .portfolioIntro span,
 :global(:root[data-theme='dark']) .combinedSummary > span,
+:global(:root[data-theme='dark']) .performanceGuide span,
 :global(:root[data-theme='dark']) .marketSummary > span {
   background: #252b37;
   color: #aeb8c7;

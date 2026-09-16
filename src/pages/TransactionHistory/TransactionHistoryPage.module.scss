@@ -84,6 +84,24 @@
   }
 }
 
+.realizedBreakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+
+  span {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f2f4f6;
+    color: $color-text-muted;
+    font-size: 0.8rem;
+  }
+
+  b {
+    font-weight: 700;
+  }
+}
+
 .positive {
   color: $color-success;
 }
@@ -95,6 +113,10 @@
 :global(:root[data-theme='dark']) .realizedSummary {
   background: #171b24;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+:global(:root[data-theme='dark']) .realizedBreakdown span {
+  background: #252b37;
 }
 
 :global(:root[data-theme='dark']) .tabs button {

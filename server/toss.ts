@@ -3,6 +3,50 @@ import { createStockSearch } from './stockSearch.ts';
 import type { StockSearchItem } from '../src/types/market.ts';
 
 const BASE = 'https://openapi.tossinvest.com';
+const HISTORICAL_FX_BASE = 'https://api.frankfurter.dev/v2';
+const historicalFxCache = new Map<string, { resolvedDate: string; rate: number }>();
+
+function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function previousDate(value: string): string {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+async function historicalUsdKrwRate(requestedDate: string) {
+  const cached = historicalFxCache.get(requestedDate);
+  if (cached) return cached;
+
+  let candidate = requestedDate;
+  for (let offset = 0; offset <= 7; offset += 1) {
+    const response = await fetch(
+      `${HISTORICAL_FX_BASE}/rate/usd/krw?${new URLSearchParams({ date: candidate })}`,
+      { signal: AbortSignal.timeout(10_000) },
+    );
+    if (response.ok) {
+      const data = (await response.json()) as { date?: unknown; rate?: unknown };
+      const rate = Number(data.rate);
+      const resolvedDate = typeof data.date === 'string' ? data.date : candidate;
+      if (isCalendarDate(resolvedDate) && Number.isFinite(rate) && rate > 0) {
+        const result = { resolvedDate, rate };
+        historicalFxCache.set(requestedDate, result);
+        return result;
+      }
+      throw new Error('과거 환율 데이터 형식이 올바르지 않습니다.');
+    }
+    if (response.status !== 404 && response.status !== 422) {
+      throw new Error(`과거 환율 조회에 실패했습니다. (${response.status})`);
+    }
+    candidate = previousDate(candidate);
+  }
+  throw new Error('거래일 기준 7일 이내의 환율을 찾지 못했습니다.');
+}
+
 export function tossPlugin(env: Record<string, string>): Plugin {
   let token: { value: string; expires: number } | undefined;
   let pending: Promise<string> | undefined;
@@ -78,7 +122,14 @@ export function tossPlugin(env: Record<string, string>): Plugin {
     const endpoint = url.pathname.slice('/api/toss/'.length);
     if (
       req.method !== 'GET' ||
-      !['search', 'stocks', 'prices', 'candles', 'exchange-rate'].includes(endpoint)
+      ![
+        'search',
+        'stocks',
+        'prices',
+        'candles',
+        'exchange-rate',
+        'historical-exchange-rate',
+      ].includes(endpoint)
     ) {
       res.statusCode = 404;
       res.end('{}');
@@ -98,6 +149,28 @@ export function tossPlugin(env: Record<string, string>): Plugin {
           return;
         }
         res.end(JSON.stringify({ result: await searchStocks(query) }));
+        return;
+      }
+      if (endpoint === 'historical-exchange-rate') {
+        const requestedDate = url.searchParams.get('date') ?? '';
+        if (!isCalendarDate(requestedDate)) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ message: '거래일은 YYYY-MM-DD 형식으로 입력해 주세요.' }));
+          return;
+        }
+        const rate = await historicalUsdKrwRate(requestedDate);
+        res.end(
+          JSON.stringify({
+            result: {
+              baseCurrency: 'USD',
+              quoteCurrency: 'KRW',
+              requestedDate,
+              resolvedDate: rate.resolvedDate,
+              rate: rate.rate,
+              source: 'Frankfurter daily reference rate',
+            },
+          }),
+        );
         return;
       }
       const params = new URLSearchParams();

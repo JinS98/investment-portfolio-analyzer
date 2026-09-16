@@ -3,8 +3,9 @@ import { TransactionModal } from '../TransactionModal/TransactionModal';
 import { fetchCurrentPrices } from '../../services/tossApi';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
-import type { Holding, PortfolioType } from '../../types';
+import type { Holding, HoldingHistory, PortfolioType } from '../../types';
 import { formatRate } from '../../utils/calculator';
+import { calculatePortfolioFxPerformance } from '../../utils/portfolioFxPerformance';
 import styles from './PortfolioManager.module.scss';
 
 const money = (value: number, market: 'KR' | 'US') => {
@@ -16,6 +17,7 @@ const money = (value: number, market: 'KR' | 'US') => {
 };
 
 const EMPTY_HOLDINGS: Holding[] = [];
+const EMPTY_HISTORIES: HoldingHistory[] = [];
 
 interface StockAvatarProps {
   name?: string;
@@ -119,6 +121,9 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const holdings = activePortfolio
     ? (portfolioLedgers[activePortfolio.id]?.holdings ?? EMPTY_HOLDINGS)
     : selectedHoldings;
+  const histories = activePortfolio
+    ? (portfolioLedgers[activePortfolio.id]?.histories ?? EMPTY_HISTORIES)
+    : EMPTY_HISTORIES;
 
   const grouped = useMemo(
     () =>
@@ -130,45 +135,20 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
         .filter((group) => group.holdings.length),
     [holdings],
   );
-  const combinedSummary = useMemo(() => {
-    const hasMissingPrice = holdings.some((holding) => prices[holding.ticker] === undefined);
-    const hasUsHolding = holdings.some((holding) => holding.market === 'US');
-    const exchangeRateValue = exchangeRate?.rate;
-
-    if (hasMissingPrice || (hasUsHolding && !exchangeRateValue)) {
-      return {
-        evaluatedValue: null,
-        unrealizedPnL: null,
-        profitRate: null,
-      };
-    }
-
-    const totalInvestment = holdings.reduce(
-      (sum, holding) =>
-        sum + holding.investedAmount * (holding.market === 'US' ? (exchangeRateValue ?? 1) : 1),
-      0,
-    );
-    const totalEvaluated = holdings.reduce(
-      (sum, holding) =>
-        sum +
-        (prices[holding.ticker] ?? holding.averagePrice) *
-          holding.quantity *
-          (holding.market === 'US' ? (exchangeRateValue ?? 1) : 1),
-      0,
-    );
-    const unrealizedPnL = totalEvaluated - totalInvestment;
-    return {
-      evaluatedValue: totalEvaluated,
-      unrealizedPnL,
-      profitRate: totalInvestment > 0 ? (unrealizedPnL / totalInvestment) * 100 : 0,
-    };
-  }, [exchangeRate?.rate, holdings, prices]);
-  const isSummaryCurrencyAvailable = summaryCurrency === 'KRW' || Boolean(exchangeRate?.rate);
-  const summaryMoney = (value: number) =>
-    money(
-      summaryCurrency === 'USD' ? value / exchangeRate!.rate : value,
-      summaryCurrency === 'USD' ? 'US' : 'KR',
-    );
+  const fxPerformance = useMemo(
+    () => calculatePortfolioFxPerformance(holdings, histories, prices, exchangeRate?.rate ?? null),
+    [exchangeRate?.rate, histories, holdings, prices],
+  );
+  const combinedSummary = summaryCurrency === 'USD' ? fxPerformance.usd : fxPerformance.krw;
+  const isSummaryCurrencyAvailable = combinedSummary !== null;
+  const summaryUnavailableMessage =
+    summaryCurrency === 'KRW' &&
+    histories.some((history) => history.market === 'US' && !history.exchangeRate)
+      ? '거래일 환율 보정 중'
+      : summaryCurrency === 'USD'
+        ? '환율 미조회'
+        : '시세 미조회';
+  const summaryMoney = (value: number) => money(value, summaryCurrency === 'USD' ? 'US' : 'KR');
 
   useEffect(() => {
     localStorage.setItem(summaryCurrencyStorageKey, summaryCurrency);
@@ -288,43 +268,73 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
         <span>
           현재 계좌 금액 ({summaryCurrency === 'USD' ? '$' : '원'})
           <strong className={styles.accountValue}>
-            {!isSummaryCurrencyAvailable || combinedSummary.evaluatedValue === null
-              ? summaryCurrency === 'USD'
-                ? '환율 미조회'
-                : '시세 미조회'
-              : summaryMoney(combinedSummary.evaluatedValue)}
+            {!isSummaryCurrencyAvailable
+              ? summaryUnavailableMessage
+              : summaryMoney(combinedSummary.currentValue)}
           </strong>
         </span>
         <span>
           통합 평가손익 ({summaryCurrency === 'USD' ? '$' : '원'})
           <strong
             className={
-              combinedSummary.unrealizedPnL === null || combinedSummary.unrealizedPnL >= 0
+              combinedSummary === null || combinedSummary.profitAmount >= 0
                 ? styles.positive
                 : styles.negative
             }
           >
-            {!isSummaryCurrencyAvailable || combinedSummary.unrealizedPnL === null
-              ? summaryCurrency === 'USD'
-                ? '환율 미조회'
-                : '시세 미조회'
-              : summaryMoney(combinedSummary.unrealizedPnL)}
+            {!isSummaryCurrencyAvailable
+              ? summaryUnavailableMessage
+              : summaryMoney(combinedSummary.profitAmount)}
           </strong>
         </span>
         <span>
           통합 평가 수익률
           <strong
             className={
-              combinedSummary.profitRate === null || combinedSummary.profitRate >= 0
+              combinedSummary === null || combinedSummary.profitRate >= 0
                 ? styles.positive
                 : styles.negative
             }
           >
-            {combinedSummary.profitRate === null
-              ? '시세 미조회'
+            {combinedSummary === null
+              ? summaryUnavailableMessage
               : formatRate(combinedSummary.profitRate)}
           </strong>
         </span>
+      </div>
+
+      <div className={styles.performanceGuide} role="status">
+        {summaryCurrency === 'KRW' && fxPerformance.krw ? (
+          <>
+            <span>
+              주가 손익{' '}
+              <strong
+                className={
+                  fxPerformance.krw.stockProfitAmount >= 0 ? styles.positive : styles.negative
+                }
+              >
+                {money(fxPerformance.krw.stockProfitAmount, 'KR')}
+              </strong>
+            </span>
+            <span>
+              환차익{' '}
+              <strong
+                className={
+                  fxPerformance.krw.foreignExchangeProfitAmount >= 0
+                    ? styles.positive
+                    : styles.negative
+                }
+              >
+                {money(fxPerformance.krw.foreignExchangeProfitAmount, 'KR')}
+              </strong>
+            </span>
+            <small>평가손익에는 거래일 환율과 현재 환율의 차이를 반영합니다.</small>
+          </>
+        ) : summaryCurrency === 'USD' ? (
+          <small>달러 기준 성과에는 환율 변동을 포함하지 않습니다.</small>
+        ) : (
+          <small>거래일 환율을 확인한 뒤 원화 기준 성과를 계산합니다.</small>
+        )}
       </div>
 
       {ledgerError && (

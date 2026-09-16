@@ -1,6 +1,8 @@
 import type { PriceMap } from '../types';
 import { object, parseStocks, parseQuotes, parseCandles } from './marketParser';
 import type { ExchangeRate, StockSearchItem } from '../types/market';
+import type { HistoricalExchangeRate } from '../types/market';
+import { isCalendarDate, parseHistoricalExchangeRate } from '../utils/historicalExchangeRate';
 
 export async function searchStocks(query: string, signal: AbortSignal): Promise<StockSearchItem[]> {
   const response = await fetch('/api/toss/search?' + new URLSearchParams({ q: query }), { signal });
@@ -76,6 +78,27 @@ export async function fetchUsdKrwExchangeRate(): Promise<ExchangeRate> {
     validFrom: result.validFrom,
     validUntil: result.validUntil,
   };
+}
+
+export async function fetchHistoricalUsdKrwExchangeRate(
+  targetDate: string,
+): Promise<HistoricalExchangeRate> {
+  if (!isCalendarDate(targetDate)) throw new Error('거래일은 YYYY-MM-DD 형식으로 입력해 주세요.');
+  const response = await fetch(
+    '/api/toss/historical-exchange-rate?' + new URLSearchParams({ date: targetDate }),
+    { signal: AbortSignal.timeout(15_000) },
+  );
+  if (!response.headers.get('content-type')?.includes('application/json')) {
+    throw new Error('과거 환율 서버에 연결할 수 없습니다.');
+  }
+  const data = object(await response.json());
+  if (!response.ok) {
+    throw new Error(
+      typeof data.message === 'string' ? data.message : '과거 환율을 불러오지 못했습니다.',
+    );
+  }
+  if (!('result' in data)) throw new Error('과거 환율 응답이 올바르지 않습니다.');
+  return parseHistoricalExchangeRate(data.result);
 }
 export async function fetchCandlePage(ticker: string, count = 90, before?: string) {
   symbols([ticker]);

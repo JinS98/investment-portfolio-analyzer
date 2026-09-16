@@ -1,5 +1,13 @@
 import type { DailyCandle } from './market';
-export type { StockInfo, Quote, DailyCandle, CandlePage, Currency, ExchangeRate } from './market';
+export type {
+  StockInfo,
+  Quote,
+  DailyCandle,
+  CandlePage,
+  Currency,
+  ExchangeRate,
+  HistoricalExchangeRate,
+} from './market';
 export type {
   PortfolioType,
   MarketType,

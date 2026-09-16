@@ -54,6 +54,11 @@ export interface HoldingHistory {
   tax: number;
   realizedPnL: number;
   date: string;
+  /** USD 거래에 적용한 거래일 기준 USD/KRW 환율. 기존 거래에는 없을 수 있다. */
+  exchangeRate?: number;
+  /** 휴장일 보정 후 실제 환율을 적용한 영업일. */
+  exchangeRateDate?: string;
+  exchangeRateSource?: string;
   createdAt: number;
   updatedAt?: number;
   source?: HoldingHistorySource;

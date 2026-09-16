@@ -20,6 +20,7 @@ import { recalculatePortfolio } from '../utils/calculator';
 import { createLegacyImportHistory } from '../utils/legacyPortfolioMigration';
 import { db } from './firebase';
 import { loadPortfolioStocks } from './portfolioService';
+import { fetchHistoricalUsdKrwExchangeRate } from './tossApi';
 
 const REAL_PORTFOLIO_ID = 'real';
 const VIRTUAL_PORTFOLIO_ID = 'virtual';
@@ -118,6 +119,21 @@ const readHistory = (value: unknown, id: string): HoldingHistory => {
   if (source !== undefined && source !== 'MANUAL' && source !== 'LEGACY_IMPORT') {
     throw new Error('거래 이력.source 값이 올바르지 않습니다.');
   }
+  const exchangeRate = data.exchangeRate;
+  const exchangeRateDate = data.exchangeRateDate;
+  const exchangeRateSource = data.exchangeRateSource;
+  if (
+    exchangeRate !== undefined &&
+    (typeof exchangeRate !== 'number' || !Number.isFinite(exchangeRate) || exchangeRate <= 0)
+  ) {
+    throw new Error('거래 이력.exchangeRate 값이 올바르지 않습니다.');
+  }
+  if (exchangeRateDate !== undefined && typeof exchangeRateDate !== 'string') {
+    throw new Error('거래 이력.exchangeRateDate 값이 올바르지 않습니다.');
+  }
+  if (exchangeRateSource !== undefined && typeof exchangeRateSource !== 'string') {
+    throw new Error('거래 이력.exchangeRateSource 값이 올바르지 않습니다.');
+  }
   return {
     id,
     portfolioId: readString(data, 'portfolioId', '거래 이력'),
@@ -133,6 +149,9 @@ const readHistory = (value: unknown, id: string): HoldingHistory => {
     tax: readNumber(data, 'tax', '거래 이력'),
     realizedPnL: readNumber(data, 'realizedPnL', '거래 이력'),
     date: readString(data, 'date', '거래 이력'),
+    exchangeRate: exchangeRate as number | undefined,
+    exchangeRateDate: exchangeRateDate as string | undefined,
+    exchangeRateSource: exchangeRateSource as string | undefined,
     createdAt: readNumber(data, 'createdAt', '거래 이력'),
     updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : undefined,
     source: source as HoldingHistorySource | undefined,
@@ -156,6 +175,9 @@ const historyData = (history: HoldingHistory): DocumentData => ({
   tax: history.tax,
   realizedPnL: history.realizedPnL,
   date: history.date,
+  ...(history.exchangeRate ? { exchangeRate: history.exchangeRate } : {}),
+  ...(history.exchangeRateDate ? { exchangeRateDate: history.exchangeRateDate } : {}),
+  ...(history.exchangeRateSource ? { exchangeRateSource: history.exchangeRateSource } : {}),
   createdAt: history.createdAt,
   ...(history.updatedAt ? { updatedAt: history.updatedAt } : {}),
   ...(history.source ? { source: history.source } : {}),
@@ -320,19 +342,46 @@ export async function loadPortfolioWorkspace(userId: string): Promise<PortfolioL
   if (!realPortfolio) throw new Error('기본 REAL 포트폴리오를 만들지 못했습니다.');
   await migrateLegacyStocks(userId, realPortfolio);
   const portfolios = await loadPortfolios(userId);
-  return Promise.all(portfolios.map((portfolio) => loadPortfolioLedger(userId, portfolio)));
+  const ledgers = await Promise.all(
+    portfolios.map((portfolio) => loadPortfolioLedger(userId, portfolio)),
+  );
+  return Promise.all(
+    ledgers.map(async (ledger) => {
+      try {
+        return await backfillPortfolioHistoricalExchangeRates(userId, ledger);
+      } catch (error) {
+        console.warn('[portfolioLedger] historical exchange-rate backfill skipped:', error);
+        return ledger;
+      }
+    }),
+  );
 }
 
-const createHistory = (id: string, input: HoldingHistoryInput, now: number): HoldingHistory => ({
-  id,
-  ...input,
-  grossAmount: input.price * input.quantity,
-  fee: input.fee ?? 0,
-  tax: input.tax ?? 0,
-  realizedPnL: 0,
-  createdAt: now,
-  source: 'MANUAL',
-});
+const createHistory = async (
+  id: string,
+  input: HoldingHistoryInput,
+  now: number,
+): Promise<HoldingHistory> => {
+  const historicalRate =
+    input.market === 'US' ? await fetchHistoricalUsdKrwExchangeRate(input.date) : undefined;
+  return {
+    id,
+    ...input,
+    grossAmount: input.price * input.quantity,
+    fee: input.fee ?? 0,
+    tax: input.tax ?? 0,
+    realizedPnL: 0,
+    ...(historicalRate
+      ? {
+          exchangeRate: historicalRate.rate,
+          exchangeRateDate: historicalRate.resolvedDate,
+          exchangeRateSource: historicalRate.source,
+        }
+      : {}),
+    createdAt: now,
+    source: 'MANUAL',
+  };
+};
 
 const findPortfolio = async (userId: string, portfolioId: string): Promise<Portfolio> => {
   const snapshot = await getDoc(portfolioReference(userId, portfolioId));
@@ -349,10 +398,40 @@ export async function addPortfolioHoldingHistory(
     throw new Error('거래 이력의 포트폴리오 타입이 일치하지 않습니다.');
   const previous = await loadPortfolioLedger(userId, portfolio);
   const id = crypto.randomUUID();
-  return persistLedger(userId, portfolio, previous, [
-    ...previous.histories,
-    createHistory(id, input, Date.now()),
-  ]);
+  const history = await createHistory(id, input, Date.now());
+  return persistLedger(userId, portfolio, previous, [...previous.histories, history]);
+}
+
+/** Adds transaction-date USD/KRW rates to older US ledger rows in one batch. */
+export async function backfillPortfolioHistoricalExchangeRates(
+  userId: string,
+  ledger: PortfolioLedger,
+): Promise<PortfolioLedger> {
+  const missingRates = ledger.histories.filter(
+    (history) => history.market === 'US' && !history.exchangeRate,
+  );
+  if (!missingRates.length) return ledger;
+
+  const ratesByHistoryId = new Map<
+    string,
+    Awaited<ReturnType<typeof fetchHistoricalUsdKrwExchangeRate>>
+  >();
+  for (const history of missingRates) {
+    ratesByHistoryId.set(history.id, await fetchHistoricalUsdKrwExchangeRate(history.date));
+  }
+  const histories = ledger.histories.map((history) => {
+    const rate = ratesByHistoryId.get(history.id);
+    return rate
+      ? {
+          ...history,
+          exchangeRate: rate.rate,
+          exchangeRateDate: rate.resolvedDate,
+          exchangeRateSource: rate.source,
+          updatedAt: Date.now(),
+        }
+      : history;
+  });
+  return persistLedger(userId, ledger.portfolio, ledger, histories);
 }
 
 export async function deletePortfolioHoldingHistory(
