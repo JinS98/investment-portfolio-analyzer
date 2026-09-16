@@ -101,9 +101,7 @@ export function PortfolioAllocationChart({
               .map((stock) => (
                 <li key={stock.ticker}>
                   <span className={styles.dot} style={{ backgroundColor: stock.color }} />
-                  <span className={styles.name}>
-                    {stock.name} <small>({stock.ticker})</small>
-                  </span>
+                  <span className={styles.name}>{stock.name}</span>
                   <strong>{stock.weight.toFixed(2)}%</strong>
                   <span className={styles.value}>
                     {stock.value.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}원

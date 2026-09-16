@@ -180,12 +180,13 @@ export async function fetchMarketIndicatorPrices(
 export async function fetchMarketIndicatorCandles(
   symbol: MarketIndicatorSymbol,
   count = 30,
+  interval: '1d' | '1m' = '1d',
 ): Promise<MarketIndicatorCandle[]> {
   if (!Number.isInteger(count) || count < 2 || count > 200) {
     throw new Error('지수 차트 조회 개수는 2~200개여야 합니다.');
   }
   const result = object(
-    await request('indicator-candles', new URLSearchParams({ symbol, count: String(count) })),
+    await request('indicator-candles', new URLSearchParams({ symbol, count: String(count), interval })),
   );
   if (!Array.isArray(result.candles)) throw new Error('지수 차트 응답 형식이 올바르지 않습니다.');
   return result.candles.map((value): MarketIndicatorCandle => {
@@ -198,8 +199,8 @@ export async function fetchMarketIndicatorCandles(
   }).sort((left, right) => left.timestamp.localeCompare(right.timestamp));
 }
 
-export async function fetchUsMarketIndices(): Promise<MarketIndexData[]> {
-  const result = await request('us-indices', new URLSearchParams());
+export async function fetchUsMarketIndices(range: '1d' | '1mo' = '1mo'): Promise<MarketIndexData[]> {
+  const result = await request('us-indices', new URLSearchParams({ range }));
   if (!Array.isArray(result)) throw new Error('미국 지수 응답 형식이 올바르지 않습니다.');
   return result.map((value): MarketIndexData => {
     const item = object(value);

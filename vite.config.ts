@@ -4,5 +4,5 @@ import { tossPlugin } from './server/toss.ts';
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tossPlugin(loadEnv(mode, process.cwd(), 'TOSS_'))],
+  plugins: [react(), tossPlugin(loadEnv(mode, process.cwd(), ''))],
 }));

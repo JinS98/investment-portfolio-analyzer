@@ -115,6 +115,7 @@ function TransactionModalDialog({
   const [matches, setMatches] = useState<StockSearchItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<StockSearchItem[]>(() =>
     loadRecentStockSearches(),
@@ -358,7 +359,7 @@ function TransactionModalDialog({
                     key={`${holding.market}:${holding.ticker}`}
                     value={`${holding.market}:${holding.ticker}`}
                   >
-                    {holding.name ?? holding.ticker} ({holding.ticker}) ·{' '}
+                    {holding.name ?? holding.ticker} ·{' '}
                     {holding.quantity.toLocaleString('ko-KR')}주
                   </option>
                 ))}
@@ -370,6 +371,8 @@ function TransactionModalDialog({
                 종목 검색
                 <input
                   value={searchQuery}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
                   onChange={(event) => {
                     setSearchQuery(event.target.value);
                     setDraft((current) => ({
@@ -389,7 +392,7 @@ function TransactionModalDialog({
                   <small className={styles.searchHint}>일치하는 종목이 없습니다.</small>
                 )}
                 {isSearching && <small className={styles.searchHint}>종목 검색 중…</small>}
-                {!searchQuery.trim() && recentSearches.length > 0 && (
+                {isSearchFocused && !searchQuery.trim() && recentSearches.length > 0 && (
                   <ul className={styles.searchResults} aria-label="최근 검색 종목">
                     <li className={styles.searchResultsTitle}>최근 검색</li>
                     {recentSearches.map((item) => (
@@ -400,17 +403,12 @@ function TransactionModalDialog({
                           onClick={() => selectSearchResult(item)}
                         >
                           <strong>{item.name}</strong>
-                          <span>
-                            {item.symbol} ·{' '}
-                            {['KOSPI', 'KOSDAQ', 'KR_ETC'].includes(item.market) ? '국내' : '미국'}{' '}
-                            · {item.market}
-                          </span>
                         </button>
                       </li>
                     ))}
                   </ul>
                 )}
-                {!!matches.length && (
+                {isSearchFocused && !!matches.length && (
                   <ul className={styles.searchResults} role="listbox">
                     {matches.map((item) => (
                       <li key={`${item.market}-${item.symbol}`} role="option">
@@ -420,11 +418,6 @@ function TransactionModalDialog({
                           onClick={() => selectSearchResult(item)}
                         >
                           <strong>{item.name}</strong>
-                          <span>
-                            {item.symbol} ·{' '}
-                            {['KOSPI', 'KOSDAQ', 'KR_ETC'].includes(item.market) ? '국내' : '미국'}{' '}
-                            · {item.market}
-                          </span>
                         </button>
                       </li>
                     ))}
@@ -434,7 +427,7 @@ function TransactionModalDialog({
             </div>
           ) : (
             <p className={styles.selectedStockInfo}>
-              선택 종목: <strong>{draft.name || draft.ticker}</strong> ({draft.ticker}) ·{' '}
+              선택 종목: <strong>{draft.name || draft.ticker}</strong> ·{' '}
               {draft.market === 'KR' ? '국내 (KRW)' : '미국 (USD)'}
             </p>
           )}

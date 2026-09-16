@@ -496,7 +496,6 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
                               />
                               <span>
                                 <strong>{holding.name ?? holding.ticker}</strong>
-                                <small>{holding.ticker}</small>
                               </span>
                             </div>
                           </td>

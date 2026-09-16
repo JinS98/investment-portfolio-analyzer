@@ -119,7 +119,7 @@ const Dashboard = ({ view }: DashboardProps) => {
     .join('|');
   const stockLabel = (ticker: string) => {
     const stock = portfolio.find((item) => item.ticker === ticker);
-    return stock?.name ? `${stock.name} (${ticker})` : ticker;
+    return stock?.name ?? ticker;
   };
 
   const getPanelPosition = (id: PanelId) => {

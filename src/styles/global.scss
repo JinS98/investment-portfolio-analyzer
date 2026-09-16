@@ -63,6 +63,15 @@ a:active {
   outline-offset: 2px;
 }
 
+// Korean market convention: rising values are red and falling values are blue.
+[class*='positive'] {
+  color: $color-bull !important;
+}
+
+[class*='negative'] {
+  color: $color-bear !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -131,11 +140,11 @@ a:active {
 
 // Keep financial direction immediately recognisable on dark surfaces.
 :root[data-theme='dark'] [class*='positive'] {
-  color: #4ade80 !important;
+  color: #ff6b76 !important;
 }
 
 :root[data-theme='dark'] [class*='negative'] {
-  color: #fb7185 !important;
+  color: #60a5fa !important;
 }
 
 :root[data-theme='dark'] p,

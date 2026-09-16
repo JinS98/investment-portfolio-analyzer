@@ -172,7 +172,6 @@ export function TransactionHistory({
                     </td>
                     <td>
                       <strong>{history.name ?? history.ticker}</strong>
-                      <small>{history.ticker}</small>
                     </td>
                     <td>{money(history.price, history.market)}</td>
                     <td>{history.quantity.toLocaleString('ko-KR')}주</td>

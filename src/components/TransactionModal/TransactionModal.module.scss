@@ -203,6 +203,23 @@ select {
   font-weight: 700;
 }
 
+:global(:root[data-theme='dark']) .searchResults {
+  border-color: #3a4658;
+  background: #252d3a;
+
+  button {
+    color: #f2f4f6;
+  }
+
+  button:hover {
+    background: #334155;
+  }
+}
+
+:global(:root[data-theme='dark']) .searchResultsTitle {
+  color: #a9b5c6;
+}
+
 .searchHint {
   color: $color-text-muted;
   font-size: 0.75rem;

@@ -48,10 +48,14 @@ async function historicalUsdKrwRate(requestedDate: string) {
   throw new Error('거래일 기준 7일 이내의 환율을 찾지 못했습니다.');
 }
 
-async function usIndexData(symbol: 'NASDAQ' | 'SP500') {
+async function usIndexData(
+  symbol: 'NASDAQ' | 'SP500',
+  range: '1d' | '1mo' = '1mo',
+  interval: '5m' | '1d' = '1d',
+) {
   const yahooSymbol = symbol === 'NASDAQ' ? '^IXIC' : '^GSPC';
   const response = await fetch(
-    `${YAHOO_CHART_BASE}/${encodeURIComponent(yahooSymbol)}?range=1mo&interval=1d`,
+    `${YAHOO_CHART_BASE}/${encodeURIComponent(yahooSymbol)}?${new URLSearchParams({ range, interval })}`,
     { signal: AbortSignal.timeout(15_000) },
   );
   if (!response.ok) throw new Error(`미국 지수 조회에 실패했습니다. (${response.status})`);
@@ -301,7 +305,9 @@ export function tossPlugin(env: Record<string, string>): Plugin {
         return;
       }
       if (endpoint === 'us-indices') {
-        res.end(JSON.stringify({ result: await Promise.all([usIndexData('NASDAQ'), usIndexData('SP500')]) }));
+        const range = url.searchParams.get('range') === '1d' ? '1d' : '1mo';
+        const interval = range === '1d' ? '5m' : '1d';
+        res.end(JSON.stringify({ result: await Promise.all([usIndexData('NASDAQ', range, interval), usIndexData('SP500', range, interval)]) }));
         return;
       }
       const params = new URLSearchParams();
@@ -349,10 +355,11 @@ export function tossPlugin(env: Record<string, string>): Plugin {
       } else if (endpoint === 'indicator-candles') {
         const symbol = url.searchParams.get('symbol') ?? '';
         const count = Number(url.searchParams.get('count') ?? 30);
+        const interval = url.searchParams.get('interval') === '1m' ? '1m' : '1d';
         if (!['KOSPI', 'KOSDAQ'].includes(symbol) || !Number.isInteger(count) || count < 2 || count > 200) {
           throw new Error('지원하는 지수와 조회 개수를 확인해 주세요.');
         }
-        params.set('interval', '1d');
+        params.set('interval', interval);
         params.set('count', String(count));
         upstreamEndpoint = `market-indicators/${symbol}/candles`;
       } else {

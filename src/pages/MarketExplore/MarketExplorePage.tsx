@@ -31,6 +31,7 @@ import styles from './MarketExplorePage.module.scss';
 
 type MarketFilter = 'ALL' | 'KR' | 'US';
 type StockDetail = { quote: Quote | null; candles: DailyCandle[]; insights: StockInsights | null };
+type IndicatorCardChart = { candles: MarketIndicatorCandle[]; previousClose: number | null };
 const EMPTY_HOLDINGS: Holding[] = [];
 
 const isKoreanMarket = (market: string) => ['KOSPI', 'KOSDAQ', 'KR_ETC'].includes(market);
@@ -127,6 +128,48 @@ function MiniLineChart({
   );
 }
 
+function IndicatorSparkline({
+  candles,
+  positive,
+  previousClose,
+}: {
+  candles: MarketIndicatorCandle[];
+  positive: boolean;
+  previousClose: number | null;
+}) {
+  const chart = useMemo(() => {
+    if (candles.length < 2) return '';
+    const values = candles.map((candle) => candle.closePrice);
+    const valuesWithBaseline = previousClose === null ? values : [...values, previousClose];
+    const minimum = Math.min(...valuesWithBaseline);
+    const range = Math.max(Math.max(...valuesWithBaseline) - minimum, 0.0001);
+    const points = values
+      .map((value, index) => {
+        const x = (index / (values.length - 1)) * 100;
+        const y = 46 - ((value - minimum) / range) * 42;
+        return `${x},${y}`;
+      })
+      .join(' ');
+    return {
+      points,
+      baselineY: previousClose === null ? null : 46 - ((previousClose - minimum) / range) * 42,
+    };
+  }, [candles, previousClose]);
+
+  if (!chart) return <span className={styles.sparklinePlaceholder} aria-hidden="true" />;
+  return (
+    <svg
+      className={positive ? styles.positiveSparkline : styles.negativeSparkline}
+      viewBox="0 0 100 48"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {chart.baselineY !== null ? <line className={styles.previousCloseLine} x1="0" x2="100" y1={chart.baselineY} y2={chart.baselineY} /> : null}
+      <polyline points={chart.points} />
+    </svg>
+  );
+}
+
 function StockAvatar({ name, symbol }: Pick<MarketExploreStock, 'name' | 'symbol'>) {
   const [hasImageError, setHasImageError] = useState(false);
   const label = name.trim().charAt(0) || symbol.charAt(0);
@@ -143,6 +186,9 @@ export function MarketExplorePage() {
   usePortfolioSync();
   const [overview, setOverview] = useState<MarketExploreStock[]>([]);
   const [indicators, setIndicators] = useState<MarketIndexData[]>([]);
+  const [intradayIndicators, setIntradayIndicators] = useState<
+    Partial<Record<MarketIndexSymbol, IndicatorCardChart>>
+  >({});
   const [selectedIndicator, setSelectedIndicator] = useState<MarketIndexSymbol>('KOSPI');
   const [indicatorCandles, setIndicatorCandles] = useState<MarketIndicatorCandle[]>([]);
   const [isIndicatorDialogOpen, setIsIndicatorDialogOpen] = useState(false);
@@ -214,6 +260,52 @@ export function MarketExplorePage() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+    const loadKoreanSparkline = async (symbol: 'KOSPI' | 'KOSDAQ') => {
+      const dailyCandles = await fetchMarketIndicatorCandles(symbol, 30, '1d');
+      try {
+        const intradayCandles = await fetchMarketIndicatorCandles(symbol, 200, '1m');
+        if (intradayCandles.length >= 2) {
+          return { candles: intradayCandles, previousClose: dailyCandles.at(-2)?.closePrice ?? null };
+        }
+      } catch {
+        // Fall through to daily candles when intraday data is unavailable.
+      }
+      return { candles: dailyCandles, previousClose: dailyCandles.at(-2)?.closePrice ?? null };
+    };
+    void Promise.allSettled([
+      loadKoreanSparkline('KOSPI'),
+      loadKoreanSparkline('KOSDAQ'),
+      fetchUsMarketIndices('1d').catch(() => fetchUsMarketIndices()),
+    ]).then((results) => {
+      if (!mounted) return;
+      const [kospi, kosdaq, us] = results;
+      const usIndicators = us.status === 'fulfilled' ? us.value : [];
+      const usChart = (symbol: 'NASDAQ' | 'SP500'): IndicatorCardChart => {
+        const indicator = usIndicators.find((item) => item.symbol === symbol);
+        const changeRate = indicator?.changeRate;
+        return {
+          candles: indicator?.candles ?? [],
+          previousClose:
+            indicator && changeRate !== null && changeRate !== undefined && changeRate > -1
+              ? indicator.price / (1 + changeRate)
+              : null,
+        };
+      };
+      setIntradayIndicators({
+        KOSPI: kospi.status === 'fulfilled' ? kospi.value : { candles: [], previousClose: null },
+        KOSDAQ: kosdaq.status === 'fulfilled' ? kosdaq.value : { candles: [], previousClose: null },
+        NASDAQ: usChart('NASDAQ'),
+        SP500: usChart('SP500'),
+      });
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isIndicatorDialogOpen) return;
     const cached = candleCache.current.get(selectedIndicator);
     let mounted = true;
     const request = cached
@@ -235,7 +327,7 @@ export function MarketExplorePage() {
     return () => {
       mounted = false;
     };
-  }, [selectedIndicator]);
+  }, [isIndicatorDialogOpen, selectedIndicator]);
 
   useEffect(() => {
     if (!isIndicatorDialogOpen) return;
@@ -418,7 +510,18 @@ export function MarketExplorePage() {
                           ? '나스닥'
                           : 'S&P 500'}
                   </span>
-                  <strong>{indicator ? `${indicator.price.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}pt` : '-'}</strong>
+                  <span className={styles.indicatorValue}>
+                    <strong>
+                      {indicator
+                        ? `${indicator.price.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}pt`
+                        : '-'}
+                    </strong>
+                    <IndicatorSparkline
+                      candles={intradayIndicators[symbol]?.candles ?? []}
+                      positive={(indicator?.changeRate ?? 0) >= 0}
+                      previousClose={intradayIndicators[symbol]?.previousClose ?? null}
+                    />
+                  </span>
                 </button>
               );
             })}
@@ -527,9 +630,6 @@ export function MarketExplorePage() {
                   <StockAvatar name={stock.name} symbol={stock.symbol} />
                   <span className={styles.stockName}>
                     <strong>{stock.name}</strong>
-                    <small>
-                      {stock.symbol} · {isKoreanMarket(stock.market) ? '국내' : '미국'} · {stock.market}
-                    </small>
                   </span>
                   <span className={styles.stockPrice}>{money(stock.price, stock.currency)}</span>
                   <span
