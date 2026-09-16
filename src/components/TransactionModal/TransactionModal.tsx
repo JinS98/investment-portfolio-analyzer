@@ -131,7 +131,7 @@ function TransactionModalDialog({
   }, [isOpen, isSaving, onClose]);
 
   useEffect(() => {
-    if (!isOpen || type !== 'BUY' || preset?.ticker || !searchQuery.trim()) {
+    if (!isOpen || type !== 'BUY' || preset?.ticker || draft.ticker || !searchQuery.trim()) {
       return;
     }
     const controller = new AbortController();
@@ -157,7 +157,7 @@ function TransactionModalDialog({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [isOpen, preset?.ticker, searchQuery, type]);
+  }, [draft.ticker, isOpen, preset?.ticker, searchQuery, type]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -388,7 +388,7 @@ function TransactionModalDialog({
                   disabled={isSaving}
                   required
                 />
-                {!isSearching && !matches.length && searchQuery.trim() && hasSearched && (
+                {!draft.ticker && !isSearching && !matches.length && searchQuery.trim() && hasSearched && (
                   <small className={styles.searchHint}>일치하는 종목이 없습니다.</small>
                 )}
                 {isSearching && <small className={styles.searchHint}>종목 검색 중…</small>}
