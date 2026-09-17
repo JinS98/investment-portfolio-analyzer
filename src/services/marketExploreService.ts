@@ -5,6 +5,7 @@ const MARKET_OVERVIEW_TTL = 5 * 60 * 1000;
 
 export interface MarketExploreStock {
   rank: number;
+  overallRank: number | null;
   symbol: string;
   name: string;
   market: string;
@@ -12,6 +13,25 @@ export interface MarketExploreStock {
   price: number | null;
   changeRate: number | null;
   tradingAmount: number | null;
+}
+
+/**
+ * Combines the country-specific rankings into one KRW-comparable ranking.
+ * The original currency and amount remain on each item for display.
+ */
+export function rankMarketExploreStocks(
+  stocks: MarketExploreStock[],
+  usdKrwRate: number,
+): MarketExploreStock[] {
+  const tradingAmountInKrw = (stock: MarketExploreStock) => {
+    if (stock.tradingAmount === null) return -1;
+    return stock.currency === 'USD' ? stock.tradingAmount * usdKrwRate : stock.tradingAmount;
+  };
+
+  return stocks
+    .slice()
+    .sort((left, right) => tradingAmountInKrw(right) - tradingAmountInKrw(left))
+    .map((stock, index) => ({ ...stock, overallRank: index + 1 }));
 }
 
 const cachedOverviews = new Map<RankingMarketCountry, { expiresAt: number; stocks: MarketExploreStock[] }>();
@@ -35,6 +55,7 @@ export async function fetchMarketExploreOverview(
         if (!stock) return [];
         return [{
           rank: ranking.rank,
+          overallRank: null,
           symbol: ranking.symbol,
           name: stock.name,
           market: stock.market,

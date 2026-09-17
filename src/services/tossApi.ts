@@ -21,8 +21,10 @@ const stockSearchCache = new Map<string, { expiresAt: number; items: StockSearch
 const pendingStockSearches = new Map<string, Promise<StockSearchItem[]>>();
 const quoteRequestCache = createExpiringRequestCache<PriceMap>(50);
 const exchangeRateRequestCache = createExpiringRequestCache<ExchangeRate>(1);
+const indicatorCandleRequestCache = createExpiringRequestCache<MarketIndicatorCandle[]>(20);
 const QUOTE_CACHE_TTL = 15_000;
 const EXCHANGE_RATE_CACHE_TTL = 30_000;
+const INDICATOR_CANDLE_CACHE_TTL = 30_000;
 
 const normalizeSearchQuery = (query: string) => query.normalize('NFKC').trim().toLowerCase();
 
@@ -185,18 +187,26 @@ export async function fetchMarketIndicatorCandles(
   if (!Number.isInteger(count) || count < 2 || count > 200) {
     throw new Error('지수 차트 조회 개수는 2~200개여야 합니다.');
   }
-  const result = object(
-    await request('indicator-candles', new URLSearchParams({ symbol, count: String(count), interval })),
+  const cacheKey = `${symbol}:${interval}:${count}`;
+  const candles = await indicatorCandleRequestCache.getOrLoad(
+    cacheKey,
+    INDICATOR_CANDLE_CACHE_TTL,
+    async () => {
+      const result = object(
+        await request('indicator-candles', new URLSearchParams({ symbol, count: String(count), interval })),
+      );
+      if (!Array.isArray(result.candles)) throw new Error('지수 차트 응답 형식이 올바르지 않습니다.');
+      return result.candles.map((value): MarketIndicatorCandle => {
+        const item = object(value);
+        const closePrice = Number(item.closePrice);
+        if (typeof item.timestamp !== 'string' || !Number.isFinite(closePrice)) {
+          throw new Error('지수 차트 응답에 올바르지 않은 값이 있습니다.');
+        }
+        return { timestamp: item.timestamp, closePrice };
+      }).sort((left, right) => left.timestamp.localeCompare(right.timestamp));
+    },
   );
-  if (!Array.isArray(result.candles)) throw new Error('지수 차트 응답 형식이 올바르지 않습니다.');
-  return result.candles.map((value): MarketIndicatorCandle => {
-    const item = object(value);
-    const closePrice = Number(item.closePrice);
-    if (typeof item.timestamp !== 'string' || !Number.isFinite(closePrice)) {
-      throw new Error('지수 차트 응답에 올바르지 않은 값이 있습니다.');
-    }
-    return { timestamp: item.timestamp, closePrice };
-  }).sort((left, right) => left.timestamp.localeCompare(right.timestamp));
+  return candles.map((candle) => ({ ...candle }));
 }
 
 export async function fetchUsMarketIndices(range: '1d' | '1mo' = '1mo'): Promise<MarketIndexData[]> {

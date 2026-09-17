@@ -8,10 +8,12 @@ import {
   fetchMarketIndicatorPrices,
   fetchUsMarketIndices,
   fetchQuotes,
+  fetchUsdKrwExchangeRate,
   searchStocks,
 } from '../../services/tossApi';
 import {
   fetchMarketExploreOverview,
+  rankMarketExploreStocks,
   type MarketExploreStock,
 } from '../../services/marketExploreService';
 import { fetchStockInsights, type StockInsights } from '../../services/marketInsightsApi';
@@ -25,7 +27,6 @@ import type {
   MarketIndexSymbol,
   MarketIndicatorCandle,
   Quote,
-  StockSearchItem,
 } from '../../types/market';
 import styles from './MarketExplorePage.module.scss';
 
@@ -49,6 +50,27 @@ const compactMoney = (value: number | null, currency: 'KRW' | 'USD') => {
   if (value >= 100_000_000) return `${(value / 100_000_000).toFixed(1)}억원`;
   return `${(value / 10_000).toFixed(0)}만원`;
 };
+
+async function loadSearchChangeRates(stocks: MarketExploreStock[]): Promise<Map<string, number>> {
+  const changeRates = new Map<string, number>();
+  const concurrentRequests = 4;
+  for (let index = 0; index < stocks.length; index += concurrentRequests) {
+    await Promise.all(
+      stocks.slice(index, index + concurrentRequests).map(async (stock) => {
+        if (stock.price === null) return;
+        try {
+          const previousClose = (await fetchCandlePage(stock.symbol, 2)).candles.at(-2)?.closePrice;
+          if (previousClose && previousClose > 0) {
+            changeRates.set(stock.symbol, stock.price / previousClose - 1);
+          }
+        } catch {
+          // A single unavailable candle must not hide the rest of the search results.
+        }
+      }),
+    );
+  }
+  return changeRates;
+}
 
 function MiniLineChart({
   candles,
@@ -194,7 +216,7 @@ export function MarketExplorePage() {
   const [isIndicatorDialogOpen, setIsIndicatorDialogOpen] = useState(false);
   const [filter, setFilter] = useState<MarketFilter>('ALL');
   const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<StockSearchItem[]>([]);
+  const [searchResults, setSearchResults] = useState<MarketExploreStock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState('');
@@ -229,12 +251,13 @@ export function MarketExplorePage() {
     void Promise.all([
       fetchMarketExploreOverview('KR'),
       fetchMarketExploreOverview('US'),
+      fetchUsdKrwExchangeRate(),
       fetchMarketIndicatorPrices(['KOSPI', 'KOSDAQ']),
       fetchUsMarketIndices(),
     ])
-      .then(([krStocks, usStocks, krIndicators, usIndicators]) => {
+      .then(([krStocks, usStocks, exchangeRate, krIndicators, usIndicators]) => {
         if (mounted) {
-          setOverview([...krStocks, ...usStocks]);
+          setOverview(rankMarketExploreStocks([...krStocks, ...usStocks], exchangeRate.rate));
           setIndicators([
             ...krIndicators.map((indicator) => ({ ...indicator, changeRate: null, candles: [] })),
             ...usIndicators,
@@ -368,7 +391,31 @@ export function MarketExplorePage() {
     const timer = window.setTimeout(() => {
       setIsSearching(true);
       searchStocks(normalizedQuery, controller.signal)
-        .then((stocks) => setSearchResults(stocks))
+        .then(async (stocks) => {
+          const quotes = await fetchQuotes(stocks.map((stock) => stock.symbol)).catch(() => []);
+          const quotesBySymbol = new Map(quotes.map((quote) => [quote.symbol, quote]));
+          const results = stocks.map<MarketExploreStock>((stock) => {
+            const quote = quotesBySymbol.get(stock.symbol);
+            return {
+              ...stock,
+              rank: 0,
+              overallRank: null,
+              currency: quote?.currency ?? (isKoreanMarket(stock.market) ? 'KRW' : 'USD'),
+              price: quote?.price ?? null,
+              changeRate: null,
+              tradingAmount: null,
+            };
+          });
+          if (!controller.signal.aborted) setSearchResults(results);
+          const changeRates = await loadSearchChangeRates(results);
+          return results.map((stock) => ({
+            ...stock,
+            changeRate: changeRates.get(stock.symbol) ?? null,
+          }));
+        })
+        .then((stocks) => {
+          if (!controller.signal.aborted) setSearchResults(stocks);
+        })
         .catch((cause: unknown) => {
           if (!controller.signal.aborted) {
             setError(
@@ -388,14 +435,7 @@ export function MarketExplorePage() {
 
   const visibleStocks = useMemo(() => {
     const source = query.trim()
-      ? searchResults.map<MarketExploreStock>((stock) => ({
-          ...stock,
-          rank: 0,
-          currency: isKoreanMarket(stock.market) ? 'KRW' : 'USD',
-          price: null,
-          changeRate: null,
-          tradingAmount: null,
-        }))
+      ? searchResults
       : overview;
     return source.filter((stock) => {
       if (filter === 'ALL') return true;
@@ -582,7 +622,7 @@ export function MarketExplorePage() {
             <p>
               {query.trim()
                 ? '검색 결과를 선택하면 다음 단계에서 종목 상세를 확인할 수 있습니다.'
-                : '토스 Open API의 시장 전체 실시간 거래대금 기준입니다. 5분 동안은 저장된 데이터를 바로 보여줍니다.'}
+                : '국내·해외 시장 전체 실시간 거래대금을 USD/KRW 환율로 원화 환산해 통합 순위로 보여줍니다. 5분 동안은 저장된 데이터를 바로 보여줍니다.'}
             </p>
           </div>
           <div className={styles.filters} role="tablist" aria-label="시장 구분">
@@ -624,8 +664,11 @@ export function MarketExplorePage() {
                   onClick={() => openStockDrawer(stock)}
                   aria-label={`${stock.name} ${stock.symbol} 상세 보기`}
                 >
-                  <span className={styles.stockRank} aria-label={`${stock.rank || '검색'} 순위`}>
-                    {stock.rank || '-'}
+                  <span
+                    className={styles.stockRank}
+                    aria-label={`${(filter === 'ALL' ? stock.overallRank : stock.rank) || '검색'} 순위`}
+                  >
+                    {(filter === 'ALL' ? stock.overallRank : stock.rank) || '-'}
                   </span>
                   <StockAvatar name={stock.name} symbol={stock.symbol} />
                   <span className={styles.stockName}>
@@ -642,7 +685,9 @@ export function MarketExplorePage() {
                     }
                   >
                     {stock.changeRate === null
-                      ? '시세 확인 필요'
+                      ? stock.price === null
+                        ? '시세 확인 필요'
+                        : '등락률 정보 없음'
                       : `${stock.changeRate > 0 ? '+' : ''}${(stock.changeRate * 100).toFixed(2)}%`}
                   </span>
                   <span className={styles.stockMeta}>
