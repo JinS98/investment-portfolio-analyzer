@@ -116,6 +116,7 @@ function TransactionModalDialog({
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isHoldingPickerOpen, setIsHoldingPickerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<StockSearchItem[]>(() =>
     loadRecentStockSearches(),
@@ -345,26 +346,43 @@ function TransactionModalDialog({
 
         <form onSubmit={(event) => void submit(event)}>
           {type === 'SELL' && !isPresetStock ? (
-            <label>
-              보유 종목
-              <select
-                value={selectedHolding ? `${selectedHolding.market}:${selectedHolding.ticker}` : ''}
-                onChange={(event) => selectHolding(event.target.value)}
+            <div className={styles.holdingPicker}>
+              <span>보유 종목</span>
+              <button
+                type="button"
+                className={styles.holdingPickerTrigger}
+                onClick={() => setIsHoldingPickerOpen((current) => !current)}
+                onBlur={() => window.setTimeout(() => setIsHoldingPickerOpen(false), 120)}
                 disabled={isSaving}
-                required
+                aria-expanded={isHoldingPickerOpen}
               >
-                <option value="">종목을 선택하세요</option>
-                {holdings.map((holding) => (
-                  <option
-                    key={`${holding.market}:${holding.ticker}`}
-                    value={`${holding.market}:${holding.ticker}`}
-                  >
-                    {holding.name ?? holding.ticker} ·{' '}
-                    {holding.quantity.toLocaleString('ko-KR')}주
-                  </option>
-                ))}
-              </select>
-            </label>
+                {selectedHolding
+                  ? `${selectedHolding.name ?? selectedHolding.ticker} · ${selectedHolding.quantity.toLocaleString('ko-KR')}주`
+                  : '종목을 선택하세요'}
+              </button>
+              {isHoldingPickerOpen ? (
+                <ul className={styles.holdingPickerOptions} role="listbox" aria-label="보유 종목 선택">
+                  {holdings.map((holding) => {
+                    const value = `${holding.market}:${holding.ticker}`;
+                    return (
+                      <li key={value} role="option" aria-selected={selectedHolding?.ticker === holding.ticker && selectedHolding.market === holding.market}>
+                        <button
+                          type="button"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => {
+                            selectHolding(value);
+                            setIsHoldingPickerOpen(false);
+                          }}
+                        >
+                          <strong>{holding.name ?? holding.ticker}</strong>
+                          <span>{holding.quantity.toLocaleString('ko-KR')}주 보유</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+            </div>
           ) : !isPresetStock ? (
             <div className={styles.stockFields}>
               <label className={styles.searchField}>

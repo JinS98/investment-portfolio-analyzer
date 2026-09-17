@@ -1,8 +1,10 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
+  setDoc,
   writeBatch,
   type DocumentData,
   type Firestore,
@@ -15,16 +17,31 @@ import type {
   Portfolio,
   PortfolioLedger,
   PortfolioSummary,
+  RecurringInvestmentRule,
+  RecurringInvestmentRuleInput,
+  RecurringInvestmentStatus,
 } from '../types';
 import { recalculatePortfolio } from '../utils/calculator';
 import { createLegacyImportHistory } from '../utils/legacyPortfolioMigration';
+import { getPendingRecurringInvestmentDatesUntil, koreaToday } from '../utils/recurringInvestment';
 import { db } from './firebase';
 import { loadPortfolioStocks } from './portfolioService';
-import { fetchHistoricalUsdKrwExchangeRate } from './tossApi';
+import { fetchClosePriceOnOrAfter, fetchHistoricalUsdKrwExchangeRate } from './tossApi';
 
 const REAL_PORTFOLIO_ID = 'real';
 const VIRTUAL_PORTFOLIO_ID = 'virtual';
 const LEGACY_MIGRATION_ID = 'legacy-stock-v1';
+const DEFAULT_FEE_RATE = 0.00015;
+const DEFAULT_KR_SELL_TAX_RATE = 0.002;
+
+const defaultTransactionCosts = (
+  grossAmount: number,
+  market: HoldingHistoryInput['market'],
+  type: HoldingHistoryInput['type'],
+) => ({
+  fee: grossAmount * DEFAULT_FEE_RATE,
+  tax: type === 'SELL' && market === 'KR' ? grossAmount * DEFAULT_KR_SELL_TAX_RATE : 0,
+});
 
 const getDatabase = (): Firestore => {
   if (!db) throw new Error('Firebase 설정을 확인해주세요.');
@@ -33,6 +50,9 @@ const getDatabase = (): Firestore => {
 
 const portfolioReference = (userId: string, portfolioId: string) =>
   doc(getDatabase(), 'users', userId, 'portfolios', portfolioId);
+
+const recurringInvestmentRulesReference = (userId: string, portfolioId: string) =>
+  collection(portfolioReference(userId, portfolioId), 'recurringInvestmentRules');
 
 const holdingDocumentId = (holding: Pick<Holding, 'market' | 'ticker'>): string =>
   `${holding.market}_${holding.ticker}`;
@@ -63,6 +83,99 @@ const readMarket = (data: Record<string, unknown>, label: string): 'KR' | 'US' =
   if (market !== 'KR' && market !== 'US')
     throw new Error(`${label}.market 값이 올바르지 않습니다.`);
   return market;
+};
+
+const isCalendarDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+const readRecurringInvestmentRule = (
+  value: unknown,
+  id: string,
+  portfolioId: string,
+): RecurringInvestmentRule => {
+  const data = asRecord(value, 'Recurring investment rule');
+  const portfolioType = readString(data, 'portfolioType', 'Recurring investment rule');
+  const frequency = readString(data, 'frequency', 'Recurring investment rule');
+  const status = readString(data, 'status', 'Recurring investment rule');
+  const startDate = readString(data, 'startDate', 'Recurring investment rule');
+  if (readString(data, 'portfolioId', 'Recurring investment rule') !== portfolioId) {
+    throw new Error('Recurring investment rule portfolio does not match.');
+  }
+  if (portfolioType !== 'REAL' && portfolioType !== 'VIRTUAL') {
+    throw new Error('Recurring investment rule portfolio type is invalid.');
+  }
+  if (frequency !== 'WEEKLY' && frequency !== 'MONTHLY') {
+    throw new Error('Recurring investment rule frequency is invalid.');
+  }
+  if (status !== 'ACTIVE' && status !== 'PAUSED') {
+    throw new Error('Recurring investment rule status is invalid.');
+  }
+  if (!isCalendarDate(startDate)) throw new Error('Recurring investment rule start date is invalid.');
+  const quantity = readNumber(data, 'quantity', 'Recurring investment rule');
+  if (quantity <= 0) throw new Error('Recurring investment rule quantity must be positive.');
+  const weeklyDay = data.weeklyDay;
+  const monthlyDay = data.monthlyDay;
+  if (frequency === 'WEEKLY') {
+    if (!Number.isInteger(weeklyDay) || (weeklyDay as number) < 1 || (weeklyDay as number) > 5) {
+      throw new Error('Recurring investment rule weekly day is invalid.');
+    }
+  } else if (!Number.isInteger(monthlyDay) || (monthlyDay as number) < 1 || (monthlyDay as number) > 31) {
+    throw new Error('Recurring investment rule monthly day is invalid.');
+  }
+  return {
+    id,
+    portfolioId,
+    portfolioType,
+    ticker: readString(data, 'ticker', 'Recurring investment rule'),
+    name: typeof data.name === 'string' ? data.name : undefined,
+    market: readMarket(data, 'Recurring investment rule'),
+    quantity,
+    frequency,
+    ...(frequency === 'WEEKLY' ? { weeklyDay: weeklyDay as number } : { monthlyDay: monthlyDay as number }),
+    startDate,
+    ...(typeof data.lastExecutedDate === 'string' ? { lastExecutedDate: data.lastExecutedDate } : {}),
+    status,
+    createdAt: readNumber(data, 'createdAt', 'Recurring investment rule'),
+    updatedAt: readNumber(data, 'updatedAt', 'Recurring investment rule'),
+  };
+};
+
+const recurringInvestmentRuleData = (rule: RecurringInvestmentRule): DocumentData => ({
+  portfolioId: rule.portfolioId,
+  portfolioType: rule.portfolioType,
+  ticker: rule.ticker,
+  ...(rule.name ? { name: rule.name } : {}),
+  market: rule.market,
+  quantity: rule.quantity,
+  frequency: rule.frequency,
+  ...(rule.frequency === 'WEEKLY' ? { weeklyDay: rule.weeklyDay } : { monthlyDay: rule.monthlyDay }),
+  startDate: rule.startDate,
+  ...(rule.lastExecutedDate ? { lastExecutedDate: rule.lastExecutedDate } : {}),
+  status: rule.status,
+  createdAt: rule.createdAt,
+  updatedAt: rule.updatedAt,
+});
+
+const createRecurringInvestmentRule = (
+  id: string,
+  input: RecurringInvestmentRuleInput,
+  now: number,
+): RecurringInvestmentRule => {
+  const rule = {
+    id,
+    portfolioId: input.portfolioId,
+    portfolioType: input.portfolioType,
+    ticker: input.ticker.trim().toUpperCase(),
+    ...(input.name?.trim() ? { name: input.name.trim() } : {}),
+    market: input.market,
+    quantity: input.quantity,
+    frequency: input.frequency,
+    ...(input.frequency === 'WEEKLY' ? { weeklyDay: input.weeklyDay } : { monthlyDay: input.monthlyDay }),
+    startDate: input.startDate,
+    status: input.status ?? 'ACTIVE',
+    createdAt: now,
+    updatedAt: now,
+  } satisfies RecurringInvestmentRule;
+  return readRecurringInvestmentRule(recurringInvestmentRuleData(rule), id, input.portfolioId);
 };
 
 const readPortfolio = (value: unknown, id: string, userId: string): Portfolio => {
@@ -116,7 +229,7 @@ const readHistory = (value: unknown, id: string): HoldingHistory => {
   }
   if (type !== 'BUY' && type !== 'SELL') throw new Error('거래 이력.type 값이 올바르지 않습니다.');
   const source = data.source;
-  if (source !== undefined && source !== 'MANUAL' && source !== 'LEGACY_IMPORT') {
+  if (source !== undefined && source !== 'MANUAL' && source !== 'LEGACY_IMPORT' && source !== 'RECURRING') {
     throw new Error('거래 이력.source 값이 올바르지 않습니다.');
   }
   const exchangeRate = data.exchangeRate;
@@ -155,6 +268,7 @@ const readHistory = (value: unknown, id: string): HoldingHistory => {
     createdAt: readNumber(data, 'createdAt', '거래 이력'),
     updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : undefined,
     source: source as HoldingHistorySource | undefined,
+    recurringRuleId: typeof data.recurringRuleId === 'string' ? data.recurringRuleId : undefined,
     legacyStockId: typeof data.legacyStockId === 'string' ? data.legacyStockId : undefined,
     importedAt: typeof data.importedAt === 'number' ? data.importedAt : undefined,
     legacyAddedAt: typeof data.legacyAddedAt === 'string' ? data.legacyAddedAt : undefined,
@@ -180,7 +294,8 @@ const historyData = (history: HoldingHistory): DocumentData => ({
   ...(history.exchangeRateSource ? { exchangeRateSource: history.exchangeRateSource } : {}),
   createdAt: history.createdAt,
   ...(history.updatedAt ? { updatedAt: history.updatedAt } : {}),
-  ...(history.source ? { source: history.source } : {}),
+    ...(history.source ? { source: history.source } : {}),
+    ...(history.recurringRuleId ? { recurringRuleId: history.recurringRuleId } : {}),
   ...(history.legacyStockId ? { legacyStockId: history.legacyStockId } : {}),
   ...(history.importedAt ? { importedAt: history.importedAt } : {}),
   ...(history.legacyAddedAt ? { legacyAddedAt: history.legacyAddedAt } : {}),
@@ -379,7 +494,8 @@ const createHistory = async (
         }
       : {}),
     createdAt: now,
-    source: 'MANUAL',
+    source: input.source ?? 'MANUAL',
+    ...(input.recurringRuleId ? { recurringRuleId: input.recurringRuleId } : {}),
   };
 };
 
@@ -388,6 +504,145 @@ const findPortfolio = async (userId: string, portfolioId: string): Promise<Portf
   if (!snapshot.exists()) throw new Error('포트폴리오를 찾을 수 없습니다.');
   return readPortfolio(snapshot.data(), snapshot.id, userId);
 };
+
+export async function loadRecurringInvestmentRules(
+  userId: string,
+  portfolioId: string,
+): Promise<RecurringInvestmentRule[]> {
+  await findPortfolio(userId, portfolioId);
+  const snapshot = await getDocs(recurringInvestmentRulesReference(userId, portfolioId));
+  return snapshot.docs
+    .map((item) => readRecurringInvestmentRule(item.data(), item.id, portfolioId))
+    .sort((left, right) => left.createdAt - right.createdAt || left.id.localeCompare(right.id));
+}
+
+export async function addRecurringInvestmentRule(
+  userId: string,
+  input: RecurringInvestmentRuleInput,
+): Promise<RecurringInvestmentRule> {
+  const portfolio = await findPortfolio(userId, input.portfolioId);
+  if (portfolio.type !== input.portfolioType) {
+    throw new Error('Recurring investment rule portfolio type does not match.');
+  }
+  const reference = doc(recurringInvestmentRulesReference(userId, portfolio.id));
+  const rule = createRecurringInvestmentRule(reference.id, input, Date.now());
+  await setDoc(reference, recurringInvestmentRuleData(rule));
+  return rule;
+}
+
+export async function updateRecurringInvestmentRule(
+  userId: string,
+  ruleId: string,
+  input: RecurringInvestmentRuleInput,
+): Promise<RecurringInvestmentRule> {
+  const portfolio = await findPortfolio(userId, input.portfolioId);
+  if (portfolio.type !== input.portfolioType) {
+    throw new Error('Recurring investment rule portfolio type does not match.');
+  }
+  const reference = doc(recurringInvestmentRulesReference(userId, portfolio.id), ruleId);
+  const previous = await getDoc(reference);
+  if (!previous.exists()) throw new Error('Recurring investment rule was not found.');
+  const existing = readRecurringInvestmentRule(previous.data(), previous.id, portfolio.id);
+  const next = createRecurringInvestmentRule(ruleId, input, existing.createdAt);
+  const rule = { ...next, updatedAt: Date.now() };
+  await setDoc(reference, recurringInvestmentRuleData(rule));
+  return rule;
+}
+
+export async function setRecurringInvestmentRuleStatus(
+  userId: string,
+  portfolioId: string,
+  ruleId: string,
+  status: RecurringInvestmentStatus,
+): Promise<RecurringInvestmentRule> {
+  await findPortfolio(userId, portfolioId);
+  const reference = doc(recurringInvestmentRulesReference(userId, portfolioId), ruleId);
+  const snapshot = await getDoc(reference);
+  if (!snapshot.exists()) throw new Error('Recurring investment rule was not found.');
+  const existing = readRecurringInvestmentRule(snapshot.data(), snapshot.id, portfolioId);
+  const rule = { ...existing, status, updatedAt: Date.now() };
+  await setDoc(reference, recurringInvestmentRuleData(rule));
+  return rule;
+}
+
+export async function deleteRecurringInvestmentRule(
+  userId: string,
+  portfolioId: string,
+  ruleId: string,
+): Promise<void> {
+  await findPortfolio(userId, portfolioId);
+  const reference = doc(recurringInvestmentRulesReference(userId, portfolioId), ruleId);
+  if (!(await getDoc(reference)).exists()) throw new Error('Recurring investment rule was not found.');
+  await deleteDoc(reference);
+}
+
+/** 도래한 적립식 규칙을 시작일부터 오늘까지 거래일 종가로 소급 반영한다. */
+export async function executeDueRecurringInvestmentRule(
+  userId: string,
+  ruleId: string,
+  portfolioId: string,
+): Promise<{ executedCount: number; dates: string[]; ledger?: PortfolioLedger; rule?: RecurringInvestmentRule }> {
+  const portfolio = await findPortfolio(userId, portfolioId);
+  const ruleReference = doc(recurringInvestmentRulesReference(userId, portfolioId), ruleId);
+  const ruleSnapshot = await getDoc(ruleReference);
+  if (!ruleSnapshot.exists()) throw new Error('Recurring investment rule was not found.');
+  const rule = readRecurringInvestmentRule(ruleSnapshot.data(), ruleSnapshot.id, portfolioId);
+  const dates = rule.status === 'ACTIVE' ? getPendingRecurringInvestmentDatesUntil(rule, koreaToday()) : [];
+
+  const ledger = await loadPortfolioLedger(userId, portfolio);
+  const existingDates = new Set(
+    ledger.histories
+      .filter((history) => history.recurringRuleId === rule.id)
+      .map((history) => history.date),
+  );
+  const histories = [] as HoldingHistory[];
+  const executedDates: string[] = [];
+  for (const date of dates) {
+    if (existingDates.has(date)) continue;
+    const candle = await fetchClosePriceOnOrAfter(rule.ticker, date);
+    if (!candle || candle.closePrice <= 0) throw new Error(`${rule.name ?? rule.ticker}의 ${date} 이후 종가를 찾지 못했습니다.`);
+    if (existingDates.has(candle.date)) continue;
+    const costs = defaultTransactionCosts(candle.closePrice * rule.quantity, rule.market, 'BUY');
+    histories.push(
+      await createHistory(
+        doc(collection(portfolioReference(userId, portfolioId), 'holdingHistories')).id,
+        {
+          portfolioId,
+          portfolioType: portfolio.type,
+          ticker: rule.ticker,
+          name: rule.name,
+          market: rule.market,
+          type: 'BUY',
+          price: candle.closePrice,
+          quantity: rule.quantity,
+          fee: costs.fee,
+          tax: costs.tax,
+          date: candle.date,
+          source: 'RECURRING',
+          recurringRuleId: rule.id,
+        },
+        Date.now(),
+      ),
+    );
+    executedDates.push(candle.date);
+  }
+  const correctedHistories = ledger.histories.map((history) => {
+    if (history.source !== 'RECURRING' || history.recurringRuleId !== rule.id || history.fee !== 0) return history;
+    const costs = defaultTransactionCosts(history.grossAmount, history.market, history.type);
+    return { ...history, fee: costs.fee, tax: history.tax || costs.tax, updatedAt: Date.now() };
+  });
+  const hasCostCorrection = correctedHistories.some((history, index) => history !== ledger.histories[index]);
+  const nextLedger = histories.length || hasCostCorrection
+    ? await persistLedger(userId, portfolio, ledger, [...correctedHistories, ...histories])
+    : undefined;
+  const nextRule = {
+    ...rule,
+    lastExecutedDate: executedDates.at(-1) ?? dates.at(-1) ?? rule.lastExecutedDate,
+    updatedAt: Date.now(),
+  };
+  if (dates.length) await setDoc(ruleReference, recurringInvestmentRuleData(nextRule));
+  return { executedCount: histories.length, dates, ledger: nextLedger, rule: nextRule };
+}
 
 export async function addPortfolioHoldingHistory(
   userId: string,

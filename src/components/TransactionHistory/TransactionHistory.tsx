@@ -169,6 +169,7 @@ export function TransactionHistory({
                       <span className={history.type === 'BUY' ? styles.buyBadge : styles.sellBadge}>
                         {history.type === 'BUY' ? '매수' : '매도'}
                       </span>
+                      {history.source === 'RECURRING' ? <small className={styles.recurringSource}>적립식 자동</small> : null}
                     </td>
                     <td>
                       <strong>{history.name ?? history.ticker}</strong>

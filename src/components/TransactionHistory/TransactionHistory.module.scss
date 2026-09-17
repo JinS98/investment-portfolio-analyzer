@@ -149,6 +149,14 @@ td small {
   color: $color-danger;
 }
 
+.recurringSource {
+  display: block;
+  margin-top: 4px;
+  color: $color-text-muted;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
 .positive {
   color: $color-success;
 }

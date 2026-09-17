@@ -317,3 +317,19 @@ export async function fetchClosePriceAt(
   const page = await fetchCandlePage(ticker, 10, end.toISOString());
   return page.candles.filter((candle) => candle.date <= targetDate).at(-1)?.closePrice ?? null;
 }
+
+/** 요청일이 휴장일이면 이후 최초 거래일의 종가와 실제 거래일을 반환한다. */
+export async function fetchClosePriceOnOrAfter(
+  ticker: string,
+  targetDate: string,
+): Promise<{ date: string; closePrice: number } | null> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate) || !Number.isFinite(Date.parse(targetDate)))
+    throw new Error('날짜는 YYYY-MM-DD 형식이어야 합니다.');
+  const end = new Date(targetDate + 'T00:00:00Z');
+  end.setUTCDate(end.getUTCDate() + 16);
+  const page = await fetchCandlePage(ticker, 30, end.toISOString());
+  const candidate = page.candles
+    .filter((candle) => candle.date >= targetDate)
+    .sort((left, right) => left.date.localeCompare(right.date))[0];
+  return candidate ? { date: candidate.date, closePrice: candidate.closePrice } : null;
+}

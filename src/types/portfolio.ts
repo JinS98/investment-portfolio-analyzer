@@ -8,7 +8,50 @@ export type MarketType = 'KR' | 'US';
 export type HoldingHistoryType = 'BUY' | 'SELL';
 
 /** 거래 이력이 생성된 경로. 기존 직접 입력형 보유 데이터 이관도 구분해 보관한다. */
-export type HoldingHistorySource = 'MANUAL' | 'LEGACY_IMPORT';
+export type HoldingHistorySource = 'MANUAL' | 'LEGACY_IMPORT' | 'RECURRING';
+
+/** 적립식 투자 규칙의 실행 주기. */
+export type RecurringInvestmentFrequency = 'WEEKLY' | 'MONTHLY';
+
+/** 규칙 실행 여부. */
+export type RecurringInvestmentStatus = 'ACTIVE' | 'PAUSED';
+
+/** 포트폴리오에 연결된 적립식 매수 규칙. */
+export interface RecurringInvestmentRule {
+  id: string;
+  portfolioId: string;
+  portfolioType: PortfolioType;
+  ticker: string;
+  name?: string;
+  market: MarketType;
+  quantity: number;
+  frequency: RecurringInvestmentFrequency;
+  /** WEEKLY일 때 1(월)~5(금). */
+  weeklyDay?: number;
+  /** MONTHLY일 때 1~31. 해당 일이 없는 달은 마지막 날, 주말·휴장일은 다음 거래일에 실행한다. */
+  monthlyDay?: number;
+  startDate: string;
+  /** 적립식 매수가 마지막으로 거래 이력에 반영된 날짜. */
+  lastExecutedDate?: string;
+  status: RecurringInvestmentStatus;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** 적립식 규칙을 생성할 때 받는 값. */
+export interface RecurringInvestmentRuleInput {
+  portfolioId: string;
+  portfolioType: PortfolioType;
+  ticker: string;
+  name?: string;
+  market: MarketType;
+  quantity: number;
+  frequency: RecurringInvestmentFrequency;
+  weeklyDay?: number;
+  monthlyDay?: number;
+  startDate: string;
+  status?: RecurringInvestmentStatus;
+}
 
 /**
  * 사용자별 포트폴리오 메타데이터.
@@ -62,6 +105,8 @@ export interface HoldingHistory {
   createdAt: number;
   updatedAt?: number;
   source?: HoldingHistorySource;
+  /** 적립식 투자 규칙에서 생성된 거래 이력의 원본 규칙 ID. */
+  recurringRuleId?: string;
   legacyStockId?: string;
   importedAt?: number;
   legacyAddedAt?: string;
@@ -80,6 +125,8 @@ export interface HoldingHistoryInput {
   fee?: number;
   tax?: number;
   date: string;
+  source?: HoldingHistorySource;
+  recurringRuleId?: string;
 }
 
 /** 거래 모달을 열 때 채워 넣을 선택 항목이다. 시장 탐색 화면에서도 같은 형태로 사용한다. */

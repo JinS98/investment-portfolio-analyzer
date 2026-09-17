@@ -64,6 +64,7 @@
   font-weight: 700;
   background: #edf5ff;
 }
+
 .portfolioTabs {
   display: flex;
   flex-wrap: wrap;
@@ -201,9 +202,19 @@ button {
 :global(:root[data-theme='dark']) .portfolioIntro span,
 :global(:root[data-theme='dark']) .combinedSummary > span,
 :global(:root[data-theme='dark']) .performanceGuide span,
-:global(:root[data-theme='dark']) .marketSummary > span {
+:global(:root[data-theme='dark']) .marketSummary > span,
+:global(:root[data-theme='dark']) .recurringRules {
   background: #252b37;
   color: #aeb8c7;
+}
+
+:global(:root[data-theme='dark']) .recurringRules li {
+  border-color: #3a4658;
+  color: #aeb8c7;
+}
+
+:global(:root[data-theme='dark']) .recurringRules strong {
+  color: #f2f4f6;
 }
 
 :global(:root[data-theme='dark']) .portfolioTabs button {
@@ -280,6 +291,250 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-sm;
+}
+
+.recurringRules {
+  margin-top: $spacing-lg;
+  padding: $spacing-md;
+  border-radius: 16px;
+  background: #f7f8fa;
+
+  ul {
+    display: grid;
+    gap: 0;
+    margin: $spacing-md 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) repeat(4, auto) auto;
+    align-items: center;
+    gap: $spacing-md;
+    padding: 12px 8px;
+    border-top: 1px solid rgba($color-border, 0.75);
+    border-radius: 10px;
+    color: $color-text-muted;
+    font-size: 0.84rem;
+
+    &:hover {
+      background: rgba($color-text, 0.025);
+    }
+  }
+
+  strong {
+    color: $color-text;
+    font-size: 0.92rem;
+  }
+}
+
+.recurringStock {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  min-width: 0;
+
+  .stockAvatar {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    aspect-ratio: 1;
+    margin: 0;
+    font-size: 0.78rem;
+  }
+}
+
+.recurringRulesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
+
+  p {
+    margin-top: 4px;
+    color: $color-text-muted;
+    font-size: 0.8rem;
+  }
+
+  button {
+    min-height: 36px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+  }
+}
+
+.recurringExecutionError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+  margin-top: $spacing-sm;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba($color-danger, 0.08);
+  color: $color-danger;
+  font-size: 0.78rem;
+
+  button {
+    flex: 0 0 auto;
+    min-height: 30px;
+    padding: 5px 9px;
+    border: 1px solid rgba($color-danger, 0.35);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+  }
+}
+
+:global(:root[data-theme='dark']) .recurringExecutionError {
+  background: rgba($color-danger, 0.14);
+}
+
+.ruleActive,
+.rulePaused {
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ruleStatusMenu {
+  position: relative;
+}
+
+.ruleStatusTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 29px;
+  min-height: 29px;
+  padding: 3px 9px 3px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+
+  svg {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+.ruleStatusOptions {
+  position: absolute;
+  z-index: 4;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 104px;
+  padding: 5px;
+  border: 1px solid rgba($color-border, 0.9);
+  border-radius: 10px;
+  background: $color-surface;
+  box-shadow: 0 12px 26px rgba(25, 31, 40, 0.12);
+
+  button {
+    width: 100%;
+    min-height: 30px;
+    padding: 6px 9px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: $color-text;
+    text-align: left;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+
+    &:hover {
+      background: #f2f4f6;
+    }
+  }
+}
+
+.ruleEditButton,
+.recordButton {
+  display: inline-grid;
+  width: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  place-items: center;
+  background: $color-primary;
+  color: #fff;
+}
+
+.ruleActions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.recordButton {
+  background: #475569;
+
+  &:hover {
+    background: #334155;
+  }
+}
+
+.ruleEditButton {
+  background: #eef2f7;
+  color: $color-text-muted;
+}
+
+:global(:root[data-theme='dark']) .ruleEditButton {
+  background: #252b37;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .ruleStatusOptions {
+  border-color: #3a4658;
+  background: #252d3a;
+
+  button {
+    color: #f2f4f6;
+
+    &:hover {
+      background: #334155;
+    }
+  }
+}
+
+.ruleActive {
+  background: rgba($color-success, 0.12);
+  color: $color-success;
+}
+
+.rulePaused {
+  background: rgba($color-text-muted, 0.12);
+  color: $color-text-muted;
+}
+
+.ruleStatusTrigger.ruleActive {
+  border-color: rgba($color-success, 0.18);
+}
+
+.ruleStatusTrigger.rulePaused {
+  border-color: rgba($color-text-muted, 0.18);
 }
 .tableWrap {
   position: relative;
@@ -545,6 +800,20 @@ td small {
     button {
       flex: 1;
       min-height: 48px;
+    }
+  }
+
+  .recurringRules li {
+    grid-template-columns: 1fr auto;
+    gap: 6px $spacing-md;
+
+    span:nth-of-type(3) {
+      display: none;
+    }
+
+    .ruleActions {
+      grid-column: 2;
+      grid-row: 3;
     }
   }
 

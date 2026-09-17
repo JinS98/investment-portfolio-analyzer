@@ -1,11 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { FiChevronDown, FiEdit2, FiPlus } from 'react-icons/fi';
 import { TransactionModal } from '../TransactionModal/TransactionModal';
+import { RecurringInvestmentModal } from '../RecurringInvestmentModal/RecurringInvestmentModal';
+import {
+  executeDueRecurringInvestmentRule,
+  loadRecurringInvestmentRules,
+  setRecurringInvestmentRuleStatus,
+} from '../../services/portfolioLedgerService';
 import { fetchCurrentPrices } from '../../services/tossApi';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
-import type { Holding, HoldingHistory, PortfolioType } from '../../types';
+import type { Holding, HoldingHistory, PortfolioType, RecurringInvestmentRule } from '../../types';
 import { formatRate } from '../../utils/calculator';
 import { calculatePortfolioFxPerformance } from '../../utils/portfolioFxPerformance';
+import { getNextPendingRecurringInvestmentDate } from '../../utils/recurringInvestment';
 import styles from './PortfolioManager.module.scss';
 
 const money = (value: number, market: 'KR' | 'US') => {
@@ -18,6 +26,7 @@ const money = (value: number, market: 'KR' | 'US') => {
 
 const EMPTY_HOLDINGS: Holding[] = [];
 const EMPTY_HISTORIES: HoldingHistory[] = [];
+const WEEKDAY_LABELS = ['', '월요일', '화요일', '수요일', '목요일', '금요일'];
 
 interface StockAvatarProps {
   name?: string;
@@ -106,7 +115,18 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const closeTransactionModal = usePortfolioStore((state) => state.closeTransactionModal);
   const setTransactionModalType = usePortfolioStore((state) => state.setTransactionModalType);
   const addHoldingHistory = usePortfolioStore((state) => state.addHoldingHistory);
+  const loadPortfolioLedgers = usePortfolioStore((state) => state.loadPortfolioLedgers);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
+  const [editingRecurringRule, setEditingRecurringRule] = useState<RecurringInvestmentRule | null>(null);
+  const [updatingRecurringRuleId, setUpdatingRecurringRuleId] = useState<string | null>(null);
+  const [openRuleStatusId, setOpenRuleStatusId] = useState<string | null>(null);
+  const [recurringExecutionErrors, setRecurringExecutionErrors] = useState<Record<string, string>>({});
+  const executedPortfolioRef = useRef<string | null>(null);
+  const [recurringRuleData, setRecurringRuleData] = useState<{
+    portfolioId: string | null;
+    rules: RecurringInvestmentRule[];
+  }>({ portfolioId: null, rules: [] });
   const [actionNotice, setActionNotice] = useState('');
   const [columnMenuMarket, setColumnMenuMarket] = useState<'KR' | 'US' | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(() =>
@@ -118,12 +138,128 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const activePortfolio = portfolioType
     ? portfolios.find((portfolio) => portfolio.type === portfolioType)
     : portfolios.find((portfolio) => portfolio.id === activePortfolioId);
+  const activeRecurringPortfolioId = activePortfolio?.id;
   const holdings = activePortfolio
     ? (portfolioLedgers[activePortfolio.id]?.holdings ?? EMPTY_HOLDINGS)
     : selectedHoldings;
   const histories = activePortfolio
     ? (portfolioLedgers[activePortfolio.id]?.histories ?? EMPTY_HISTORIES)
     : EMPTY_HISTORIES;
+  const recurringRules =
+    recurringRuleData.portfolioId === activeRecurringPortfolioId ? recurringRuleData.rules : [];
+
+  const updateRecurringRuleStatus = async (rule: RecurringInvestmentRule, status: 'ACTIVE' | 'PAUSED') => {
+    if (!userId) return;
+    setUpdatingRecurringRuleId(rule.id);
+    try {
+      const updated = await setRecurringInvestmentRuleStatus(userId, rule.portfolioId, rule.id, status);
+      setRecurringRuleData((current) =>
+        current.portfolioId === rule.portfolioId
+          ? { ...current, rules: current.rules.map((item) => (item.id === updated.id ? updated : item)) }
+          : current,
+      );
+      setActionNotice(status === 'ACTIVE' ? '적립식 투자 규칙을 재개했습니다.' : '적립식 투자 규칙을 일시 정지했습니다.');
+    } catch (cause) {
+      setActionNotice(cause instanceof Error ? cause.message : '적립식 투자 규칙 상태를 변경하지 못했습니다.');
+    } finally {
+      setUpdatingRecurringRuleId(null);
+      setOpenRuleStatusId(null);
+    }
+  };
+
+  const retryRecurringRule = async (rule: RecurringInvestmentRule) => {
+    if (!userId || !activePortfolio) return;
+    setUpdatingRecurringRuleId(rule.id);
+    try {
+      const result = await executeDueRecurringInvestmentRule(userId, rule.id, activePortfolio.id);
+      if (result.rule) {
+        setRecurringRuleData((current) => ({
+          ...current,
+          rules: current.rules.map((item) => (item.id === result.rule?.id ? result.rule : item)),
+        }));
+      }
+      if (result.executedCount) await loadPortfolioLedgers(userId);
+      setRecurringExecutionErrors((current) => {
+        const next = { ...current };
+        delete next[rule.id];
+        return next;
+      });
+      setActionNotice(result.executedCount ? `적립식 투자 ${result.executedCount}건을 반영했습니다.` : '반영할 예정 매수가 없습니다.');
+    } catch (cause) {
+      setRecurringExecutionErrors((current) => ({
+        ...current,
+        [rule.id]: cause instanceof Error ? cause.message : '적립식 투자 자동 반영에 실패했습니다.',
+      }));
+    } finally {
+      setUpdatingRecurringRuleId(null);
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const portfolioId = activeRecurringPortfolioId;
+    if (!userId || !portfolioId) {
+      return () => {
+        mounted = false;
+      };
+    }
+    void loadRecurringInvestmentRules(userId, portfolioId)
+      .then((rules) => {
+        if (mounted) setRecurringRuleData({ portfolioId, rules });
+      })
+      .catch((cause: unknown) => {
+        if (mounted) {
+          setActionNotice(
+            cause instanceof Error ? cause.message : '적립식 투자 규칙을 불러오지 못했습니다.',
+          );
+        }
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [activeRecurringPortfolioId, userId]);
+
+  useEffect(() => {
+    if (!userId || !activePortfolio) return;
+    if (recurringRuleData.portfolioId !== activePortfolio.id || executedPortfolioRef.current === activePortfolio.id) return;
+    executedPortfolioRef.current = activePortfolio.id;
+    const dueRules = recurringRuleData.rules.filter((rule) => rule.status === 'ACTIVE');
+    if (!dueRules.length) return;
+    void (async () => {
+      const results = [];
+      const errors: Record<string, string> = {};
+      for (const rule of dueRules) {
+        try {
+          results.push(await executeDueRecurringInvestmentRule(userId, rule.id, activePortfolio.id));
+        } catch (cause) {
+          errors[rule.id] = cause instanceof Error ? cause.message : '적립식 투자 자동 반영에 실패했습니다.';
+        }
+      }
+      return { results, errors };
+    })()
+      .then(async ({ results, errors }) => {
+        setRecurringExecutionErrors(errors);
+        const executedCount = results.reduce((total, result) => total + result.executedCount, 0);
+        const updatedRules = results.flatMap((result) => (result.rule ? [result.rule] : []));
+        if (updatedRules.length) {
+          setRecurringRuleData((current) =>
+            current.portfolioId === activePortfolio.id
+              ? {
+                  ...current,
+                  rules: current.rules.map((rule) => updatedRules.find((item) => item.id === rule.id) ?? rule),
+                }
+              : current,
+          );
+        }
+        if (executedCount) {
+          await loadPortfolioLedgers(userId);
+          setActionNotice(`적립식 투자 ${executedCount}건을 거래일 종가로 반영했습니다.`);
+        }
+      })
+      .catch((cause: unknown) => {
+        setActionNotice(cause instanceof Error ? cause.message : '적립식 투자 자동 반영에 실패했습니다.');
+      });
+  }, [activePortfolio, loadPortfolioLedgers, recurringRuleData.portfolioId, recurringRuleData.rules, userId]);
 
   const grouped = useMemo(
     () =>
@@ -353,9 +489,16 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
       ) : !holdings.length ? (
         <div className={styles.emptyState}>
           <p>아직 보유 종목이 없습니다.</p>
-          <button type="button" onClick={() => openTransaction({ type: 'BUY' })}>
-            첫 매수 기록 추가
-          </button>
+          <div className={styles.actionButtons}>
+            {userId && (
+              <button type="button" onClick={() => setIsRecurringModalOpen(true)}>
+                적립식 투자
+              </button>
+            )}
+            <button type="button" onClick={() => openTransaction({ type: 'BUY' })}>
+              첫 매수 기록 추가
+            </button>
+          </div>
         </div>
       ) : (
         <>
@@ -364,6 +507,11 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
               KRW와 USD는 통화별로 따로 표시합니다. 현재가는 보유 종목 기준으로 갱신합니다.
             </span>
             <div className={styles.actionButtons}>
+              {userId && (
+                <button type="button" onClick={() => setIsRecurringModalOpen(true)}>
+                  적립식 투자
+                </button>
+              )}
               <button type="button" onClick={() => openTransaction({ type: 'BUY' })}>
                 매수 기록 추가
               </button>
@@ -547,6 +695,7 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
                           <td>
                             <button
                               type="button"
+                              className={styles.recordButton}
                               onClick={() =>
                                 openTransaction({
                                   type: 'BUY',
@@ -556,8 +705,10 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
                                   price: currentPrice,
                                 })
                               }
+                              aria-label={`${holding.name ?? holding.ticker} 매수 기록 추가`}
+                              title="매수 기록 추가"
                             >
-                              기록 추가
+                              <FiPlus aria-hidden="true" />
                             </button>
                           </td>
                         </tr>
@@ -570,6 +721,86 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
           })}
         </>
       )}
+      {userId && activePortfolio && recurringRules.length > 0 ? (
+        <section className={styles.recurringRules} aria-labelledby="recurring-rules-title">
+          <div className={styles.recurringRulesHeader}>
+            <div>
+              <h3 id="recurring-rules-title">적립식 투자</h3>
+              <p>저장한 자동 매수 규칙입니다.</p>
+            </div>
+            <button type="button" onClick={() => setIsRecurringModalOpen(true)}>
+              규칙 추가
+            </button>
+          </div>
+          <ul>
+            {recurringRules.map((rule) => (
+              <li key={rule.id}>
+                <strong className={styles.recurringStock}>
+                  <StockAvatar name={rule.name} ticker={rule.ticker} market={rule.market} />
+                  {rule.name ?? rule.ticker}
+                </strong>
+                <span>
+                  {rule.frequency === 'WEEKLY'
+                    ? `매주 ${WEEKDAY_LABELS[rule.weeklyDay ?? 1]}`
+                    : `매월 ${rule.monthlyDay}일`}
+                </span>
+                <span>{rule.quantity.toLocaleString('ko-KR')}주</span>
+                <span>다음 매수 {rule.status === 'ACTIVE' ? getNextPendingRecurringInvestmentDate(rule) : '-'}</span>
+                <div className={styles.ruleStatusMenu}>
+                  <button
+                    type="button"
+                    className={`${styles.ruleStatusTrigger} ${rule.status === 'ACTIVE' ? styles.ruleActive : styles.rulePaused}`}
+                    onClick={() => setOpenRuleStatusId((current) => (current === rule.id ? null : rule.id))}
+                    onBlur={() => window.setTimeout(() => setOpenRuleStatusId(null), 120)}
+                    disabled={updatingRecurringRuleId === rule.id}
+                    aria-expanded={openRuleStatusId === rule.id}
+                    aria-label={`${rule.name ?? rule.ticker} 적립식 투자 상태`}
+                  >
+                    {rule.status === 'ACTIVE' ? '진행 중' : '일시 정지'}
+                    <FiChevronDown aria-hidden="true" />
+                  </button>
+                  {openRuleStatusId === rule.id ? (
+                    <div className={styles.ruleStatusOptions} role="menu">
+                      <button type="button" role="menuitem" onMouseDown={(event) => event.preventDefault()} onClick={() => void updateRecurringRuleStatus(rule, 'ACTIVE')}>
+                        진행 중
+                      </button>
+                      <button type="button" role="menuitem" onMouseDown={(event) => event.preventDefault()} onClick={() => void updateRecurringRuleStatus(rule, 'PAUSED')}>
+                        일시 정지
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                <div className={styles.ruleActions}>
+                  <button
+                    type="button"
+                    className={styles.ruleEditButton}
+                    onClick={() => {
+                      setEditingRecurringRule(rule);
+                      setIsRecurringModalOpen(true);
+                    }}
+                    aria-label={`${rule.name ?? rule.ticker} 적립식 투자 수정`}
+                    title="수정"
+                  >
+                    <FiEdit2 aria-hidden="true" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {Object.entries(recurringExecutionErrors).map(([ruleId, error]) => {
+            const rule = recurringRules.find((item) => item.id === ruleId);
+            if (!rule) return null;
+            return (
+              <div key={ruleId} className={styles.recurringExecutionError} role="alert">
+                <span>{rule.name ?? rule.ticker}: {error}</span>
+                <button type="button" onClick={() => void retryRecurringRule(rule)} disabled={updatingRecurringRuleId === rule.id}>
+                  다시 시도
+                </button>
+              </div>
+            );
+          })}
+        </section>
+      ) : null}
       <TransactionModal
         isOpen={isTransactionModalOpen}
         type={transactionModalType}
@@ -581,6 +812,42 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
         onClose={closeTransactionModal}
         onSubmit={submitTransaction}
       />
+      {userId && activePortfolio ? (
+        <RecurringInvestmentModal
+          key={editingRecurringRule?.id ?? 'new'}
+          isOpen={isRecurringModalOpen}
+          userId={userId}
+          portfolio={activePortfolio}
+          rule={editingRecurringRule ?? undefined}
+          onClose={() => {
+            setIsRecurringModalOpen(false);
+            setEditingRecurringRule(null);
+          }}
+          onSaved={(rule) => {
+            setRecurringRuleData((current) =>
+              current.portfolioId === rule.portfolioId
+                ? {
+                    ...current,
+                    rules: current.rules.some((item) => item.id === rule.id)
+                      ? current.rules.map((item) => (item.id === rule.id ? rule : item))
+                      : [...current.rules, rule],
+                  }
+                : current,
+            );
+            setActionNotice(editingRecurringRule ? '적립식 투자 규칙을 수정했습니다.' : '적립식 투자 규칙을 저장했습니다.');
+            setEditingRecurringRule(null);
+            executedPortfolioRef.current = null;
+          }}
+          onDeleted={(ruleId) => {
+            setRecurringRuleData((current) => ({
+              ...current,
+              rules: current.rules.filter((item) => item.id !== ruleId),
+            }));
+            setActionNotice('적립식 투자 규칙을 삭제했습니다.');
+            setEditingRecurringRule(null);
+          }}
+        />
+      ) : null}
     </section>
   );
 }

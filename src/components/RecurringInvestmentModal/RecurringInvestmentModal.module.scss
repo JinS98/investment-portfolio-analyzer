@@ -1,0 +1,291 @@
+@use '../../styles/variables' as *;
+
+.backdrop {
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+  padding: $spacing-lg;
+  background: rgba(15, 23, 42, 0.56);
+}
+
+.dialog {
+  width: min(520px, 100%);
+  height: fit-content;
+  margin: auto 0;
+  padding: 28px;
+  border-radius: 22px;
+  background: $color-surface;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+
+  header,
+  footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-md;
+  }
+
+  header {
+    margin-bottom: $spacing-lg;
+  }
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  header p {
+    margin-bottom: 4px;
+    color: $color-text-muted;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  label,
+  fieldset {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    color: $color-text-muted;
+    font-size: 0.85rem;
+  }
+
+  input,
+  select {
+    width: 100%;
+    height: 46px;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid $color-border;
+    border-radius: 10px;
+    background: $color-surface;
+    color: $color-text;
+    font: inherit;
+  }
+
+  fieldset {
+    margin-top: $spacing-md;
+    padding: 0;
+    border: 0;
+  }
+
+  legend {
+    margin-bottom: 7px;
+  }
+
+  footer {
+    justify-content: flex-end;
+    margin-top: $spacing-xl;
+  }
+
+  footer button,
+  .frequencyButtons button {
+    min-height: 42px;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 700;
+  }
+
+  footer button:last-child {
+    padding: 0 16px;
+    border: 0;
+    background: $color-primary;
+    color: #fff;
+  }
+}
+
+.closeButton,
+.cancelButton {
+  display: inline-grid;
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  place-items: center;
+  background: #f2f4f6;
+  color: $color-text;
+}
+
+.cancelButton {
+  width: auto;
+  padding: 0 16px;
+}
+
+.deleteButton {
+  margin-right: auto;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba($color-danger, 0.1);
+  color: $color-danger;
+  font: inherit;
+  font-weight: 700;
+}
+
+.searchField {
+  position: relative;
+}
+
+.stockReadOnly {
+  display: grid;
+  gap: 7px;
+  color: $color-text-muted;
+  font-size: 0.85rem;
+
+  strong {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid $color-border;
+    border-radius: 10px;
+    background: #f7f8fa;
+    color: $color-text;
+    font-size: 0.95rem;
+  }
+}
+
+.results {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  max-height: 190px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid rgba($color-border, 0.9);
+  border-radius: 12px;
+  background: $color-surface;
+  box-shadow: 0 14px 30px rgba(25, 31, 40, 0.12);
+  list-style: none;
+
+  li {
+    padding: 10px 12px;
+  }
+
+  button {
+    width: 100%;
+    padding: 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: $color-text;
+    text-align: left;
+    font: inherit;
+    font-weight: 700;
+
+    &:hover {
+      background: #f2f4f6;
+    }
+  }
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+}
+
+.frequencyButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: #f2f4f6;
+
+  button {
+    border: 0;
+    background: transparent;
+    color: $color-text-muted;
+  }
+
+  button.active {
+    background: $color-primary;
+    color: #fff;
+  }
+}
+
+.guide {
+  margin-top: $spacing-lg !important;
+  color: $color-text-muted;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.error {
+  margin-top: $spacing-sm !important;
+  color: $color-danger;
+  font-size: 0.82rem;
+}
+
+:global(:root[data-theme='dark']) .dialog,
+:global(:root[data-theme='dark']) .results,
+:global(:root[data-theme='dark']) input,
+:global(:root[data-theme='dark']) select {
+  border-color: #3a4658;
+  background: #171b24;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .stockReadOnly strong {
+  border-color: #3a4658;
+  background: #171b24;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .closeButton,
+:global(:root[data-theme='dark']) .cancelButton,
+:global(:root[data-theme='dark']) .frequencyButtons {
+  background: #252b37;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .deleteButton {
+  background: rgba($color-danger, 0.16);
+}
+
+:global(:root[data-theme='dark']) .frequencyButtons button {
+  color: #aeb8c7;
+}
+
+:global(:root[data-theme='dark']) .frequencyButtons button.active {
+  background: $color-primary;
+  color: #fff;
+}
+
+:global(:root[data-theme='dark']) .results button:hover {
+  background: #334155;
+}
+
+:global(:root[data-theme='dark']) .results button {
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .results button:hover {
+  color: #fff;
+}
+
+@include mobile {
+  .backdrop {
+    align-items: flex-end;
+    padding: $spacing-sm;
+  }
+
+  .dialog {
+    width: 100%;
+    margin: 0;
+    padding: $spacing-lg;
+    border-radius: 20px;
+  }
+}
