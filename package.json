@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
-    "typecheck": "tsc -b --pretty false"
+    "typecheck": "tsc -b --pretty false",
+    "test:recurring": "node --experimental-strip-types --test tests/recurringInvestment.test.ts"
   },
   "dependencies": {
     "firebase": "^12.17.1",

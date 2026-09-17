@@ -15,6 +15,7 @@ export type RecurringInvestmentFrequency = 'WEEKLY' | 'MONTHLY';
 
 /** 규칙 실행 여부. */
 export type RecurringInvestmentStatus = 'ACTIVE' | 'PAUSED';
+export type RecurringExecutionStatus = 'PENDING' | 'CONFIRMED';
 
 /** 포트폴리오에 연결된 적립식 매수 규칙. */
 export interface RecurringInvestmentRule {
@@ -107,6 +108,11 @@ export interface HoldingHistory {
   source?: HoldingHistorySource;
   /** 적립식 투자 규칙에서 생성된 거래 이력의 원본 규칙 ID. */
   recurringRuleId?: string;
+  /** 적립식 규칙명. 규칙이 삭제돼도 과거 거래 이력에서 출처를 확인한다. */
+  recurringRuleName?: string;
+  /** 휴장일 보정 전 규칙이 지정한 원래 매수 예정일. */
+  scheduledDate?: string;
+  recurringExecutionStatus?: RecurringExecutionStatus;
   legacyStockId?: string;
   importedAt?: number;
   legacyAddedAt?: string;
@@ -127,6 +133,9 @@ export interface HoldingHistoryInput {
   date: string;
   source?: HoldingHistorySource;
   recurringRuleId?: string;
+  recurringRuleName?: string;
+  scheduledDate?: string;
+  recurringExecutionStatus?: RecurringExecutionStatus;
 }
 
 /** 거래 모달을 열 때 채워 넣을 선택 항목이다. 시장 탐색 화면에서도 같은 형태로 사용한다. */

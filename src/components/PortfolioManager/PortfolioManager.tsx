@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FiChevronDown, FiEdit2, FiPlus } from 'react-icons/fi';
+import { FiChevronDown, FiEdit2, FiList, FiPlus } from 'react-icons/fi';
 import { TransactionModal } from '../TransactionModal/TransactionModal';
 import { RecurringInvestmentModal } from '../RecurringInvestmentModal/RecurringInvestmentModal';
 import {
@@ -122,6 +122,7 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const [updatingRecurringRuleId, setUpdatingRecurringRuleId] = useState<string | null>(null);
   const [openRuleStatusId, setOpenRuleStatusId] = useState<string | null>(null);
   const [recurringExecutionErrors, setRecurringExecutionErrors] = useState<Record<string, string>>({});
+  const [recurringExecutionProgress, setRecurringExecutionProgress] = useState<{ completed: number; total: number } | null>(null);
   const executedPortfolioRef = useRef<string | null>(null);
   const [recurringRuleData, setRecurringRuleData] = useState<{
     portfolioId: string | null;
@@ -226,14 +227,17 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
     const dueRules = recurringRuleData.rules.filter((rule) => rule.status === 'ACTIVE');
     if (!dueRules.length) return;
     void (async () => {
+      await Promise.resolve();
+      setRecurringExecutionProgress({ completed: 0, total: dueRules.length });
       const results = [];
       const errors: Record<string, string> = {};
-      for (const rule of dueRules) {
+      for (const [index, rule] of dueRules.entries()) {
         try {
           results.push(await executeDueRecurringInvestmentRule(userId, rule.id, activePortfolio.id));
         } catch (cause) {
           errors[rule.id] = cause instanceof Error ? cause.message : '적립식 투자 자동 반영에 실패했습니다.';
         }
+        setRecurringExecutionProgress({ completed: index + 1, total: dueRules.length });
       }
       return { results, errors };
     })()
@@ -258,6 +262,9 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
       })
       .catch((cause: unknown) => {
         setActionNotice(cause instanceof Error ? cause.message : '적립식 투자 자동 반영에 실패했습니다.');
+      })
+      .finally(() => {
+        setRecurringExecutionProgress(null);
       });
   }, [activePortfolio, loadPortfolioLedgers, recurringRuleData.portfolioId, recurringRuleData.rules, userId]);
 
@@ -726,18 +733,42 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
           <div className={styles.recurringRulesHeader}>
             <div>
               <h3 id="recurring-rules-title">적립식 투자</h3>
-              <p>저장한 자동 매수 규칙입니다.</p>
+              <p>규칙 수정·삭제는 이미 반영된 자동매수 이력에 영향을 주지 않습니다.</p>
             </div>
             <button type="button" onClick={() => setIsRecurringModalOpen(true)}>
               규칙 추가
             </button>
           </div>
+          {recurringExecutionProgress ? (
+            <div className={styles.recurringExecutionProgress} role="status">
+              <span>자동매수 이력 확인 중</span>
+              <span>{recurringExecutionProgress.completed} / {recurringExecutionProgress.total} 규칙</span>
+              <i style={{ width: `${(recurringExecutionProgress.completed / recurringExecutionProgress.total) * 100}%` }} />
+            </div>
+          ) : null}
           <ul>
-            {recurringRules.map((rule) => (
+            {recurringRules.map((rule) => {
+              const ruleHistories = histories
+                .filter((history) => history.source === 'RECURRING' && history.recurringRuleId === rule.id)
+                .sort((left, right) => right.date.localeCompare(left.date) || right.createdAt - left.createdAt);
+              const totalQuantity = ruleHistories.reduce((total, history) => total + history.quantity, 0);
+              const totalInvestment = ruleHistories.reduce(
+                (total, history) => total + history.grossAmount + history.fee + history.tax,
+                0,
+              );
+              const latestHistory = ruleHistories[0];
+              return (
               <li key={rule.id}>
                 <strong className={styles.recurringStock}>
                   <StockAvatar name={rule.name} ticker={rule.ticker} market={rule.market} />
-                  {rule.name ?? rule.ticker}
+                  <span>
+                    <b>{rule.name ?? rule.ticker}</b>
+                    <small>
+                      {ruleHistories.length
+                        ? `${ruleHistories.length}회 · ${totalQuantity.toLocaleString('ko-KR')}주 · ${money(totalInvestment, rule.market)}`
+                        : '아직 자동매수 이력이 없습니다.'}
+                    </small>
+                  </span>
                 </strong>
                 <span>
                   {rule.frequency === 'WEEKLY'
@@ -775,6 +806,18 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
                     type="button"
                     className={styles.ruleEditButton}
                     onClick={() => {
+                      sessionStorage.setItem('transaction-history-recurring-rule-id', rule.id);
+                      window.location.hash = '#transactions';
+                    }}
+                    aria-label={`${rule.name ?? rule.ticker} 자동매수 거래 이력 보기`}
+                    title={latestHistory ? `최근 반영 ${latestHistory.date} · ${money(latestHistory.price, rule.market)}` : '자동매수 거래 이력 보기'}
+                  >
+                    <FiList aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.ruleEditButton}
+                    onClick={() => {
                       setEditingRecurringRule(rule);
                       setIsRecurringModalOpen(true);
                     }}
@@ -785,7 +828,8 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
                   </button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
           {Object.entries(recurringExecutionErrors).map(([ruleId, error]) => {
             const rule = recurringRules.find((item) => item.id === ruleId);

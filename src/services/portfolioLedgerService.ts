@@ -269,6 +269,12 @@ const readHistory = (value: unknown, id: string): HoldingHistory => {
     updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : undefined,
     source: source as HoldingHistorySource | undefined,
     recurringRuleId: typeof data.recurringRuleId === 'string' ? data.recurringRuleId : undefined,
+    recurringRuleName: typeof data.recurringRuleName === 'string' ? data.recurringRuleName : undefined,
+    scheduledDate: typeof data.scheduledDate === 'string' ? data.scheduledDate : undefined,
+    recurringExecutionStatus:
+      data.recurringExecutionStatus === 'PENDING' || data.recurringExecutionStatus === 'CONFIRMED'
+        ? data.recurringExecutionStatus
+        : undefined,
     legacyStockId: typeof data.legacyStockId === 'string' ? data.legacyStockId : undefined,
     importedAt: typeof data.importedAt === 'number' ? data.importedAt : undefined,
     legacyAddedAt: typeof data.legacyAddedAt === 'string' ? data.legacyAddedAt : undefined,
@@ -296,6 +302,9 @@ const historyData = (history: HoldingHistory): DocumentData => ({
   ...(history.updatedAt ? { updatedAt: history.updatedAt } : {}),
     ...(history.source ? { source: history.source } : {}),
     ...(history.recurringRuleId ? { recurringRuleId: history.recurringRuleId } : {}),
+    ...(history.recurringRuleName ? { recurringRuleName: history.recurringRuleName } : {}),
+    ...(history.scheduledDate ? { scheduledDate: history.scheduledDate } : {}),
+    ...(history.recurringExecutionStatus ? { recurringExecutionStatus: history.recurringExecutionStatus } : {}),
   ...(history.legacyStockId ? { legacyStockId: history.legacyStockId } : {}),
   ...(history.importedAt ? { importedAt: history.importedAt } : {}),
   ...(history.legacyAddedAt ? { legacyAddedAt: history.legacyAddedAt } : {}),
@@ -496,6 +505,9 @@ const createHistory = async (
     createdAt: now,
     source: input.source ?? 'MANUAL',
     ...(input.recurringRuleId ? { recurringRuleId: input.recurringRuleId } : {}),
+    ...(input.recurringRuleName ? { recurringRuleName: input.recurringRuleName } : {}),
+    ...(input.scheduledDate ? { scheduledDate: input.scheduledDate } : {}),
+    ...(input.recurringExecutionStatus ? { recurringExecutionStatus: input.recurringExecutionStatus } : {}),
   };
 };
 
@@ -620,6 +632,9 @@ export async function executeDueRecurringInvestmentRule(
           date: candle.date,
           source: 'RECURRING',
           recurringRuleId: rule.id,
+          recurringRuleName: rule.name ?? rule.ticker,
+          scheduledDate: date,
+          recurringExecutionStatus: portfolio.type === 'REAL' ? 'PENDING' : 'CONFIRMED',
         },
         Date.now(),
       ),
@@ -655,6 +670,47 @@ export async function addPortfolioHoldingHistory(
   const id = crypto.randomUUID();
   const history = await createHistory(id, input, Date.now());
   return persistLedger(userId, portfolio, previous, [...previous.histories, history]);
+}
+
+export async function confirmRecurringHoldingHistory(
+  userId: string,
+  portfolioId: string,
+  historyId: string,
+  values: Pick<HoldingHistoryInput, 'price' | 'quantity' | 'fee' | 'tax'>,
+): Promise<PortfolioLedger> {
+  const portfolio = await findPortfolio(userId, portfolioId);
+  const previous = await loadPortfolioLedger(userId, portfolio);
+  const existing = previous.histories.find((history) => history.id === historyId);
+  if (!existing || existing.source !== 'RECURRING') throw new Error('확정할 적립식 자동매수 이력을 찾지 못했습니다.');
+  const confirmed = await createHistory(
+    existing.id,
+    {
+      portfolioId: existing.portfolioId,
+      portfolioType: existing.portfolioType,
+      ticker: existing.ticker,
+      name: existing.name,
+      market: existing.market,
+      type: existing.type,
+      price: values.price,
+      quantity: values.quantity,
+      fee: values.fee,
+      tax: values.tax,
+      date: existing.date,
+      source: existing.source,
+      recurringRuleId: existing.recurringRuleId,
+      recurringRuleName: existing.recurringRuleName,
+      scheduledDate: existing.scheduledDate,
+      recurringExecutionStatus: 'CONFIRMED',
+    },
+    existing.createdAt,
+  );
+  const nextHistory = { ...confirmed, updatedAt: Date.now() };
+  return persistLedger(
+    userId,
+    portfolio,
+    previous,
+    previous.histories.map((history) => (history.id === historyId ? nextHistory : history)),
+  );
 }
 
 /** Adds transaction-date USD/KRW rates to older US ledger rows in one batch. */

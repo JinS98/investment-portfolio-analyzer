@@ -15,6 +15,7 @@ export type {
   HoldingHistorySource,
   RecurringInvestmentFrequency,
   RecurringInvestmentStatus,
+  RecurringExecutionStatus,
   RecurringInvestmentRule,
   RecurringInvestmentRuleInput,
   Portfolio,

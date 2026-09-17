@@ -54,3 +54,13 @@ test('pending dates resume after the last executed purchase', () => {
     ['2026-09-15'],
   );
 });
+
+test('a weekend monthly schedule is not added twice after its adjusted execution date', () => {
+  assert.deepEqual(
+    getPendingRecurringInvestmentDatesUntil(
+      { frequency: 'MONTHLY', monthlyDay: 19, startDate: '2026-09-01', lastExecutedDate: '2026-09-21' },
+      '2026-10-31',
+    ),
+    ['2026-10-19'],
+  );
+});

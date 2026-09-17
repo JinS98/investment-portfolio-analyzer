@@ -4,6 +4,7 @@ import { usePortfolioStore } from '../../store/portfolioStore';
 import { TransactionHistory } from '../../components/TransactionHistory/TransactionHistory';
 import type { HoldingHistory } from '../../types';
 import { calculateRealizedKrwPnLBreakdown } from '../../utils/portfolioFxPerformance';
+import { confirmRecurringHoldingHistory } from '../../services/portfolioLedgerService';
 import styles from './TransactionHistoryPage.module.scss';
 
 const money = (value: number) => `${value.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}원`;
@@ -17,12 +18,22 @@ export function TransactionHistoryPage() {
   const isSaving = usePortfolioStore((state) => state.isSaving);
   const setActivePortfolioId = usePortfolioStore((state) => state.setActivePortfolioId);
   const deleteHoldingHistory = usePortfolioStore((state) => state.deleteHoldingHistory);
+  const loadPortfolioLedgers = usePortfolioStore((state) => state.loadPortfolioLedgers);
   const activePortfolio = portfolios.find((portfolio) => portfolio.id === activePortfolioId);
   const realizedPnL = calculateRealizedKrwPnLBreakdown(histories);
 
   const removeTransaction = async (history: HoldingHistory) => {
     if (!userId) throw new Error('로그인 후 거래 기록을 삭제할 수 있습니다.');
     await deleteHoldingHistory(userId, history.portfolioId, history.id);
+  };
+
+  const confirmRecurringTransaction = async (
+    history: HoldingHistory,
+    values: { price: number; quantity: number; fee: number; tax: number },
+  ) => {
+    if (!userId) throw new Error('로그인 후 자동매수 체결 내역을 확정할 수 있습니다.');
+    await confirmRecurringHoldingHistory(userId, history.portfolioId, history.id, values);
+    await loadPortfolioLedgers(userId);
   };
 
   return (
@@ -103,6 +114,7 @@ export function TransactionHistoryPage() {
           histories={histories}
           isSaving={isSaving}
           onDelete={userId ? removeTransaction : undefined}
+          onConfirmRecurring={userId ? confirmRecurringTransaction : undefined}
         />
       )}
     </main>

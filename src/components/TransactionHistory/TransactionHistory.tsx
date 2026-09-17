@@ -1,14 +1,27 @@
 import { useMemo, useState } from 'react';
 import type { HoldingHistory, MarketType } from '../../types';
+import { RecurringExecutionConfirmModal } from '../RecurringExecutionConfirmModal/RecurringExecutionConfirmModal';
 import styles from './TransactionHistory.module.scss';
 
 type TransactionFilter = 'ALL' | 'BUY' | 'SELL';
+type SourceFilter = 'ALL' | 'MANUAL' | 'RECURRING';
 type SortOrder = 'DESC' | 'ASC';
+
+const recurringRuleFilterStorageKey = 'transaction-history-recurring-rule-id';
+
+const loadRecurringRuleFilter = (): string => {
+  try {
+    return sessionStorage.getItem(recurringRuleFilterStorageKey) ?? '';
+  } catch {
+    return '';
+  }
+};
 
 interface TransactionHistoryProps {
   histories: HoldingHistory[];
   isSaving?: boolean;
   onDelete?: (history: HoldingHistory) => Promise<void>;
+  onConfirmRecurring?: (history: HoldingHistory, values: { price: number; quantity: number; fee: number; tax: number }) => Promise<void>;
 }
 
 const money = (value: number, market: MarketType) => {
@@ -23,19 +36,27 @@ export function TransactionHistory({
   histories,
   isSaving = false,
   onDelete,
+  onConfirmRecurring,
 }: TransactionHistoryProps) {
   const [type, setType] = useState<TransactionFilter>('ALL');
+  const [source, setSource] = useState<SourceFilter>(() =>
+    loadRecurringRuleFilter() ? 'RECURRING' : 'ALL',
+  );
+  const [recurringRuleId, setRecurringRuleId] = useState(loadRecurringRuleFilter);
   const [query, setQuery] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('DESC');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState('');
+  const [confirmingHistory, setConfirmingHistory] = useState<HoldingHistory | null>(null);
 
   const filteredHistories = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return histories
       .filter((history) => type === 'ALL' || history.type === type)
+      .filter((history) => source === 'ALL' || (source === 'RECURRING' ? history.source === 'RECURRING' : history.source !== 'RECURRING'))
+      .filter((history) => !recurringRuleId || history.recurringRuleId === recurringRuleId)
       .filter(
         (history) =>
           !normalizedQuery ||
@@ -51,7 +72,21 @@ export function TransactionHistory({
           left.id.localeCompare(right.id);
         return sortOrder === 'DESC' ? -comparison : comparison;
       });
-  }, [fromDate, histories, query, sortOrder, toDate, type]);
+  }, [fromDate, histories, query, recurringRuleId, sortOrder, source, toDate, type]);
+
+  const selectedRecurringRuleName = recurringRuleId
+    ? histories.find((history) => history.recurringRuleId === recurringRuleId)?.recurringRuleName
+    : null;
+
+  const clearRecurringRuleFilter = () => {
+    setRecurringRuleId('');
+    setSource('ALL');
+    try {
+      sessionStorage.removeItem(recurringRuleFilterStorageKey);
+    } catch {
+      // Session storage is optional for this navigation aid.
+    }
+  };
 
   const deleteHistory = async (history: HoldingHistory) => {
     if (!onDelete || isSaving || deletingId) return;
@@ -105,6 +140,24 @@ export function TransactionHistory({
             </button>
           ))}
         </div>
+        <div className={styles.sourceFilters} role="group" aria-label="거래 출처 필터">
+          {(
+            [
+              ['ALL', '전체 출처'],
+              ['MANUAL', '수동'],
+              ['RECURRING', '적립식 자동'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={source === value ? styles.active : undefined}
+              onClick={() => setSource(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <label>
           <span className={styles.srOnly}>종목 검색</span>
           <input
@@ -135,6 +188,12 @@ export function TransactionHistory({
           <option value="ASC">오래된순</option>
         </select>
       </div>
+      {recurringRuleId ? (
+        <div className={styles.ruleFilterNotice}>
+          <span>{selectedRecurringRuleName ?? '선택한 규칙'} 자동매수 이력만 표시 중</span>
+          <button type="button" onClick={clearRecurringRuleFilter}>필터 해제</button>
+        </div>
+      ) : null}
       {deleteError && (
         <p className={styles.error} role="alert">
           {deleteError}
@@ -150,12 +209,14 @@ export function TransactionHistory({
               <tr>
                 <th>거래일</th>
                 <th>구분</th>
+                <th>출처</th>
                 <th>종목</th>
                 <th>가격</th>
                 <th>수량</th>
                 <th>거래금액</th>
                 <th>수수료/세금</th>
                 <th>실현손익</th>
+                {onConfirmRecurring && <th>체결 확인</th>}
                 {onDelete && <th>관리</th>}
               </tr>
             </thead>
@@ -169,7 +230,16 @@ export function TransactionHistory({
                       <span className={history.type === 'BUY' ? styles.buyBadge : styles.sellBadge}>
                         {history.type === 'BUY' ? '매수' : '매도'}
                       </span>
-                      {history.source === 'RECURRING' ? <small className={styles.recurringSource}>적립식 자동</small> : null}
+                    </td>
+                    <td>
+                      {history.source === 'RECURRING' ? (
+                        <span className={styles.recurringSource}>
+                          <strong>{history.recurringRuleName ?? '적립식 자동매수'}</strong>
+                          <small>예정 {history.scheduledDate ?? history.date} · 반영 {history.date}</small>
+                        </span>
+                      ) : (
+                        <span className={styles.manualSource}>수동 기록</span>
+                      )}
                     </td>
                     <td>
                       <strong>{history.name ?? history.ticker}</strong>
@@ -189,6 +259,13 @@ export function TransactionHistory({
                     >
                       {history.type === 'SELL' ? money(history.realizedPnL, history.market) : '-'}
                     </td>
+                    {onConfirmRecurring && (
+                      <td>
+                        {history.source === 'RECURRING' && history.portfolioType === 'REAL' && history.recurringExecutionStatus !== 'CONFIRMED' ? (
+                          <button type="button" className={styles.confirmButton} onClick={() => setConfirmingHistory(history)}>확인 필요</button>
+                        ) : history.source === 'RECURRING' && history.portfolioType === 'REAL' ? <span className={styles.confirmed}>확정</span> : '-'}
+                      </td>
+                    )}
                     {onDelete && (
                       <td>
                         <button
@@ -208,6 +285,19 @@ export function TransactionHistory({
           </table>
         </div>
       )}
+      {onConfirmRecurring ? (
+        <RecurringExecutionConfirmModal
+          key={confirmingHistory?.id ?? 'closed'}
+          history={confirmingHistory}
+          isSaving={isSaving}
+          onClose={() => setConfirmingHistory(null)}
+          onConfirm={async (values) => {
+            if (!confirmingHistory) return;
+            await onConfirmRecurring(confirmingHistory, values);
+            setConfirmingHistory(null);
+          }}
+        />
+      ) : null}
     </section>
   );
 }

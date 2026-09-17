@@ -314,7 +314,7 @@ button {
     gap: $spacing-md;
     padding: 12px 8px;
     border-top: 1px solid rgba($color-border, 0.75);
-    border-radius: 10px;
+    border-radius: 0;
     color: $color-text-muted;
     font-size: 0.84rem;
 
@@ -334,6 +334,27 @@ button {
   align-items: center;
   gap: $spacing-sm;
   min-width: 0;
+
+  > span {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+  }
+
+  b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    overflow: hidden;
+    color: $color-text-muted;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   .stockAvatar {
     flex: 0 0 28px;
@@ -372,6 +393,36 @@ button {
     border-radius: 10px;
     font-size: 0.8rem;
   }
+}
+
+.recurringExecutionProgress {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+  padding: 9px 10px 12px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba($color-text, 0.045);
+  color: $color-text-muted;
+  font-size: 0.76rem;
+
+  i {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    height: 2px;
+    background: #64748b;
+    transition: width 180ms ease;
+  }
+}
+
+:global(:root[data-theme='dark']) .recurringExecutionProgress {
+  background: rgba(#aeb8c7, 0.08);
 }
 
 .recurringExecutionError {
@@ -815,6 +866,12 @@ td small {
       grid-column: 2;
       grid-row: 3;
     }
+  }
+
+  .recurringExecutionProgress {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .tableWrap {

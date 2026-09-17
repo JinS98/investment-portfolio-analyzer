@@ -81,8 +81,58 @@
   }
 }
 
+.sourceFilters {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: #f2f4f6;
+
+  button {
+    min-height: 34px;
+    padding: 6px 9px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: $color-text-muted;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  button.active {
+    background: $color-surface;
+    color: $color-text;
+    box-shadow: 0 1px 3px rgba(25, 31, 40, 0.08);
+  }
+}
+
 .dateSeparator {
   color: $color-text-muted;
+}
+
+.ruleFilterNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f2f4f6;
+  color: $color-text-muted;
+  font-size: 0.78rem;
+
+  button {
+    padding: 4px 7px;
+    border: 0;
+    border-radius: 7px;
+    background: $color-surface;
+    color: $color-text;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
 }
 
 .tableWrap {
@@ -95,7 +145,7 @@
 
 table {
   width: 100%;
-  min-width: 950px;
+  min-width: 1060px;
   border-collapse: collapse;
 }
 
@@ -149,11 +199,30 @@ td small {
   color: $color-danger;
 }
 
-.recurringSource {
-  display: block;
-  margin-top: 4px;
+.recurringSource,
+.manualSource {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
   color: $color-text-muted;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
+  white-space: nowrap;
+
+  strong {
+    color: $color-text;
+    font-size: 0.76rem;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: 0.7rem;
+  }
+}
+
+.manualSource {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #f2f4f6;
   font-weight: 700;
 }
 
@@ -175,6 +244,20 @@ td small {
   font-size: 0.78rem;
 }
 
+.confirmButton,
+.confirmed {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.confirmButton { border: 1px solid rgba($color-warning, .5); background: rgba($color-warning, .1); color: #b45309; }
+.confirmed { background: rgba($color-success, .12); color: $color-success; }
+
 .empty {
   margin: $spacing-lg 0 0;
   padding: $spacing-lg 0;
@@ -195,6 +278,30 @@ td small {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+}
+
+:global(:root[data-theme='dark']) .sourceFilters,
+:global(:root[data-theme='dark']) .manualSource {
+  background: #252b37;
+}
+
+:global(:root[data-theme='dark']) .ruleFilterNotice {
+  background: #252b37;
+  color: #aeb8c7;
+
+  button {
+    background: #3a4658;
+    color: #f2f4f6;
+  }
+}
+
+:global(:root[data-theme='dark']) .sourceFilters button.active {
+  background: #3a4658;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .recurringSource strong {
+  color: #f2f4f6;
 }
 
 @include mobile {
@@ -236,6 +343,18 @@ td small {
     }
   }
 
+  .sourceFilters {
+    width: 100%;
+
+    button {
+      flex: 1;
+      min-width: 0;
+      padding-right: 6px;
+      padding-left: 6px;
+      font-size: 0.72rem;
+    }
+  }
+
   .filters input[placeholder] {
     width: 100%;
   }
@@ -247,7 +366,7 @@ td small {
   }
 
   table {
-    min-width: 820px;
+    min-width: 940px;
   }
 
   th,
