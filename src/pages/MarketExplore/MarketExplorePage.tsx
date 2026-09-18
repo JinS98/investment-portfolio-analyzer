@@ -13,7 +13,6 @@ import {
 } from '../../services/tossApi';
 import {
   fetchMarketExploreOverview,
-  rankMarketExploreStocks,
   type MarketExploreStock,
 } from '../../services/marketExploreService';
 import { fetchStockInsights, type StockInsights } from '../../services/marketInsightsApi';
@@ -32,7 +31,7 @@ import type {
 } from '../../types/market';
 import styles from './MarketExplorePage.module.scss';
 
-type MarketFilter = 'ALL' | 'KR' | 'US';
+type MarketFilter = 'KR' | 'US';
 type StockDetail = { quote: Quote | null; candles: DailyCandle[]; insights: StockInsights | null };
 type IndicatorCardChart = { candles: MarketIndicatorCandle[]; previousClose: number | null };
 const EMPTY_HOLDINGS: Holding[] = [];
@@ -270,7 +269,7 @@ export function MarketExplorePage() {
   const [selectedIndicator, setSelectedIndicator] = useState<MarketIndexSymbol>('KOSPI');
   const [indicatorCandles, setIndicatorCandles] = useState<MarketIndicatorCandle[]>([]);
   const [isIndicatorDialogOpen, setIsIndicatorDialogOpen] = useState(false);
-  const [filter, setFilter] = useState<MarketFilter>('ALL');
+  const [filter, setFilter] = useState<MarketFilter>('KR');
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<MarketExploreStock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -295,6 +294,7 @@ export function MarketExplorePage() {
   const setTransactionModalType = usePortfolioStore((state) => state.setTransactionModalType);
   const addHoldingHistory = usePortfolioStore((state) => state.addHoldingHistory);
   const exchangeRate = usePortfolioStore((state) => state.exchangeRate);
+  const setExchangeRate = usePortfolioStore((state) => state.setExchangeRate);
   const displayCurrency = useDisplayCurrencyStore((state) => state.displayCurrency);
   const realPortfolio = useMemo(
     () => portfolios.find((portfolio) => portfolio.type === 'REAL') ?? null,
@@ -313,9 +313,10 @@ export function MarketExplorePage() {
       fetchMarketIndicatorPrices(['KOSPI', 'KOSDAQ']),
       fetchUsMarketIndices(),
     ])
-      .then(([krStocks, usStocks, exchangeRate, krIndicators, usIndicators]) => {
+      .then(([krStocks, usStocks, freshExchangeRate, krIndicators, usIndicators]) => {
         if (mounted) {
-          setOverview(rankMarketExploreStocks([...krStocks, ...usStocks], exchangeRate.rate));
+          setOverview([...krStocks, ...usStocks]);
+          setExchangeRate(freshExchangeRate);
           setIndicators([
             ...krIndicators.map((indicator) => ({ ...indicator, changeRate: null, candles: [] })),
             ...usIndicators,
@@ -340,7 +341,7 @@ export function MarketExplorePage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [setExchangeRate]);
 
   useEffect(() => {
     let mounted = true;
@@ -466,7 +467,6 @@ export function MarketExplorePage() {
             return {
               ...stock,
               rank: 0,
-              overallRank: null,
               currency: quote?.currency ?? (isKoreanMarket(stock.market) ? 'KRW' : 'USD'),
               price: quote?.price ?? null,
               changeRate: null,
@@ -505,7 +505,6 @@ export function MarketExplorePage() {
   const visibleStocks = useMemo(() => {
     const source = query.trim() ? searchResults : overview;
     return source.filter((stock) => {
-      if (filter === 'ALL') return true;
       return filter === 'KR' ? isKoreanMarket(stock.market) : !isKoreanMarket(stock.market);
     });
   }, [filter, overview, query, searchResults]);
@@ -706,11 +705,11 @@ export function MarketExplorePage() {
             <p>
               {query.trim()
                 ? '검색 결과를 선택하면 다음 단계에서 종목 상세를 확인할 수 있습니다.'
-                : '국내·해외 시장 전체 실시간 거래대금을 USD/KRW 환율로 원화 환산해 통합 순위로 보여줍니다. 5분 동안은 저장된 데이터를 바로 보여줍니다.'}
+                : `${filter === 'KR' ? '국내' : '해외'} 시장의 실시간 거래대금 순위입니다. 5분 동안은 저장된 데이터를 바로 보여줍니다.`}
             </p>
           </div>
           <div className={styles.filters} role="tablist" aria-label="시장 구분">
-            {(['ALL', 'KR', 'US'] as const).map((value) => (
+            {(['KR', 'US'] as const).map((value) => (
               <button
                 key={value}
                 type="button"
@@ -719,7 +718,7 @@ export function MarketExplorePage() {
                 className={filter === value ? styles.activeFilter : undefined}
                 onClick={() => setFilter(value)}
               >
-                {value === 'ALL' ? '전체' : value === 'KR' ? '국내' : '해외'}
+                {value === 'KR' ? '국내' : '해외'}
               </button>
             ))}
           </div>
@@ -750,9 +749,9 @@ export function MarketExplorePage() {
                 >
                   <span
                     className={styles.stockRank}
-                    aria-label={`${(filter === 'ALL' ? stock.overallRank : stock.rank) || '검색'} 순위`}
+                    aria-label={`${stock.rank || '검색'} 순위`}
                   >
-                    {(filter === 'ALL' ? stock.overallRank : stock.rank) || '-'}
+                    {stock.rank || '-'}
                   </span>
                   <StockAvatar name={stock.name} symbol={stock.symbol} />
                   <span className={styles.stockName}>
