@@ -209,7 +209,9 @@ export async function fetchMarketIndicatorCandles(
   return candles.map((candle) => ({ ...candle }));
 }
 
-export async function fetchUsMarketIndices(range: '1d' | '1mo' = '1mo'): Promise<MarketIndexData[]> {
+export type UsIndexRange = '1d' | '1mo' | '3mo' | '6mo' | 'max';
+
+export async function fetchUsMarketIndices(range: UsIndexRange = '1mo'): Promise<MarketIndexData[]> {
   const result = await request('us-indices', new URLSearchParams({ range }));
   if (!Array.isArray(result)) throw new Error('미국 지수 응답 형식이 올바르지 않습니다.');
   return result.map((value): MarketIndexData => {

@@ -1,0 +1,113 @@
+@use '../../styles/variables' as *;
+
+.section { @include card; container-type: inline-size; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: $spacing-md; }
+.header h2, .header p { margin: 0; }
+.header h2 { font-size: 1.2rem; }
+.header p { margin-top: 4px; color: $color-text-muted; font-size: 0.82rem; }
+.header > span { flex: 0 0 auto; padding: 5px 8px; border-radius: 8px; background: #eef1f5; color: $color-text-muted; font-size: 0.72rem; }
+.blockHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: $spacing-md; margin-top: $spacing-lg; }
+.blockHeader h3, .blockHeader p { margin: 0; }
+.blockHeader h3 { font-size: 0.92rem; }
+.blockHeader p { margin-top: 3px; color: $color-text-muted; font-size: 0.72rem; }
+.blockHeader > span { color: $color-text-muted; font-size: 0.72rem; }
+.status { margin: $spacing-md 0 0; color: $color-text-muted; font-size: 0.8rem; }
+.empty { margin: $spacing-md 0 0; padding: $spacing-md; border-radius: 11px; background: #f7f8fa; color: $color-text-muted; font-size: 0.8rem; }
+.riskLegend { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 13px; margin-top: $spacing-sm; color: $color-text-muted; font-size: 0.7rem; }
+.riskLegend > span { display: inline-flex; align-items: center; gap: 5px; }
+.riskLegend i { width: 8px; height: 8px; border-radius: 50%; background: currentcolor; }
+.riskLegend small { font-size: 0.68rem; }
+.levelNormal { color: #16a34a !important; }
+.levelCaution { color: #ca8a04 !important; }
+.levelHigh { color: #f97316 !important; }
+.riskMetrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: $spacing-sm; margin-top: $spacing-md; }
+.riskMetricCard { position: relative; padding: 12px; border: 1px solid $color-border; border-radius: 11px; transition: border-color 150ms ease, background 150ms ease; }
+.riskMetricCard:hover, .riskMetricCard:focus-visible { border-color: #8fa6c2; background: rgba(#64748b, 0.04); outline: 0; }
+.riskMetrics small, .riskMetrics span { display: block; color: $color-text-muted; }
+.riskMetrics small { margin-bottom: 6px; font-size: 0.7rem; }
+.riskMetrics small i { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; border: 1px solid currentcolor; border-radius: 50%; font-size: 0.58rem; font-style: normal; }
+.riskMetrics strong { font-size: 1rem; }
+.riskMetrics span { margin-top: 4px; font-size: 0.66rem; }
+.metricTooltip { position: absolute; z-index: 20; top: calc(100% + 8px); left: 0; width: min(310px, 80vw); padding: 12px; visibility: hidden; border: 1px solid $color-border; border-radius: 11px; background: $color-surface; box-shadow: 0 14px 32px rgba(25, 31, 40, 0.18); color: $color-text; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity 140ms ease, transform 140ms ease, visibility 140ms; }
+.riskMetricCard:nth-child(n + 3) .metricTooltip { right: 0; left: auto; }
+.riskMetricCard:hover .metricTooltip, .riskMetricCard:focus-visible .metricTooltip { visibility: visible; opacity: 1; transform: translateY(0); }
+.metricTooltip b { display: block; margin-bottom: 7px; color: $color-text; font-size: 0.76rem; }
+.metricTooltip p { margin: 0; color: $color-text-muted; font-size: 0.72rem; line-height: 1.5; }
+.metricTooltip p + p { margin-top: 6px; padding-top: 6px; border-top: 1px solid $color-border; }
+.loss { color: $color-bear !important; }
+.exposure { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: $spacing-sm; margin-top: $spacing-lg; }
+.exposure > div { display: grid; grid-template-columns: 1fr auto; gap: 5px $spacing-sm; padding: 12px; border-radius: 12px; background: #f7f8fa; }
+.exposure small { color: $color-text-muted; }
+.exposure i { grid-column: 1 / -1; height: 5px; overflow: hidden; border-radius: 99px; background: #e2e7ed; }
+.exposure b { display: block; height: 100%; border-radius: inherit; background: #64748b; }
+.warnings { display: grid; gap: 6px; margin: $spacing-md 0 0; padding: 0; list-style: none; }
+.warnings li { display: flex; gap: $spacing-sm; padding: 9px 11px; border-radius: 9px; background: rgba($color-warning, 0.09); font-size: 0.76rem; }
+.warnings b { flex: 0 0 auto; color: $color-warning; }
+.warnings span { color: $color-text-muted; }
+.clear { margin: $spacing-md 0 0; color: $color-success; font-size: 0.8rem; }
+.positionList { margin-top: $spacing-lg; }
+.positionHead, .positionRow { display: grid; grid-template-columns: minmax(100px, 1fr) repeat(3, minmax(76px, 0.55fr)); gap: $spacing-sm; padding: 9px 5px; text-align: right; font-size: 0.76rem; }
+.positionHead { border-bottom: 1px solid $color-border; color: $color-text-muted; }
+.positionHead span:first-child, .positionRow strong { text-align: left; }
+.positionRow + .positionRow { border-top: 1px solid rgba($color-border, 0.65); }
+.increase { color: $color-bull; }
+.preview { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(130px, 0.7fr) 110px auto; align-items: end; gap: $spacing-md; margin-top: $spacing-lg; padding: $spacing-md; border-radius: 14px; background: #f7f8fa; }
+.preview h3, .preview p { margin: 0; }
+.preview h3 { font-size: 0.88rem; }
+.preview p { margin-top: 3px; color: $color-text-muted; font-size: 0.7rem; }
+.preview label, .stockPicker { display: grid; gap: 5px; color: $color-text-muted; font-size: 0.7rem; }
+.preview input { width: 100%; height: 38px; padding: 0 10px; border: 1px solid $color-border; border-radius: 9px; background: $color-surface; color: $color-text; }
+.stockPicker { position: relative; }
+.stockPickerTrigger { display: flex; align-items: center; justify-content: space-between; gap: $spacing-sm; width: 100%; height: 38px; padding: 0 10px; border: 1px solid $color-border; border-radius: 9px; background: $color-surface; color: $color-text; text-align: left; font: inherit; font-size: 0.78rem; }
+.stockPickerTrigger svg { transition: transform 160ms ease; }
+.stockPickerTrigger[aria-expanded='true'] { border-color: #8fa6c2; box-shadow: 0 0 0 3px rgba(#64748b, 0.12); }
+.stockPickerTrigger[aria-expanded='true'] svg { transform: rotate(180deg); }
+.stockPickerOptions { position: absolute; z-index: 5; top: calc(100% + 4px); right: 0; left: 0; max-height: 210px; overflow-y: auto; margin: 0; padding: 6px; border: 1px solid $color-border; border-radius: 11px; background: $color-surface; box-shadow: 0 14px 30px rgba(25, 31, 40, 0.14); list-style: none; }
+.stockPickerOptions li { display: block; margin: 0; padding: 0; border: 0; }
+.stockPickerOptions button { width: 100%; min-height: 34px; padding: 7px 9px; border: 0; border-radius: 7px; background: transparent; color: $color-text; text-align: left; font: inherit; font-size: 0.78rem; }
+.stockPickerOptions button:hover { background: #f2f4f6; }
+.stockPickerOptions [aria-selected='true'] button { background: rgba(#64748b, 0.1); font-weight: 700; }
+.previewResult { display: flex; align-items: center; gap: 6px; min-height: 38px; white-space: nowrap; font-size: 0.76rem; }
+.previewResult b { color: $color-text-muted; }
+.unavailable { margin: $spacing-md 0 0; color: $color-warning; font-size: 0.74rem; }
+.riskDetail { margin-top: $spacing-lg; padding-top: 1px; border-top: 1px solid $color-border; }
+.riskTableWrap { margin-top: $spacing-md; overflow-x: auto; }
+.riskTableWrap table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+.riskTableWrap th, .riskTableWrap td { padding: 9px 6px; border-bottom: 1px solid $color-border; text-align: right; }
+.riskTableWrap th { color: $color-text-muted; font-size: 0.7rem; }
+.riskTableWrap th:first-child, .riskTableWrap td:first-child { text-align: left; }
+
+:global(:root[data-theme='dark']) {
+  .header > span, .exposure > div, .preview { background: #202632; }
+  .empty { background: #202632; }
+  .riskMetricCard, .riskDetail, .riskTableWrap th, .riskTableWrap td { border-color: #354052; }
+  .metricTooltip { border-color: #3a4558; background: #252d3a; box-shadow: 0 14px 32px rgba(#000, 0.32); }
+  .metricTooltip b { color: #f2f4f6; }
+  .metricTooltip p { color: #aeb8c7; }
+  .metricTooltip p + p { border-color: #3a4558; }
+  .levelNormal { color: #4ade80 !important; }
+  .levelCaution { color: #facc15 !important; }
+  .levelHigh { color: #fb923c !important; }
+  .exposure i { background: #354052; }
+  .preview input, .stockPickerTrigger, .stockPickerOptions { border-color: #3a4558; background: #171b24; color: #eef2f7; }
+  .stockPickerOptions button { color: #eef2f7; }
+  .stockPickerOptions button:hover { background: #303949; }
+  .stockPickerOptions [aria-selected='true'] button { background: rgba(#94a3b8, 0.14); }
+}
+
+@container (max-width: 700px) {
+  .riskMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .preview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .preview > div:first-child, .previewResult { grid-column: 1 / -1; }
+}
+@container (max-width: 480px) {
+  .header { flex-direction: column; }
+  .exposure { grid-template-columns: 1fr; }
+  .positionList { overflow-x: auto; }
+  .positionHead, .positionRow { min-width: 480px; }
+  .preview { grid-template-columns: 1fr; }
+  .preview > div:first-child, .previewResult { grid-column: auto; }
+  .riskMetrics { grid-template-columns: 1fr; }
+  .riskTableWrap table { min-width: 520px; }
+  .riskMetricCard .metricTooltip { right: auto; left: 0; width: min(300px, calc(100cqw - 24px)); }
+}

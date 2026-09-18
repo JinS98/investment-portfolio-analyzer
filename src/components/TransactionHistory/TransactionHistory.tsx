@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import type { HoldingHistory, MarketType } from '../../types';
+import type { HoldingHistory } from '../../types';
+import { useDisplayCurrencyStore } from '../../store/displayCurrencyStore';
+import { formatHistoricalMoney } from '../../utils/displayCurrency';
 import { RecurringExecutionConfirmModal } from '../RecurringExecutionConfirmModal/RecurringExecutionConfirmModal';
 import styles from './TransactionHistory.module.scss';
 
@@ -21,16 +23,11 @@ interface TransactionHistoryProps {
   histories: HoldingHistory[];
   isSaving?: boolean;
   onDelete?: (history: HoldingHistory) => Promise<void>;
-  onConfirmRecurring?: (history: HoldingHistory, values: { price: number; quantity: number; fee: number; tax: number }) => Promise<void>;
+  onConfirmRecurring?: (
+    history: HoldingHistory,
+    values: { price: number; quantity: number; fee: number; tax: number },
+  ) => Promise<void>;
 }
-
-const money = (value: number, market: MarketType) => {
-  const formatted = value.toLocaleString('ko-KR', {
-    minimumFractionDigits: market === 'US' ? 2 : 0,
-    maximumFractionDigits: market === 'KR' ? 0 : 2,
-  });
-  return market === 'KR' ? `${formatted}원` : `$${formatted}`;
-};
 
 export function TransactionHistory({
   histories,
@@ -38,6 +35,7 @@ export function TransactionHistory({
   onDelete,
   onConfirmRecurring,
 }: TransactionHistoryProps) {
+  const displayCurrency = useDisplayCurrencyStore((state) => state.displayCurrency);
   const [type, setType] = useState<TransactionFilter>('ALL');
   const [source, setSource] = useState<SourceFilter>(() =>
     loadRecurringRuleFilter() ? 'RECURRING' : 'ALL',
@@ -55,7 +53,13 @@ export function TransactionHistory({
     const normalizedQuery = query.trim().toLowerCase();
     return histories
       .filter((history) => type === 'ALL' || history.type === type)
-      .filter((history) => source === 'ALL' || (source === 'RECURRING' ? history.source === 'RECURRING' : history.source !== 'RECURRING'))
+      .filter(
+        (history) =>
+          source === 'ALL' ||
+          (source === 'RECURRING'
+            ? history.source === 'RECURRING'
+            : history.source !== 'RECURRING'),
+      )
       .filter((history) => !recurringRuleId || history.recurringRuleId === recurringRuleId)
       .filter(
         (history) =>
@@ -81,6 +85,16 @@ export function TransactionHistory({
   const clearRecurringRuleFilter = () => {
     setRecurringRuleId('');
     setSource('ALL');
+    try {
+      sessionStorage.removeItem(recurringRuleFilterStorageKey);
+    } catch {
+      // Session storage is optional for this navigation aid.
+    }
+  };
+
+  const selectSourceFilter = (nextSource: SourceFilter) => {
+    setSource(nextSource);
+    setRecurringRuleId('');
     try {
       sessionStorage.removeItem(recurringRuleFilterStorageKey);
     } catch {
@@ -152,7 +166,7 @@ export function TransactionHistory({
               key={value}
               type="button"
               className={source === value ? styles.active : undefined}
-              onClick={() => setSource(value)}
+              onClick={() => selectSourceFilter(value)}
             >
               {label}
             </button>
@@ -191,7 +205,9 @@ export function TransactionHistory({
       {recurringRuleId ? (
         <div className={styles.ruleFilterNotice}>
           <span>{selectedRecurringRuleName ?? '선택한 규칙'} 자동매수 이력만 표시 중</span>
-          <button type="button" onClick={clearRecurringRuleFilter}>필터 해제</button>
+          <button type="button" onClick={clearRecurringRuleFilter}>
+            필터 해제
+          </button>
         </div>
       ) : null}
       {deleteError && (
@@ -235,7 +251,9 @@ export function TransactionHistory({
                       {history.source === 'RECURRING' ? (
                         <span className={styles.recurringSource}>
                           <strong>{history.recurringRuleName ?? '적립식 자동매수'}</strong>
-                          <small>예정 {history.scheduledDate ?? history.date} · 반영 {history.date}</small>
+                          <small>
+                            예정 {history.scheduledDate ?? history.date} · 반영 {history.date}
+                          </small>
                         </span>
                       ) : (
                         <span className={styles.manualSource}>수동 기록</span>
@@ -244,10 +262,33 @@ export function TransactionHistory({
                     <td>
                       <strong>{history.name ?? history.ticker}</strong>
                     </td>
-                    <td>{money(history.price, history.market)}</td>
+                    <td>
+                      {formatHistoricalMoney(
+                        history.price,
+                        history.market,
+                        displayCurrency,
+                        history.exchangeRate,
+                      )}
+                    </td>
                     <td>{history.quantity.toLocaleString('ko-KR')}주</td>
-                    <td>{money(history.grossAmount, history.market)}</td>
-                    <td>{cost ? money(cost, history.market) : '-'}</td>
+                    <td>
+                      {formatHistoricalMoney(
+                        history.grossAmount,
+                        history.market,
+                        displayCurrency,
+                        history.exchangeRate,
+                      )}
+                    </td>
+                    <td>
+                      {cost
+                        ? formatHistoricalMoney(
+                            cost,
+                            history.market,
+                            displayCurrency,
+                            history.exchangeRate,
+                          )
+                        : '-'}
+                    </td>
                     <td
                       className={
                         history.type === 'SELL'
@@ -257,13 +298,32 @@ export function TransactionHistory({
                           : undefined
                       }
                     >
-                      {history.type === 'SELL' ? money(history.realizedPnL, history.market) : '-'}
+                      {history.type === 'SELL'
+                        ? formatHistoricalMoney(
+                            history.realizedPnL,
+                            history.market,
+                            displayCurrency,
+                            history.exchangeRate,
+                          )
+                        : '-'}
                     </td>
                     {onConfirmRecurring && (
                       <td>
-                        {history.source === 'RECURRING' && history.portfolioType === 'REAL' && history.recurringExecutionStatus !== 'CONFIRMED' ? (
-                          <button type="button" className={styles.confirmButton} onClick={() => setConfirmingHistory(history)}>확인 필요</button>
-                        ) : history.source === 'RECURRING' && history.portfolioType === 'REAL' ? <span className={styles.confirmed}>확정</span> : '-'}
+                        {history.source === 'RECURRING' &&
+                        history.portfolioType === 'REAL' &&
+                        history.recurringExecutionStatus !== 'CONFIRMED' ? (
+                          <button
+                            type="button"
+                            className={styles.confirmButton}
+                            onClick={() => setConfirmingHistory(history)}
+                          >
+                            확인 필요
+                          </button>
+                        ) : history.source === 'RECURRING' && history.portfolioType === 'REAL' ? (
+                          <span className={styles.confirmed}>확정</span>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                     )}
                     {onDelete && (

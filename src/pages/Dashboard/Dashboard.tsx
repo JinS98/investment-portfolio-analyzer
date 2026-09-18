@@ -6,27 +6,29 @@ import { MarketDataPanel } from '../../components/MarketDataPanel/MarketDataPane
 import { PortfolioManager } from '../../components/PortfolioManager/PortfolioManager';
 import { PortfolioAllocationChart } from '../../components/PortfolioAllocationChart/PortfolioAllocationChart';
 import { PortfolioPerformanceChart } from '../../components/PortfolioPerformanceChart/PortfolioPerformanceChart';
-import { RiskGuidePanel } from '../../components/RiskGuidePanel/RiskGuidePanel';
+import { PortfolioRiskDiagnostic } from '../../components/PortfolioRiskDiagnostic/PortfolioRiskDiagnostic';
 import { PortfolioHistoryPanel } from '../../components/PortfolioHistoryPanel/PortfolioHistoryPanel';
 import { MonthlyComparisonPanel } from '../../components/MonthlyComparisonPanel/MonthlyComparisonPanel';
+import { RecurringInvestmentAnalysisPanel } from '../../components/RecurringInvestmentAnalysisPanel/RecurringInvestmentAnalysisPanel';
+import { PortfolioAlertSummary } from '../../components/PortfolioAlertSummary/PortfolioAlertSummary';
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import styles from './Dashboard.module.scss';
 
 type PanelId =
-  'market' | 'manager' | 'allocation' | 'performance' | 'history' | 'monthly' | 'guide' | 'risk';
+  'market' | 'manager' | 'allocation' | 'recurring' | 'performance' | 'history' | 'monthly' | 'guide';
 type DashboardView = 'dashboard' | 'analysis';
 const EMPTY_HOLDINGS: import('../../types').Holding[] = [];
 const DEFAULT_PANEL_ORDER: PanelId[] = [
   'market',
   'manager',
   'allocation',
+  'recurring',
   'performance',
   'history',
   'monthly',
   'guide',
-  'risk',
 ];
 
 interface PanelRow {
@@ -66,6 +68,9 @@ const Dashboard = ({ view }: DashboardProps) => {
       ? (portfolioLedgers[realPortfolio.id]?.holdings ?? EMPTY_HOLDINGS)
       : EMPTY_HOLDINGS;
   }, [portfolioLedgers, realPortfolio]);
+  const realHistories = realPortfolio
+    ? (portfolioLedgers[realPortfolio.id]?.histories ?? [])
+    : [];
 
   const addMarketSearchBuyRecord = userId && realPortfolio
     ? (preset: { ticker: string; name: string; market: 'KR' | 'US'; price: number }) => {
@@ -87,6 +92,7 @@ const Dashboard = ({ view }: DashboardProps) => {
     exchangeRate,
     riskData,
     historySaveError,
+    priceRefreshFailures,
     refreshPrices,
     loadHistoricalData,
   } = usePortfolio();
@@ -94,6 +100,7 @@ const Dashboard = ({ view }: DashboardProps) => {
   const lastAutoRefreshKey = useRef<string | null>(null);
   const loadHistoricalDataRef = useRef(loadHistoricalData);
   const lastRiskRefresh = useRef<string | null>(null);
+  const recurringAnalysisPanelRef = useRef<HTMLDivElement>(null);
   const [isRiskLoading, setIsRiskLoading] = useState(false);
   const [panelRows, setPanelRows] = useState<PanelRow[]>(() => {
     try {
@@ -117,11 +124,6 @@ const Dashboard = ({ view }: DashboardProps) => {
   const autoRefreshKey = realHoldings
     .map((holding) => `${holding.market}:${holding.ticker}:${holding.lastTransactionAt ?? ''}`)
     .join('|');
-  const stockLabel = (ticker: string) => {
-    const stock = portfolio.find((item) => item.ticker === ticker);
-    return stock?.name ?? ticker;
-  };
-
   const getPanelPosition = (id: PanelId) => {
     const rowIndex = panelRows.findIndex((row) => row.ids.includes(id));
     const row = panelRows[rowIndex];
@@ -254,6 +256,25 @@ const Dashboard = ({ view }: DashboardProps) => {
   }, [panelRows]);
 
   useEffect(() => {
+    if (view !== 'analysis') return;
+    try {
+      if (sessionStorage.getItem('focus-recurring-investment-analysis') !== 'true') return;
+      sessionStorage.removeItem('focus-recurring-investment-analysis');
+    } catch {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      recurringAnalysisPanelRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [view]);
+
+  useEffect(() => {
     if (isPortfolioLoading || !autoRefreshKey) {
       lastAutoRefreshKey.current = null;
       return;
@@ -337,6 +358,17 @@ const Dashboard = ({ view }: DashboardProps) => {
           </button> */}
         </div>
       </header>
+      {view === 'dashboard' && userId ? (
+        <PortfolioAlertSummary
+          holdings={realHoldings}
+          histories={realHistories}
+          portfolioHistory={portfolioHistory}
+          prices={prices}
+          exchangeRate={exchangeRate}
+          lastUpdated={lastUpdated}
+          failedTickers={priceRefreshFailures}
+        />
+      ) : null}
       <div className={styles.componentGrid}>
         <div {...panelProps('market')}>
           <span className={styles.dragHandle} aria-hidden="true">
@@ -366,6 +398,17 @@ const Dashboard = ({ view }: DashboardProps) => {
             exchangeRate={exchangeRate}
           />
         </div>
+        <div {...panelProps('recurring')} ref={recurringAnalysisPanelRef}>
+          <span className={styles.dragHandle} aria-hidden="true">
+            ⠿
+          </span>
+          {renderResizeHandle('recurring')}
+          <RecurringInvestmentAnalysisPanel
+            portfolioId={realPortfolio?.id}
+            histories={realHistories}
+            prices={prices}
+          />
+        </div>
         <div {...panelProps('performance')}>
           <span className={styles.dragHandle} aria-hidden="true">
             ⠿
@@ -374,6 +417,8 @@ const Dashboard = ({ view }: DashboardProps) => {
           <PortfolioPerformanceChart
             portfolio={portfolio}
             historicalData={historicalData}
+            portfolioHistory={portfolioHistory}
+            holdingHistories={realHistories}
             exchangeRate={exchangeRate}
             isLoading={isRiskLoading}
           />
@@ -392,15 +437,20 @@ const Dashboard = ({ view }: DashboardProps) => {
           {renderResizeHandle('monthly')}
           <MonthlyComparisonPanel history={portfolioHistory} />
         </div>
-        {riskData && (
-          <div {...panelProps('guide')}>
+        <div {...panelProps('guide')}>
             <span className={styles.dragHandle} aria-hidden="true">
               ⠿
             </span>
             {renderResizeHandle('guide')}
-            <RiskGuidePanel riskData={riskData} isLoading={isRiskLoading} />
-          </div>
-        )}
+            <PortfolioRiskDiagnostic
+              portfolioId={realPortfolio?.id}
+              holdings={realHoldings}
+              prices={prices}
+              exchangeRate={exchangeRate}
+              riskData={riskData}
+              isRiskLoading={isRiskLoading}
+            />
+        </div>
 
         {isPortfolioLoading && (
           <p className={styles.storageStatus}>저장된 포트폴리오를 불러오는 중...</p>
@@ -438,105 +488,6 @@ const Dashboard = ({ view }: DashboardProps) => {
         <section className={styles.placeholder}>
           <p>🚦 월별 투자 시그널 패널 (Week 8)</p>
         </section>
-        <div {...panelProps('risk')}>
-          <span className={styles.dragHandle} aria-hidden="true">
-            ⠿
-          </span>
-          {renderResizeHandle('risk')}
-          <section className={styles.riskSection} aria-labelledby="risk-title">
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 id="risk-title">리스크 분석</h2>
-                <p>최근 90일 일봉 기준으로 계산합니다.</p>
-              </div>
-              {riskData && (
-                <span className={styles.analysisCount}>
-                  분석 종목 {riskData.analyzedTickers.length}개
-                </span>
-              )}
-            </div>
-
-            {isRiskLoading && (
-              <p className={styles.riskStatus}>
-                일봉 데이터를 불러와 리스크를 계산하는 중입니다...
-              </p>
-            )}
-            {!isRiskLoading && !riskData && portfolio.length > 0 && (
-              <p className={styles.riskStatus}>현재가를 불러온 뒤 리스크 분석을 준비합니다.</p>
-            )}
-
-            {!isRiskLoading && riskData && (
-              <>
-                <div className={styles.riskGrid}>
-                  <article className={styles.riskCard}>
-                    <span>연율 변동성</span>
-                    <strong>
-                      {riskData.volatility === null ? '-' : `${riskData.volatility.toFixed(2)}%`}
-                    </strong>
-                    <small>종목 비중을 반영한 평균</small>
-                  </article>
-                  <article className={styles.riskCard}>
-                    <span>최대 낙폭 (MDD)</span>
-                    <strong className={styles.negative}>
-                      {riskData.mdd === null ? '-' : `${riskData.mdd.toFixed(2)}%`}
-                    </strong>
-                    <small>분석 종목 중 가장 큰 하락폭</small>
-                  </article>
-                  <article className={styles.riskCard}>
-                    <span>상위 2종목 집중도</span>
-                    <strong>{riskData.concentration.toFixed(2)}%</strong>
-                    <small>비중이 높은 두 종목의 합계</small>
-                  </article>
-                  <article className={styles.riskCard}>
-                    <span>최대 단일 종목 비중</span>
-                    <strong>{riskData.maxWeight.toFixed(2)}%</strong>
-                    <small>현재가와 환율을 반영</small>
-                  </article>
-                </div>
-
-                {riskData.insufficientTickers.length > 0 && (
-                  <p className={styles.riskWarning}>
-                    일봉 데이터가 부족해 제외된 종목:{' '}
-                    {riskData.insufficientTickers.map(stockLabel).join(', ')}
-                  </p>
-                )}
-
-                <div className={styles.riskTableWrap}>
-                  <table className={styles.riskTable}>
-                    <thead>
-                      <tr>
-                        <th>종목</th>
-                        <th>일봉 수</th>
-                        <th>연율 변동성</th>
-                        <th>MDD</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {riskData.stocks.map((stock) => (
-                        <tr key={stock.ticker}>
-                          <td>{stockLabel(stock.ticker)}</td>
-                          <td>{stock.observations}</td>
-                          <td>
-                            {stock.volatility === null
-                              ? '데이터 부족'
-                              : `${stock.volatility.toFixed(2)}%`}
-                          </td>
-                          <td
-                            className={
-                              stock.mdd !== null && stock.mdd < 0 ? styles.negative : undefined
-                            }
-                          >
-                            {stock.mdd === null ? '데이터 부족' : `${stock.mdd.toFixed(2)}%`}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </section>
-        </div>
       </div>
     </main>
   );

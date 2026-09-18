@@ -19,6 +19,7 @@ import { useAuthStore } from '../store/authStore';
 export const usePortfolio = () => {
   const userId = useAuthStore((state) => state.user?.uid);
   const [historySaveError, setHistorySaveError] = useState('');
+  const [priceRefreshFailures, setPriceRefreshFailures] = useState<string[]>([]);
   const {
     portfolio,
     portfolios,
@@ -56,10 +57,18 @@ export const usePortfolio = () => {
 
     try {
       const tickers = snapshotPositions.map((position) => position.ticker);
-      const [newPrices, exchangeRate] = await Promise.all([
-        tickers.length ? fetchCurrentPrices(tickers) : Promise.resolve({}),
+      const [priceResults, exchangeRate] = await Promise.all([
+        Promise.allSettled(tickers.map(async (ticker) => ({ ticker, prices: await fetchCurrentPrices([ticker]) }))),
         fetchUsdKrwExchangeRate(),
       ]);
+      const newPrices: typeof prices = {};
+      const failures: string[] = [];
+      priceResults.forEach((result, index) => {
+        if (result.status === 'fulfilled') Object.assign(newPrices, result.value.prices);
+        else failures.push(tickers[index]);
+      });
+      if (tickers.length && !Object.keys(newPrices).length) throw new Error('현재가를 갱신하지 못했습니다.');
+      setPriceRefreshFailures(failures);
       const mergedPrices = { ...prices, ...newPrices };
       setPrices(mergedPrices);
       setExchangeRate(exchangeRate);
@@ -82,6 +91,7 @@ export const usePortfolio = () => {
       }
     } catch (err) {
       console.error('[usePortfolio] refreshPrices error:', err);
+      setPriceRefreshFailures(snapshotPositions.map((position) => position.ticker));
       setError(true);
     } finally {
       setLoading(false);
@@ -147,14 +157,14 @@ export const usePortfolio = () => {
    */
   const loadHistoricalData = useCallback(
     async (days = 90) => {
-      if (!portfolio.length) {
+      if (!snapshotPositions.length) {
         setHistoricalData({});
         setRiskData(null);
         return null;
       }
 
       const result: Record<string, Awaited<ReturnType<typeof fetchCandles>>> = {};
-      const tickers = [...new Set(portfolio.map((stock) => stock.ticker))];
+      const tickers = [...new Set(snapshotPositions.map((stock) => stock.ticker))];
       const failures: string[] = [];
       for (let index = 0; index < tickers.length; index += 4) {
         const batch = tickers.slice(index, index + 4);
@@ -167,10 +177,14 @@ export const usePortfolio = () => {
         });
       }
       if (!Object.keys(result).length) throw new Error('일봉 데이터를 불러오지 못했습니다.');
-      if (failures.length) console.warn('[usePortfolio] candle requests failed:', failures);
+      if (failures.length) {
+        failures.forEach((ticker) => { result[ticker] = []; });
+        console.warn('[usePortfolio] candle requests failed:', failures);
+      }
 
-      const weightedValues = portfolio.map((stock) => {
-        const currentPrice = prices[stock.ticker] ?? stock.buyPrice;
+      const weightedValues = snapshotPositions.map((stock) => {
+        const fallbackPrice = 'averagePrice' in stock ? stock.averagePrice : stock.buyPrice;
+        const currentPrice = prices[stock.ticker] ?? fallbackPrice;
         const exchangeMultiplier = stock.market === 'US' ? (exchangeRate?.rate ?? 0) : 1;
         return { ticker: stock.ticker, value: currentPrice * stock.quantity * exchangeMultiplier };
       });
@@ -193,7 +207,7 @@ export const usePortfolio = () => {
       setRiskData(risk);
       return risk;
     },
-    [portfolio, prices, exchangeRate, setHistoricalData, setRiskData],
+    [snapshotPositions, prices, exchangeRate, setHistoricalData, setRiskData],
   );
 
   return {
@@ -205,6 +219,7 @@ export const usePortfolio = () => {
     computedData,
     riskData,
     historySaveError,
+    priceRefreshFailures,
     isLoading,
     isError,
     lastUpdated,

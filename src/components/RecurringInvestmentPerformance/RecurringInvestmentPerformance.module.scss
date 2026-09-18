@@ -1,0 +1,191 @@
+@use '../../styles/variables' as *;
+
+.analysis {
+  container-type: inline-size;
+  margin-top: $spacing-md;
+  padding: $spacing-md;
+  border-top: 1px solid $color-border;
+  background: rgba($color-surface, 0.55);
+}
+
+.standalone {
+  margin-top: 0;
+  padding: 0;
+  border-top: 0;
+  background: transparent;
+
+  .header h4 { font-size: 1.2rem; }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+
+  h4, p { margin: 0; }
+  h4 { font-size: 0.95rem; }
+  p { margin-top: 3px; color: $color-text-muted; font-size: 0.75rem; }
+}
+
+.rulePicker {
+  position: relative;
+  width: min(100%, 220px);
+}
+
+.rulePickerTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 11px;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  background: $color-surface;
+  color: $color-text;
+  text-align: left;
+  font: inherit;
+  font-size: 0.82rem;
+
+  svg {
+    flex: 0 0 auto;
+    transition: transform 160ms ease;
+  }
+
+  &[aria-expanded='true'] {
+    border-color: #8fa6c2;
+    box-shadow: 0 0 0 3px rgba(#64748b, 0.12);
+
+    svg { transform: rotate(180deg); }
+  }
+}
+
+.analysis .rulePickerOptions {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 5px);
+  right: 0;
+  left: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid rgba($color-border, 0.9);
+  border-radius: 12px;
+  background: $color-surface;
+  box-shadow: 0 14px 30px rgba(25, 31, 40, 0.12);
+  list-style: none;
+
+  li {
+    display: block;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  button {
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: $color-text;
+    text-align: left;
+    font: inherit;
+    font-size: 0.82rem;
+
+    &:hover { background: #f2f4f6; }
+  }
+
+  [aria-selected='true'] button {
+    background: rgba(#64748b, 0.1);
+    font-weight: 700;
+  }
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $spacing-sm;
+  margin-top: $spacing-sm;
+
+  > div { padding: 12px; border-radius: 11px; background: #f2f4f6; }
+  small { display: block; margin-bottom: 5px; color: $color-text-muted; font-size: 0.7rem; }
+  strong { font-size: 0.92rem; }
+}
+
+.content { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr); gap: $spacing-lg; margin-top: $spacing-lg; }
+.comparison, .trend { min-width: 0; }
+.comparison h5, .trend h5 { margin: 0 0 $spacing-sm; font-size: 0.82rem; }
+.comparisonHead, .comparisonRow { display: grid; grid-template-columns: 90px repeat(4, minmax(82px, 1fr)); gap: $spacing-sm; align-items: center; padding: 9px 6px; font-size: 0.74rem; text-align: right; }
+.comparisonHead { color: $color-text-muted; border-bottom: 1px solid $color-border; }
+.comparisonHead span:first-child, .comparisonRow b { text-align: left; }
+.comparisonRow + .comparisonRow { border-top: 1px solid rgba($color-border, 0.65); }
+.comparisonRow b { font-size: 0.76rem; }
+
+.trendRow { display: grid; grid-template-columns: 92px minmax(70px, 1fr) auto; align-items: center; gap: $spacing-sm; padding: 7px 0; }
+.trendRow > div:first-child { display: grid; }
+.trendRow b, .trendRow strong { font-size: 0.72rem; }
+.trendRow span { color: $color-text-muted; font-size: 0.66rem; }
+.bar { height: 6px; overflow: hidden; border-radius: 99px; background: rgba(#64748b, 0.13); }
+.bar i { display: block; height: 100%; border-radius: inherit; background: #64748b; }
+.empty { margin: 0; padding: $spacing-md 0; color: $color-text-muted; font-size: 0.76rem; }
+.positive { color: $color-bull; }
+.negative { color: $color-bear; }
+
+:global(:root[data-theme='dark']) {
+  .analysis { border-color: #354052; background: rgba(#171b24, 0.35); }
+  .rulePickerTrigger, .rulePickerOptions { border-color: #3a4558; background: #202632; color: #eef2f7; }
+  .rulePickerOptions button { color: #eef2f7; }
+  .rulePickerOptions button:hover { background: #303949; }
+  .rulePickerOptions [aria-selected='true'] button { background: rgba(#94a3b8, 0.14); }
+  .summary > div { background: #202632; }
+  .comparisonHead, .comparisonRow + .comparisonRow { border-color: #354052; }
+  .bar { background: rgba(#aeb8c7, 0.14); }
+  .bar i { background: #8290a3; }
+}
+
+@media (max-width: 900px) {
+  .content { grid-template-columns: 1fr; }
+  .comparison { overflow-x: auto; }
+  .comparisonHead, .comparisonRow { min-width: 570px; }
+}
+
+@container (max-width: 760px) {
+  .content {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
+
+  .comparison {
+    overflow-x: auto;
+    padding-bottom: 3px;
+  }
+
+  .comparisonHead,
+  .comparisonRow {
+    min-width: 570px;
+  }
+}
+
+@container (max-width: 480px) {
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rulePicker { width: 100%; }
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trendRow { grid-template-columns: 82px minmax(50px, 1fr) auto; }
+}
+
+@include mobile {
+  .header { align-items: stretch; flex-direction: column; }
+  .rulePicker { width: 100%; }
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trendRow { grid-template-columns: 82px minmax(50px, 1fr) auto; }
+}

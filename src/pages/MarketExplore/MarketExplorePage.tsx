@@ -19,6 +19,8 @@ import {
 import { fetchStockInsights, type StockInsights } from '../../services/marketInsightsApi';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
+import { useDisplayCurrencyStore, type DisplayCurrency } from '../../store/displayCurrencyStore';
+import { formatCurrentMoney } from '../../utils/displayCurrency';
 import type { Holding, HoldingHistoryInput } from '../../types';
 import type {
   Currency,
@@ -37,15 +39,28 @@ const EMPTY_HOLDINGS: Holding[] = [];
 
 const isKoreanMarket = (market: string) => ['KOSPI', 'KOSDAQ', 'KR_ETC'].includes(market);
 
-const money = (price: number | null, currency: 'KRW' | 'USD') => {
+const money = (
+  price: number | null,
+  currency: 'KRW' | 'USD',
+  displayCurrency: DisplayCurrency,
+  exchangeRate?: number | null,
+) => {
   if (price === null) return '시세 미조회';
-  const formatted = price.toLocaleString('ko-KR', { maximumFractionDigits: currency === 'USD' ? 2 : 0 });
-  return currency === 'KRW' ? `${formatted}원` : `$${formatted}`;
+  return formatCurrentMoney(price, currency === 'KRW' ? 'KR' : 'US', displayCurrency, exchangeRate);
 };
 
-const compactMoney = (value: number | null, currency: 'KRW' | 'USD') => {
+const compactMoney = (
+  value: number | null,
+  currency: 'KRW' | 'USD',
+  displayCurrency: DisplayCurrency,
+  exchangeRate?: number | null,
+) => {
   if (value === null) return '-';
-  if (currency === 'USD') return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (currency === 'USD' && displayCurrency === 'USD') return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (currency === 'USD') {
+    if (!exchangeRate) return '환율 없음';
+    value *= exchangeRate;
+  }
   if (value >= 1_000_000_000_000) return `${(value / 1_000_000_000_000).toFixed(1)}조원`;
   if (value >= 100_000_000) return `${(value / 100_000_000).toFixed(1)}억원`;
   return `${(value / 10_000).toFixed(0)}만원`;
@@ -75,9 +90,13 @@ async function loadSearchChangeRates(stocks: MarketExploreStock[]): Promise<Map<
 function MiniLineChart({
   candles,
   currency,
+  displayCurrency,
+  exchangeRate,
 }: {
   candles: MarketIndicatorCandle[];
   currency?: Currency;
+  displayCurrency: DisplayCurrency;
+  exchangeRate?: number | null;
 }) {
   const gradientId = useId();
   const chart = useMemo(() => {
@@ -108,8 +127,14 @@ function MiniLineChart({
       min,
       max,
       changeRate,
-      startDate: new Date(candles[0].timestamp).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }),
-      endDate: new Date(candles.at(-1)!.timestamp).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }),
+      startDate: new Date(candles[0].timestamp).toLocaleDateString('ko-KR', {
+        month: 'numeric',
+        day: 'numeric',
+      }),
+      endDate: new Date(candles.at(-1)!.timestamp).toLocaleDateString('ko-KR', {
+        month: 'numeric',
+        day: 'numeric',
+      }),
     };
   }, [candles]);
   if (!chart) return null;
@@ -117,7 +142,11 @@ function MiniLineChart({
     <div
       className={`${styles.chartWrap} ${chart.changeRate >= 0 ? styles.positiveChart : styles.negativeChart}`}
     >
-      <svg className={styles.miniChart} viewBox={`0 0 ${chart.width} ${chart.height}`} aria-label="최근 30일 지수 흐름">
+      <svg
+        className={styles.miniChart}
+        viewBox={`0 0 ${chart.width} ${chart.height}`}
+        aria-label="최근 30일 지수 흐름"
+      >
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
@@ -136,14 +165,33 @@ function MiniLineChart({
         <path d={chart.area} fill={`url(#${gradientId})`} />
         <polyline points={chart.line} fill="none" />
         <circle cx={chart.points.at(-1)!.x} cy={chart.points.at(-1)!.y} r="4" />
-        <text x={chart.padding.left} y={chart.height - 7}>{chart.startDate}</text>
-        <text x={chart.width - chart.padding.right} y={chart.height - 7} textAnchor="end">{chart.endDate}</text>
+        <text x={chart.padding.left} y={chart.height - 7}>
+          {chart.startDate}
+        </text>
+        <text x={chart.width - chart.padding.right} y={chart.height - 7} textAnchor="end">
+          {chart.endDate}
+        </text>
       </svg>
       <div className={styles.chartStats}>
-        <span>저점 <b>{currency ? money(chart.min, currency) : `${chart.min.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}pt`}</b></span>
-        <span>고점 <b>{currency ? money(chart.max, currency) : `${chart.max.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}pt`}</b></span>
+        <span>
+          저점{' '}
+          <b>
+            {currency
+              ? money(chart.min, currency, displayCurrency, exchangeRate)
+              : `${chart.min.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}pt`}
+          </b>
+        </span>
+        <span>
+          고점{' '}
+          <b>
+            {currency
+              ? money(chart.max, currency, displayCurrency, exchangeRate)
+              : `${chart.max.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}pt`}
+          </b>
+        </span>
         <strong className={chart.changeRate >= 0 ? styles.positive : styles.negative}>
-          {chart.changeRate > 0 ? '+' : ''}{chart.changeRate.toFixed(2)}%
+          {chart.changeRate > 0 ? '+' : ''}
+          {chart.changeRate.toFixed(2)}%
         </strong>
       </div>
     </div>
@@ -186,7 +234,15 @@ function IndicatorSparkline({
       preserveAspectRatio="none"
       aria-hidden="true"
     >
-      {chart.baselineY !== null ? <line className={styles.previousCloseLine} x1="0" x2="100" y1={chart.baselineY} y2={chart.baselineY} /> : null}
+      {chart.baselineY !== null ? (
+        <line
+          className={styles.previousCloseLine}
+          x1="0"
+          x2="100"
+          y1={chart.baselineY}
+          y2={chart.baselineY}
+        />
+      ) : null}
       <polyline points={chart.points} />
     </svg>
   );
@@ -238,6 +294,8 @@ export function MarketExplorePage() {
   const closeTransactionModal = usePortfolioStore((state) => state.closeTransactionModal);
   const setTransactionModalType = usePortfolioStore((state) => state.setTransactionModalType);
   const addHoldingHistory = usePortfolioStore((state) => state.addHoldingHistory);
+  const exchangeRate = usePortfolioStore((state) => state.exchangeRate);
+  const displayCurrency = useDisplayCurrencyStore((state) => state.displayCurrency);
   const realPortfolio = useMemo(
     () => portfolios.find((portfolio) => portfolio.type === 'REAL') ?? null,
     [portfolios],
@@ -262,7 +320,9 @@ export function MarketExplorePage() {
             ...krIndicators.map((indicator) => ({ ...indicator, changeRate: null, candles: [] })),
             ...usIndicators,
           ]);
-          usIndicators.forEach((indicator) => candleCache.current.set(indicator.symbol, indicator.candles));
+          usIndicators.forEach((indicator) =>
+            candleCache.current.set(indicator.symbol, indicator.candles),
+          );
         }
       })
       .catch((cause: unknown) => {
@@ -289,7 +349,10 @@ export function MarketExplorePage() {
       try {
         const intradayCandles = await fetchMarketIndicatorCandles(symbol, 200, '1m');
         if (intradayCandles.length >= 2) {
-          return { candles: intradayCandles, previousClose: dailyCandles.at(-2)?.closePrice ?? null };
+          return {
+            candles: intradayCandles,
+            previousClose: dailyCandles.at(-2)?.closePrice ?? null,
+          };
         }
       } catch {
         // Fall through to daily candles when intraday data is unavailable.
@@ -336,8 +399,12 @@ export function MarketExplorePage() {
       : selectedIndicator === 'KOSPI' || selectedIndicator === 'KOSDAQ'
         ? fetchMarketIndicatorCandles(selectedIndicator, 30)
         : fetchUsMarketIndices().then((indices) => {
-            indices.forEach((indicator) => candleCache.current.set(indicator.symbol, indicator.candles));
-            return indices.find((indicator) => indicator.symbol === selectedIndicator)?.candles ?? [];
+            indices.forEach((indicator) =>
+              candleCache.current.set(indicator.symbol, indicator.candles),
+            );
+            return (
+              indices.find((indicator) => indicator.symbol === selectedIndicator)?.candles ?? []
+            );
           });
     void request
       .then((candles) => {
@@ -419,7 +486,9 @@ export function MarketExplorePage() {
         .catch((cause: unknown) => {
           if (!controller.signal.aborted) {
             setError(
-              cause instanceof Error ? cause.message : '종목 검색에 실패했습니다. 다시 시도해 주세요.',
+              cause instanceof Error
+                ? cause.message
+                : '종목 검색에 실패했습니다. 다시 시도해 주세요.',
             );
           }
         })
@@ -434,9 +503,7 @@ export function MarketExplorePage() {
   }, [query]);
 
   const visibleStocks = useMemo(() => {
-    const source = query.trim()
-      ? searchResults
-      : overview;
+    const source = query.trim() ? searchResults : overview;
     return source.filter((stock) => {
       if (filter === 'ALL') return true;
       return filter === 'KR' ? isKoreanMarket(stock.market) : !isKoreanMarket(stock.market);
@@ -452,7 +519,11 @@ export function MarketExplorePage() {
       const [quotes, candlePage, insights] = await Promise.all([
         fetchQuotes([stock.symbol]),
         fetchCandlePage(stock.symbol, 30),
-        fetchStockInsights(stock.symbol, stock.name, isKoreanMarket(stock.market) ? 'KR' : 'US').catch(() => null),
+        fetchStockInsights(
+          stock.symbol,
+          stock.name,
+          isKoreanMarket(stock.market) ? 'KR' : 'US',
+        ).catch(() => null),
       ]);
       if (requestId === detailRequestId.current) {
         setStockDetail({ quote: quotes[0] ?? null, candles: candlePage.candles, insights });
@@ -528,43 +599,43 @@ export function MarketExplorePage() {
           <span>카드를 선택하면 최근 30일 흐름을 볼 수 있어요.</span>
         </div>
         <div className={styles.indicatorCards}>
-            {(['KOSPI', 'KOSDAQ', 'NASDAQ', 'SP500'] as const).map((symbol) => {
-              const indicator = indicators.find((item) => item.symbol === symbol);
-              return (
-                <button
-                  key={symbol}
-                  type="button"
-                  className={selectedIndicator === symbol ? styles.selectedIndicator : undefined}
-                  onClick={() => {
-                    setSelectedIndicator(symbol);
-                    setIsIndicatorDialogOpen(true);
-                  }}
-                  aria-pressed={selectedIndicator === symbol}
-                >
-                  <span>
-                    {symbol === 'KOSPI'
-                      ? '코스피'
-                      : symbol === 'KOSDAQ'
-                        ? '코스닥'
-                        : symbol === 'NASDAQ'
-                          ? '나스닥'
-                          : 'S&P 500'}
-                  </span>
-                  <span className={styles.indicatorValue}>
-                    <strong>
-                      {indicator
-                        ? `${indicator.price.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}pt`
-                        : '-'}
-                    </strong>
-                    <IndicatorSparkline
-                      candles={intradayIndicators[symbol]?.candles ?? []}
-                      positive={(indicator?.changeRate ?? 0) >= 0}
-                      previousClose={intradayIndicators[symbol]?.previousClose ?? null}
-                    />
-                  </span>
-                </button>
-              );
-            })}
+          {(['KOSPI', 'KOSDAQ', 'NASDAQ', 'SP500'] as const).map((symbol) => {
+            const indicator = indicators.find((item) => item.symbol === symbol);
+            return (
+              <button
+                key={symbol}
+                type="button"
+                className={selectedIndicator === symbol ? styles.selectedIndicator : undefined}
+                onClick={() => {
+                  setSelectedIndicator(symbol);
+                  setIsIndicatorDialogOpen(true);
+                }}
+                aria-pressed={selectedIndicator === symbol}
+              >
+                <span>
+                  {symbol === 'KOSPI'
+                    ? '코스피'
+                    : symbol === 'KOSDAQ'
+                      ? '코스닥'
+                      : symbol === 'NASDAQ'
+                        ? '나스닥'
+                        : 'S&P 500'}
+                </span>
+                <span className={styles.indicatorValue}>
+                  <strong>
+                    {indicator
+                      ? `${indicator.price.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}pt`
+                      : '-'}
+                  </strong>
+                  <IndicatorSparkline
+                    candles={intradayIndicators[symbol]?.candles ?? []}
+                    positive={(indicator?.changeRate ?? 0) >= 0}
+                    previousClose={intradayIndicators[symbol]?.previousClose ?? null}
+                  />
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -586,15 +657,28 @@ export function MarketExplorePage() {
                       ? '코스닥'
                       : selectedIndicator === 'NASDAQ'
                         ? '나스닥'
-                        : 'S&P 500'} 최근 30일
+                        : 'S&P 500'}{' '}
+                  최근 30일
                 </h2>
                 <p>일별 종가 기준 흐름입니다.</p>
               </div>
-              <button type="button" onClick={() => setIsIndicatorDialogOpen(false)} aria-label="지수 차트 닫기">
+              <button
+                type="button"
+                onClick={() => setIsIndicatorDialogOpen(false)}
+                aria-label="지수 차트 닫기"
+              >
                 ×
               </button>
             </div>
-            {indicatorCandles.length ? <MiniLineChart candles={indicatorCandles} /> : <p className={styles.chartLoading}>차트를 불러오는 중입니다.</p>}
+            {indicatorCandles.length ? (
+              <MiniLineChart
+                candles={indicatorCandles}
+                displayCurrency={displayCurrency}
+                exchangeRate={exchangeRate?.rate}
+              />
+            ) : (
+              <p className={styles.chartLoading}>차트를 불러오는 중입니다.</p>
+            )}
           </section>
         </div>
       )}
@@ -674,7 +758,9 @@ export function MarketExplorePage() {
                   <span className={styles.stockName}>
                     <strong>{stock.name}</strong>
                   </span>
-                  <span className={styles.stockPrice}>{money(stock.price, stock.currency)}</span>
+                  <span className={styles.stockPrice}>
+                    {money(stock.price, stock.currency, displayCurrency, exchangeRate?.rate)}
+                  </span>
                   <span
                     className={
                       stock.changeRate === null
@@ -691,7 +777,13 @@ export function MarketExplorePage() {
                       : `${stock.changeRate > 0 ? '+' : ''}${(stock.changeRate * 100).toFixed(2)}%`}
                   </span>
                   <span className={styles.stockMeta}>
-                    거래대금 {compactMoney(stock.tradingAmount, stock.currency)}
+                    거래대금{' '}
+                    {compactMoney(
+                      stock.tradingAmount,
+                      stock.currency,
+                      displayCurrency,
+                      exchangeRate?.rate,
+                    )}
                   </span>
                 </button>
               </li>
@@ -719,11 +811,17 @@ export function MarketExplorePage() {
                 <StockAvatar name={selectedStock.name} symbol={selectedStock.symbol} />
                 <div>
                   <h2 id="stock-drawer-title">{selectedStock.name}</h2>
-                  <p>{selectedStock.symbol} · {selectedStock.market}</p>
+                  <p>
+                    {selectedStock.symbol} · {selectedStock.market}
+                  </p>
                 </div>
               </div>
               <div className={styles.drawerActions}>
-                <button type="button" className={styles.addStockButton} onClick={addStockToPortfolio}>
+                <button
+                  type="button"
+                  className={styles.addStockButton}
+                  onClick={addStockToPortfolio}
+                >
                   + 담기
                 </button>
                 <button
@@ -738,7 +836,9 @@ export function MarketExplorePage() {
             </header>
 
             {portfolioActionNotice ? (
-              <p className={styles.portfolioActionNotice} role="status">{portfolioActionNotice}</p>
+              <p className={styles.portfolioActionNotice} role="status">
+                {portfolioActionNotice}
+              </p>
             ) : null}
 
             {isDetailLoading ? (
@@ -751,20 +851,32 @@ export function MarketExplorePage() {
               <div className={styles.detailError} role="alert">
                 <strong>상세 정보를 불러오지 못했습니다.</strong>
                 <span>{detailError}</span>
-                <button type="button" onClick={() => void loadStockDetail(selectedStock)}>다시 시도</button>
+                <button type="button" onClick={() => void loadStockDetail(selectedStock)}>
+                  다시 시도
+                </button>
               </div>
             ) : stockDetail ? (
               <div className={styles.drawerContent}>
                 <section className={styles.currentQuote} aria-label="현재가">
                   <span>현재가</span>
-                  <strong>{money(stockDetail.quote?.price ?? selectedStock.price, selectedStock.currency)}</strong>
+                  <strong>
+                    {money(
+                      stockDetail.quote?.price ?? selectedStock.price,
+                      selectedStock.currency,
+                      displayCurrency,
+                      exchangeRate?.rate,
+                    )}
+                  </strong>
                   <small>
                     {stockDetail.quote?.timestamp
                       ? `기준 ${new Date(stockDetail.quote.timestamp).toLocaleString('ko-KR')}`
                       : '현재 시세 기준'}
                   </small>
                 </section>
-                <section className={styles.fundamentalsSection} aria-labelledby="fundamentals-title">
+                <section
+                  className={styles.fundamentalsSection}
+                  aria-labelledby="fundamentals-title"
+                >
                   <div>
                     <h3 id="fundamentals-title">핵심 재무 지표</h3>
                     <p>최근 공시 기준으로 제공되는 참고 정보입니다.</p>
@@ -779,12 +891,19 @@ export function MarketExplorePage() {
                       ].map(([label, value, unit]) => (
                         <div key={label}>
                           <dt>{label}</dt>
-                          <dd>{typeof value === 'number' ? `${value.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}${unit}` : '-'}</dd>
+                          <dd>
+                            {typeof value === 'number'
+                              ? `${value.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}${unit}`
+                              : '-'}
+                          </dd>
                         </div>
                       ))}
                     </dl>
                   ) : (
-                    <p className={styles.insightUnavailable}>{stockDetail.insights?.fundamentalsMessage ?? '재무 지표를 확인할 수 없습니다.'}</p>
+                    <p className={styles.insightUnavailable}>
+                      {stockDetail.insights?.fundamentalsMessage ??
+                        '재무 지표를 확인할 수 없습니다.'}
+                    </p>
                   )}
                 </section>
                 <section className={styles.dailyChartSection} aria-labelledby="daily-chart-title">
@@ -793,7 +912,12 @@ export function MarketExplorePage() {
                     <p>일별 종가 기준 흐름입니다.</p>
                   </div>
                   {stockDetail.candles.length >= 2 ? (
-                    <MiniLineChart candles={stockDetail.candles} currency={selectedStock.currency} />
+                    <MiniLineChart
+                      candles={stockDetail.candles}
+                      currency={selectedStock.currency}
+                      displayCurrency={displayCurrency}
+                      exchangeRate={exchangeRate?.rate}
+                    />
                   ) : (
                     <p className={styles.noChart}>표시할 일봉 데이터가 부족합니다.</p>
                   )}
@@ -809,13 +933,20 @@ export function MarketExplorePage() {
                         <li key={article.url}>
                           <a href={article.url} target="_blank" rel="noreferrer">
                             <strong>{article.title}</strong>
-                            <span>{article.source}{article.publishedAt ? ` · ${new Date(article.publishedAt).toLocaleDateString('ko-KR')}` : ''}</span>
+                            <span>
+                              {article.source}
+                              {article.publishedAt
+                                ? ` · ${new Date(article.publishedAt).toLocaleDateString('ko-KR')}`
+                                : ''}
+                            </span>
                           </a>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className={styles.insightUnavailable}>{stockDetail.insights?.newsMessage ?? '최근 관련 뉴스를 확인할 수 없습니다.'}</p>
+                    <p className={styles.insightUnavailable}>
+                      {stockDetail.insights?.newsMessage ?? '최근 관련 뉴스를 확인할 수 없습니다.'}
+                    </p>
                   )}
                 </section>
               </div>

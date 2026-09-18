@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { FiChevronDown, FiLogOut } from 'react-icons/fi';
 import { useAuth } from './hooks/useAuth';
 import Dashboard from './pages/Dashboard';
 import { TransactionHistoryPage } from './pages/TransactionHistory/TransactionHistoryPage';
 import { VirtualPortfolioPage } from './pages/VirtualPortfolio/VirtualPortfolioPage';
 import { MarketExplorePage } from './pages/MarketExplore';
 import { AuthDialog } from './components/AuthDialog/AuthDialog';
+import { useDisplayCurrencyStore } from './store/displayCurrencyStore';
 import styles from './App.module.scss';
 
 function App() {
@@ -14,7 +16,9 @@ function App() {
     if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
-  const [page, setPage] = useState<'dashboard' | 'analysis' | 'transactions' | 'market' | 'virtual'>(() => {
+  const [page, setPage] = useState<
+    'dashboard' | 'analysis' | 'transactions' | 'market' | 'virtual'
+  >(() => {
     if (window.location.hash === '#analysis') return 'analysis';
     if (window.location.hash === '#transactions') return 'transactions';
     if (window.location.hash === '#market') return 'market';
@@ -22,6 +26,10 @@ function App() {
     return 'dashboard';
   });
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const displayCurrency = useDisplayCurrencyStore((state) => state.displayCurrency);
+  const setDisplayCurrency = useDisplayCurrencyStore((state) => state.setDisplayCurrency);
 
   useEffect(() => {
     const syncPage = () => {
@@ -39,6 +47,26 @@ function App() {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('portfolio-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (!isAccountMenuOpen) return;
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setIsAccountMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsAccountMenuOpen(false);
+    };
+
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isAccountMenuOpen]);
 
   if (isAuthLoading) {
     return (
@@ -76,6 +104,24 @@ function App() {
           </a>
         </div>
         <div className={styles.navRight}>
+          <div className={styles.currencyToggle} role="group" aria-label="표시 통화">
+            <button
+              type="button"
+              className={displayCurrency === 'USD' ? styles.currencyActive : undefined}
+              aria-pressed={displayCurrency === 'USD'}
+              onClick={() => setDisplayCurrency('USD')}
+            >
+              $
+            </button>
+            <button
+              type="button"
+              className={displayCurrency === 'KRW' ? styles.currencyActive : undefined}
+              aria-pressed={displayCurrency === 'KRW'}
+              onClick={() => setDisplayCurrency('KRW')}
+            >
+              원
+            </button>
+          </div>
           <button
             type="button"
             className={styles.themeToggle}
@@ -86,12 +132,33 @@ function App() {
             {theme === 'light' ? '◐' : '☼'}
           </button>
           {user ? (
-            <>
-              <span className={styles.navUser}>{user.displayName ?? user.email}</span>
-              <button className={styles.navBtn} onClick={logout}>
-                로그아웃
+            <div className={styles.accountMenu} ref={accountMenuRef}>
+              <button
+                type="button"
+                className={styles.accountTrigger}
+                onClick={() => setIsAccountMenuOpen((current) => !current)}
+                aria-haspopup="menu"
+                aria-expanded={isAccountMenuOpen}
+              >
+                <span className={styles.navUser}>{user.displayName ?? user.email}</span>
+                <FiChevronDown aria-hidden="true" />
               </button>
-            </>
+              {isAccountMenuOpen ? (
+                <div className={styles.accountDropdown} role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsAccountMenuOpen(false);
+                      void logout();
+                    }}
+                  >
+                    <FiLogOut aria-hidden="true" />
+                    로그아웃
+                  </button>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <button className={styles.navBtn} onClick={() => setIsAuthDialogOpen(true)}>
               로그인

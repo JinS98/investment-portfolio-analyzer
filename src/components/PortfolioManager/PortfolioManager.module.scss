@@ -23,31 +23,6 @@
   align-items: center;
   gap: $spacing-sm;
 }
-.currencyToggle {
-  display: inline-flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 9px;
-  background: #f2f4f6;
-
-  button {
-    width: 28px;
-    min-height: 28px;
-    height: 28px;
-    padding: 0;
-    border-radius: 6px;
-    background: transparent;
-    color: $color-text-muted;
-    font-size: 0.75rem;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  button.activeCurrency {
-    background: $color-text;
-    color: #fff;
-  }
-}
 .description {
   margin-bottom: 7px;
   color: $color-text-muted;
@@ -220,19 +195,6 @@ button {
 :global(:root[data-theme='dark']) .portfolioTabs button {
   background: #252b37;
   color: #aeb8c7;
-}
-
-:global(:root[data-theme='dark']) .currencyToggle {
-  background: #252b37;
-
-  button {
-    color: #aeb8c7;
-  }
-
-  button.activeCurrency {
-    background: #f2f4f6;
-    color: #171b24;
-  }
 }
 
 :global(:root[data-theme='dark']) .portfolioTabs button.activeTab {
@@ -447,6 +409,55 @@ button {
     color: inherit;
     font: inherit;
     font-weight: 700;
+  }
+}
+
+.recurringAnalysisLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+  padding: 12px 8px 0;
+  border-top: 1px solid rgba($color-border, 0.75);
+
+  span {
+    display: grid;
+    gap: 3px;
+  }
+  strong {
+    font-size: 0.86rem;
+  }
+  small {
+    color: $color-text-muted;
+    font-size: 0.72rem;
+  }
+  button {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 7px 11px;
+    border: 0;
+    border-radius: 9px;
+    background: #e7ecf3;
+    color: $color-text;
+    font-size: 0.78rem;
+    font-weight: 700;
+
+    &:hover {
+      background: #dfe5ed;
+    }
+  }
+}
+
+:global(:root[data-theme='dark']) .recurringAnalysisLink {
+  border-color: #354052;
+
+  button {
+    background: #2b3443;
+    color: #eef2f7;
+    &:hover {
+      background: #354052;
+    }
   }
 }
 

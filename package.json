@@ -13,7 +13,8 @@
     "format:check": "prettier --check .",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
-    "test:recurring": "node --experimental-strip-types --test tests/recurringInvestment.test.ts"
+    "test:recurring": "node --experimental-strip-types --test tests/recurringInvestment.test.ts tests/recurringInvestmentPerformance.test.ts",
+    "test:analysis": "node --experimental-strip-types --test tests/investmentPerformanceAnalysis.test.ts tests/allocationRisk.test.ts"
   },
   "dependencies": {
     "firebase": "^12.17.1",

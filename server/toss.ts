@@ -50,8 +50,8 @@ async function historicalUsdKrwRate(requestedDate: string) {
 
 async function usIndexData(
   symbol: 'NASDAQ' | 'SP500',
-  range: '1d' | '1mo' = '1mo',
-  interval: '5m' | '1d' = '1d',
+  range: '1d' | '1mo' | '3mo' | '6mo' | 'max' = '1mo',
+  interval: '5m' | '1d' | '1mo' = '1d',
 ) {
   const yahooSymbol = symbol === 'NASDAQ' ? '^IXIC' : '^GSPC';
   const response = await fetch(
@@ -305,8 +305,11 @@ export function tossPlugin(env: Record<string, string>): Plugin {
         return;
       }
       if (endpoint === 'us-indices') {
-        const range = url.searchParams.get('range') === '1d' ? '1d' : '1mo';
-        const interval = range === '1d' ? '5m' : '1d';
+        const requestedRange = url.searchParams.get('range');
+        const range = ['1d', '1mo', '3mo', '6mo', 'max'].includes(requestedRange ?? '')
+          ? requestedRange as '1d' | '1mo' | '3mo' | '6mo' | 'max'
+          : '1mo';
+        const interval = range === '1d' ? '5m' : range === 'max' ? '1mo' : '1d';
         res.end(JSON.stringify({ result: await Promise.all([usIndexData('NASDAQ', range, interval), usIndexData('SP500', range, interval)]) }));
         return;
       }
