@@ -16,6 +16,22 @@ export type RecurringInvestmentFrequency = 'WEEKLY' | 'MONTHLY';
 /** 규칙 실행 여부. */
 export type RecurringInvestmentStatus = 'ACTIVE' | 'PAUSED';
 export type RecurringExecutionStatus = 'PENDING' | 'CONFIRMED';
+export type RecurringExecutionResult = 'SUCCEEDED' | 'FAILED';
+
+/** 자동 매수 반영 시도 결과. 실패 이력과 재시도 결과를 함께 보관한다. */
+export interface RecurringInvestmentExecution {
+  id: string;
+  portfolioId: string;
+  ruleId: string;
+  ruleName: string;
+  ticker: string;
+  result: RecurringExecutionResult;
+  attemptedAt: number;
+  executedCount: number;
+  executedDates: string[];
+  errorMessage?: string;
+  triggeredByRetry: boolean;
+}
 
 /** 포트폴리오에 연결된 적립식 매수 규칙. */
 export interface RecurringInvestmentRule {

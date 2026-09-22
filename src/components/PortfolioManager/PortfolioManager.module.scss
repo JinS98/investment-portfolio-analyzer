@@ -389,7 +389,7 @@ button {
 
 .recurringExecutionError {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: $spacing-sm;
   margin-top: $spacing-sm;
@@ -409,6 +409,39 @@ button {
     color: inherit;
     font: inherit;
     font-weight: 700;
+  }
+}
+
+.recurringExecutionErrorText {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+
+  strong {
+    color: inherit;
+    font-size: 0.8rem;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: 0.72rem;
+  }
+
+  span {
+    overflow: hidden;
+    color: $color-text;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+:global(:root[data-theme='dark']) .recurringExecutionErrorText {
+  small {
+    color: #aeb8c7;
+  }
+
+  span {
+    color: #eef2f7;
   }
 }
 
@@ -463,6 +496,10 @@ button {
 
 :global(:root[data-theme='dark']) .recurringExecutionError {
   background: rgba($color-danger, 0.14);
+
+  button {
+    border-color: rgba(#fb7185, 0.5);
+  }
 }
 
 .ruleActive,
@@ -865,17 +902,52 @@ td small {
     }
   }
 
+  .recurringRulesHeader {
+    align-items: flex-start;
+
+    button {
+      flex: 0 0 auto;
+      min-height: 40px;
+    }
+  }
+
   .recurringRules li {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px $spacing-md;
 
-    span:nth-of-type(3) {
+    .recurringStock {
+      grid-column: 1 / -1;
+    }
+
+    // Keep the next purchase date visible; quantity is available in the edit modal.
+    > span:nth-of-type(2) {
       display: none;
+    }
+
+    > span:nth-of-type(3) {
+      grid-column: 1;
+      grid-row: 3;
+    }
+
+    .ruleStatusMenu {
+      grid-column: 2;
+      grid-row: 2;
     }
 
     .ruleActions {
       grid-column: 2;
       grid-row: 3;
+    }
+
+    .ruleStatusTrigger,
+    .ruleEditButton {
+      min-height: 40px;
+      height: 40px;
+    }
+
+    .ruleStatusTrigger {
+      padding-right: 11px;
+      padding-left: 12px;
     }
   }
 
@@ -883,6 +955,22 @@ td small {
     align-items: flex-start;
     flex-direction: column;
     gap: 4px;
+  }
+
+  .recurringExecutionError {
+    gap: 10px;
+    padding: 10px;
+
+    button {
+      min-height: 40px;
+      padding-right: 11px;
+      padding-left: 11px;
+    }
+  }
+
+  .recurringExecutionErrorText span {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .tableWrap {

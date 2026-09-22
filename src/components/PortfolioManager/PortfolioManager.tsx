@@ -4,6 +4,7 @@ import { TransactionModal } from '../TransactionModal/TransactionModal';
 import { RecurringInvestmentModal } from '../RecurringInvestmentModal/RecurringInvestmentModal';
 import {
   executeDueRecurringInvestmentRule,
+  loadRecurringInvestmentExecutions,
   loadRecurringInvestmentRules,
   setRecurringInvestmentRuleStatus,
 } from '../../services/portfolioLedgerService';
@@ -11,7 +12,13 @@ import { fetchCurrentPrices } from '../../services/tossApi';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import { useDisplayCurrencyStore } from '../../store/displayCurrencyStore';
-import type { Holding, HoldingHistory, PortfolioType, RecurringInvestmentRule } from '../../types';
+import type {
+  Holding,
+  HoldingHistory,
+  PortfolioType,
+  RecurringInvestmentExecution,
+  RecurringInvestmentRule,
+} from '../../types';
 import { formatRate } from '../../utils/calculator';
 import { calculatePortfolioFxPerformance } from '../../utils/portfolioFxPerformance';
 import { getNextPendingRecurringInvestmentDate } from '../../utils/recurringInvestment';
@@ -29,6 +36,11 @@ const money = (value: number, market: 'KR' | 'US') => {
 const EMPTY_HOLDINGS: Holding[] = [];
 const EMPTY_HISTORIES: HoldingHistory[] = [];
 const WEEKDAY_LABELS = ['', '월요일', '화요일', '수요일', '목요일', '금요일'];
+const formatRecurringExecutionTime = (value: number) =>
+  new Intl.DateTimeFormat('ko-KR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(value);
 
 interface StockAvatarProps {
   name?: string;
@@ -123,9 +135,7 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   );
   const [updatingRecurringRuleId, setUpdatingRecurringRuleId] = useState<string | null>(null);
   const [openRuleStatusId, setOpenRuleStatusId] = useState<string | null>(null);
-  const [recurringExecutionErrors, setRecurringExecutionErrors] = useState<Record<string, string>>(
-    {},
-  );
+  const [recurringExecutions, setRecurringExecutions] = useState<RecurringInvestmentExecution[]>([]);
   const [recurringExecutionProgress, setRecurringExecutionProgress] = useState<{
     completed: number;
     total: number;
@@ -153,6 +163,29 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
     : EMPTY_HISTORIES;
   const recurringRules =
     recurringRuleData.portfolioId === activeRecurringPortfolioId ? recurringRuleData.rules : [];
+  const recurringFailureStateByRule = useMemo(() => {
+    const state = new Map<
+      string,
+      { latest: RecurringInvestmentExecution; consecutiveFailures: number }
+    >();
+    const resolvedRuleIds = new Set<string>();
+    for (const execution of recurringExecutions) {
+      if (resolvedRuleIds.has(execution.ruleId)) continue;
+      const previous = state.get(execution.ruleId);
+      if (!previous) {
+        if (execution.result === 'FAILED') {
+          state.set(execution.ruleId, { latest: execution, consecutiveFailures: 1 });
+        } else {
+          resolvedRuleIds.add(execution.ruleId);
+        }
+      } else if (execution.result === 'FAILED') {
+        previous.consecutiveFailures += 1;
+      } else {
+        resolvedRuleIds.add(execution.ruleId);
+      }
+    }
+    return state;
+  }, [recurringExecutions]);
 
   const updateRecurringRuleStatus = async (
     rule: RecurringInvestmentRule,
@@ -194,7 +227,9 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
     if (!userId || !activePortfolio) return;
     setUpdatingRecurringRuleId(rule.id);
     try {
-      const result = await executeDueRecurringInvestmentRule(userId, rule.id, activePortfolio.id);
+      const result = await executeDueRecurringInvestmentRule(userId, rule.id, activePortfolio.id, {
+        triggeredByRetry: true,
+      });
       if (result.rule) {
         setRecurringRuleData((current) => ({
           ...current,
@@ -202,21 +237,17 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
         }));
       }
       if (result.executedCount) await loadPortfolioLedgers(userId);
-      setRecurringExecutionErrors((current) => {
-        const next = { ...current };
-        delete next[rule.id];
-        return next;
-      });
+      setRecurringExecutions(await loadRecurringInvestmentExecutions(userId, activePortfolio.id));
       setActionNotice(
         result.executedCount
           ? `적립식 투자 ${result.executedCount}건을 반영했습니다.`
           : '반영할 예정 매수가 없습니다.',
       );
     } catch (cause) {
-      setRecurringExecutionErrors((current) => ({
-        ...current,
-        [rule.id]: cause instanceof Error ? cause.message : '적립식 투자 자동 반영에 실패했습니다.',
-      }));
+      setRecurringExecutions(await loadRecurringInvestmentExecutions(userId, activePortfolio.id));
+      setActionNotice(
+        cause instanceof Error ? cause.message : '적립식 투자 자동 반영에 실패했습니다.',
+      );
     } finally {
       setUpdatingRecurringRuleId(null);
     }
@@ -230,9 +261,15 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
         mounted = false;
       };
     }
-    void loadRecurringInvestmentRules(userId, portfolioId)
-      .then((rules) => {
-        if (mounted) setRecurringRuleData({ portfolioId, rules });
+    void Promise.all([
+      loadRecurringInvestmentRules(userId, portfolioId),
+      loadRecurringInvestmentExecutions(userId, portfolioId),
+    ])
+      .then(([rules, executions]) => {
+        if (mounted) {
+          setRecurringRuleData({ portfolioId, rules });
+          setRecurringExecutions(executions);
+        }
       })
       .catch((cause: unknown) => {
         if (mounted) {
@@ -260,22 +297,20 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
       await Promise.resolve();
       setRecurringExecutionProgress({ completed: 0, total: dueRules.length });
       const results = [];
-      const errors: Record<string, string> = {};
       for (const [index, rule] of dueRules.entries()) {
         try {
           results.push(
             await executeDueRecurringInvestmentRule(userId, rule.id, activePortfolio.id),
           );
-        } catch (cause) {
-          errors[rule.id] =
-            cause instanceof Error ? cause.message : '적립식 투자 자동 반영에 실패했습니다.';
+        } catch {
+          // The service records the failed execution before it is re-thrown.
         }
         setRecurringExecutionProgress({ completed: index + 1, total: dueRules.length });
       }
-      return { results, errors };
+      return { results };
     })()
-      .then(async ({ results, errors }) => {
-        setRecurringExecutionErrors(errors);
+      .then(async ({ results }) => {
+        setRecurringExecutions(await loadRecurringInvestmentExecutions(userId, activePortfolio.id));
         const executedCount = results.reduce((total, result) => total + result.executedCount, 0);
         const updatedRules = results.flatMap((result) => (result.rule ? [result.rule] : []));
         if (updatedRules.length) {
@@ -908,14 +943,22 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
               );
             })}
           </ul>
-          {Object.entries(recurringExecutionErrors).map(([ruleId, error]) => {
-            const rule = recurringRules.find((item) => item.id === ruleId);
-            if (!rule) return null;
+          {recurringRules.map((rule) => {
+            const failureState = recurringFailureStateByRule.get(rule.id);
+            if (!failureState) return null;
             return (
-              <div key={ruleId} className={styles.recurringExecutionError} role="alert">
-                <span>
-                  {rule.name ?? rule.ticker}: {error}
-                </span>
+              <div key={rule.id} className={styles.recurringExecutionError} role="alert">
+                <div className={styles.recurringExecutionErrorText}>
+                  <strong>{rule.name ?? rule.ticker} 자동매수 반영 실패</strong>
+                  <small>
+                    {formatRecurringExecutionTime(failureState.latest.attemptedAt)} ·{' '}
+                    {failureState.consecutiveFailures}회 연속 실패
+                  </small>
+                  <span>{failureState.latest.errorMessage}</span>
+                  {failureState.consecutiveFailures >= 2 ? (
+                    <small>반복되면 종목 코드, 네트워크와 시세 조회 상태를 확인해 주세요.</small>
+                  ) : null}
+                </div>
                 <button
                   type="button"
                   onClick={() => void retryRecurringRule(rule)}

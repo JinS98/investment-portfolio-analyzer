@@ -17,6 +17,8 @@ import type {
   Portfolio,
   PortfolioLedger,
   PortfolioSummary,
+  RecurringInvestmentExecution,
+  RecurringExecutionResult,
   RecurringInvestmentRule,
   RecurringInvestmentRuleInput,
   RecurringInvestmentStatus,
@@ -53,6 +55,9 @@ const portfolioReference = (userId: string, portfolioId: string) =>
 
 const recurringInvestmentRulesReference = (userId: string, portfolioId: string) =>
   collection(portfolioReference(userId, portfolioId), 'recurringInvestmentRules');
+
+const recurringInvestmentExecutionsReference = (userId: string, portfolioId: string) =>
+  collection(portfolioReference(userId, portfolioId), 'recurringInvestmentExecutions');
 
 const holdingDocumentId = (holding: Pick<Holding, 'market' | 'ticker'>): string =>
   `${holding.market}_${holding.ticker}`;
@@ -153,6 +158,57 @@ const recurringInvestmentRuleData = (rule: RecurringInvestmentRule): DocumentDat
   status: rule.status,
   createdAt: rule.createdAt,
   updatedAt: rule.updatedAt,
+});
+
+const readRecurringInvestmentExecution = (
+  value: unknown,
+  id: string,
+  portfolioId: string,
+): RecurringInvestmentExecution => {
+  const data = asRecord(value, 'Recurring investment execution');
+  if (readString(data, 'portfolioId', 'Recurring investment execution') !== portfolioId) {
+    throw new Error('Recurring investment execution portfolio does not match.');
+  }
+  const result = readString(data, 'result', 'Recurring investment execution');
+  if (result !== 'SUCCEEDED' && result !== 'FAILED') {
+    throw new Error('Recurring investment execution result is invalid.');
+  }
+  const executedDates = data.executedDates;
+  if (!Array.isArray(executedDates) || !executedDates.every((date) => typeof date === 'string')) {
+    throw new Error('Recurring investment execution dates are invalid.');
+  }
+  const errorMessage = data.errorMessage;
+  if (errorMessage !== undefined && typeof errorMessage !== 'string') {
+    throw new Error('Recurring investment execution error is invalid.');
+  }
+  return {
+    id,
+    portfolioId,
+    ruleId: readString(data, 'ruleId', 'Recurring investment execution'),
+    ruleName: readString(data, 'ruleName', 'Recurring investment execution'),
+    ticker: readString(data, 'ticker', 'Recurring investment execution'),
+    result: result as RecurringExecutionResult,
+    attemptedAt: readNumber(data, 'attemptedAt', 'Recurring investment execution'),
+    executedCount: readNumber(data, 'executedCount', 'Recurring investment execution'),
+    executedDates,
+    ...(errorMessage ? { errorMessage } : {}),
+    triggeredByRetry: data.triggeredByRetry === true,
+  };
+};
+
+const recurringInvestmentExecutionData = (
+  execution: RecurringInvestmentExecution,
+): DocumentData => ({
+  portfolioId: execution.portfolioId,
+  ruleId: execution.ruleId,
+  ruleName: execution.ruleName,
+  ticker: execution.ticker,
+  result: execution.result,
+  attemptedAt: execution.attemptedAt,
+  executedCount: execution.executedCount,
+  executedDates: execution.executedDates,
+  ...(execution.errorMessage ? { errorMessage: execution.errorMessage } : {}),
+  triggeredByRetry: execution.triggeredByRetry,
 });
 
 const createRecurringInvestmentRule = (
@@ -528,6 +584,46 @@ export async function loadRecurringInvestmentRules(
     .sort((left, right) => left.createdAt - right.createdAt || left.id.localeCompare(right.id));
 }
 
+export async function loadRecurringInvestmentExecutions(
+  userId: string,
+  portfolioId: string,
+): Promise<RecurringInvestmentExecution[]> {
+  await findPortfolio(userId, portfolioId);
+  const snapshot = await getDocs(recurringInvestmentExecutionsReference(userId, portfolioId));
+  return snapshot.docs
+    .map((item) => readRecurringInvestmentExecution(item.data(), item.id, portfolioId))
+    .sort((left, right) => right.attemptedAt - left.attemptedAt || right.id.localeCompare(left.id));
+}
+
+const saveRecurringInvestmentExecution = async (
+  userId: string,
+  portfolioId: string,
+  rule: RecurringInvestmentRule,
+  result: RecurringExecutionResult,
+  options: {
+    executedCount?: number;
+    executedDates?: string[];
+    errorMessage?: string;
+    triggeredByRetry: boolean;
+  },
+): Promise<void> => {
+  const reference = doc(recurringInvestmentExecutionsReference(userId, portfolioId));
+  const execution: RecurringInvestmentExecution = {
+    id: reference.id,
+    portfolioId,
+    ruleId: rule.id,
+    ruleName: rule.name ?? rule.ticker,
+    ticker: rule.ticker,
+    result,
+    attemptedAt: Date.now(),
+    executedCount: options.executedCount ?? 0,
+    executedDates: options.executedDates ?? [],
+    ...(options.errorMessage ? { errorMessage: options.errorMessage } : {}),
+    triggeredByRetry: options.triggeredByRetry,
+  };
+  await setDoc(reference, recurringInvestmentExecutionData(execution));
+};
+
 export async function addRecurringInvestmentRule(
   userId: string,
   input: RecurringInvestmentRuleInput,
@@ -593,12 +689,14 @@ export async function executeDueRecurringInvestmentRule(
   userId: string,
   ruleId: string,
   portfolioId: string,
+  options: { triggeredByRetry?: boolean } = {},
 ): Promise<{ executedCount: number; dates: string[]; ledger?: PortfolioLedger; rule?: RecurringInvestmentRule }> {
   const portfolio = await findPortfolio(userId, portfolioId);
   const ruleReference = doc(recurringInvestmentRulesReference(userId, portfolioId), ruleId);
   const ruleSnapshot = await getDoc(ruleReference);
   if (!ruleSnapshot.exists()) throw new Error('Recurring investment rule was not found.');
   const rule = readRecurringInvestmentRule(ruleSnapshot.data(), ruleSnapshot.id, portfolioId);
+  try {
   const dates = rule.status === 'ACTIVE' ? getPendingRecurringInvestmentDatesUntil(rule, koreaToday()) : [];
 
   const ledger = await loadPortfolioLedger(userId, portfolio);
@@ -656,7 +754,27 @@ export async function executeDueRecurringInvestmentRule(
     updatedAt: Date.now(),
   };
   if (dates.length) await setDoc(ruleReference, recurringInvestmentRuleData(nextRule));
+  if (histories.length || options.triggeredByRetry) {
+    await saveRecurringInvestmentExecution(userId, portfolioId, nextRule, 'SUCCEEDED', {
+      executedCount: histories.length,
+      executedDates,
+      triggeredByRetry: options.triggeredByRetry === true,
+    });
+  }
   return { executedCount: histories.length, dates, ledger: nextLedger, rule: nextRule };
+  } catch (cause) {
+    const errorMessage =
+      cause instanceof Error ? cause.message : '자동 매수 반영에 실패했습니다.';
+    try {
+      await saveRecurringInvestmentExecution(userId, portfolioId, rule, 'FAILED', {
+        errorMessage,
+        triggeredByRetry: options.triggeredByRetry === true,
+      });
+    } catch {
+      // Preserve the original execution failure even when the audit record cannot be saved.
+    }
+    throw cause;
+  }
 }
 
 export async function addPortfolioHoldingHistory(

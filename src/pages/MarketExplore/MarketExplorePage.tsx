@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FiSearch, FiX } from 'react-icons/fi';
 import { TransactionModal } from '../../components/TransactionModal/TransactionModal';
+import { SidePanel } from '../../components/layout/SidePanel/SidePanel';
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import {
   fetchCandlePage,
@@ -435,24 +436,6 @@ export function MarketExplorePage() {
   }, [isIndicatorDialogOpen]);
 
   useEffect(() => {
-    if (!selectedStock) return;
-    const previousOverflow = document.body.style.overflow;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      detailRequestId.current += 1;
-      setSelectedStock(null);
-      setStockDetail(null);
-      setDetailError('');
-    };
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [selectedStock]);
-
-  useEffect(() => {
     const normalizedQuery = query.trim();
     if (!normalizedQuery) return;
     const controller = new AbortController();
@@ -796,15 +779,13 @@ export function MarketExplorePage() {
         )}
       </section>
 
-      {selectedStock && (
-        <div className={styles.drawerOverlay} onMouseDown={closeStockDrawer}>
-          <aside
-            className={styles.stockDrawer}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="stock-drawer-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
+      <SidePanel
+        isOpen={selectedStock !== null}
+        labelledBy="stock-drawer-title"
+        onClose={closeStockDrawer}
+      >
+        {selectedStock ? (
+          <>
             <header className={styles.drawerHeader}>
               <div className={styles.drawerTitle}>
                 <StockAvatar name={selectedStock.name} symbol={selectedStock.symbol} />
@@ -950,9 +931,9 @@ export function MarketExplorePage() {
                 </section>
               </div>
             ) : null}
-          </aside>
-        </div>
-      )}
+          </>
+        ) : null}
+      </SidePanel>
       <TransactionModal
         isOpen={isTransactionModalOpen}
         type={transactionModalType}
