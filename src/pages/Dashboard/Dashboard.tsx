@@ -127,12 +127,19 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
     }
   });
   const [draggingPanel, setDraggingPanel] = useState<PanelId | null>(null);
+  const visiblePanelIds =
+    view === 'dashboard'
+      ? new Set<PanelId>(['market', 'manager', 'allocation'])
+      : new Set<PanelId>(['recurring', 'performance', 'history', 'monthly', 'guide']);
+  const visiblePanelRows = panelRows
+    .map((row) => ({ ...row, ids: row.ids.filter((id) => visiblePanelIds.has(id)) }))
+    .filter((row) => row.ids.length > 0);
   const autoRefreshKey = realHoldings
     .map((holding) => `${holding.market}:${holding.ticker}:${holding.lastTransactionAt ?? ''}`)
     .join('|');
   const getPanelPosition = (id: PanelId) => {
-    const rowIndex = panelRows.findIndex((row) => row.ids.includes(id));
-    const row = panelRows[rowIndex];
+    const rowIndex = visiblePanelRows.findIndex((row) => row.ids.includes(id));
+    const row = visiblePanelRows[rowIndex];
     const itemIndex = row?.ids.indexOf(id) ?? 0;
     const split = row?.split ?? 50;
 
@@ -201,7 +208,7 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   };
 
   const panelProps = (id: PanelId) => {
-    const row = panelRows.find((item) => item.ids.includes(id));
+    const row = visiblePanelRows.find((item) => item.ids.includes(id));
     const pairPosition =
       row?.ids.length === 2 ? (row.ids[0] === id ? styles.pairedFirst : styles.pairedSecond) : '';
 
@@ -237,7 +244,7 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   };
 
   const renderResizeHandle = (id: PanelId) =>
-    panelRows.some((row) => row.ids[0] === id && row.ids.length === 2) ? (
+    visiblePanelRows.some((row) => row.ids[0] === id && row.ids.length === 2) ? (
       <button
         type="button"
         className={styles.resizeHandle}

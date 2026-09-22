@@ -7,10 +7,14 @@
 }
 
 .header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   margin-bottom: 32px;
 
   > p {
-    margin-bottom: 8px;
+    margin: 0;
     color: $color-text-muted;
     font-size: 0.88rem;
     font-weight: 700;
@@ -24,7 +28,7 @@
 
   > span {
     display: block;
-    margin-top: 10px;
+    margin-top: 2px;
     color: $color-text-muted;
   }
 }
@@ -522,7 +526,6 @@
   gap: 16px;
   padding: 24px 24px 20px;
   border-bottom: 1px solid $color-border;
-
 }
 
 .drawerActions {

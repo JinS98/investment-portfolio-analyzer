@@ -11,6 +11,10 @@
 }
 
 .header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-xs;
   margin-bottom: $spacing-xl;
 
   p,
@@ -20,7 +24,6 @@
   }
 
   p {
-    margin-bottom: $spacing-xs;
     color: $color-primary;
     font-size: 0.85rem;
     font-weight: 700;
@@ -34,7 +37,6 @@
 
   span {
     display: block;
-    margin-top: $spacing-sm;
     color: $color-text-muted;
     font-size: 0.9rem;
   }
