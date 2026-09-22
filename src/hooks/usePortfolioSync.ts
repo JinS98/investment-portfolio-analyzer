@@ -1,6 +1,17 @@
 import { useEffect, useReducer } from 'react';
 import { loadPortfolioStocks } from '../services/portfolioService';
 import { loadPortfolioHistory } from '../services/portfolioHistoryService';
+import {
+  clearGuestPortfolioMigration,
+  clearGuestPortfolioWorkspace,
+  getGuestPortfolioMigrationUserId,
+  loadGuestPortfolioWorkspace,
+  markGuestPortfolioMigrationStarted,
+} from '../services/localPortfolioLedgerService';
+import {
+  canMigrateGuestPortfolioWorkspace,
+  migrateGuestPortfolioWorkspace,
+} from '../services/portfolioLedgerService';
 import { useAuthStore } from '../store/authStore';
 import { usePortfolioStore } from '../store/portfolioStore';
 
@@ -27,27 +38,52 @@ export function usePortfolioSync() {
     let active = true;
     // 계정 전환 중 이전 계정의 종목이 노출되지 않도록 즉시 비운다.
     // Effect 종료 전 microtask에서 비워서 계정 전환 화면에 이전 데이터가 남지 않게 한다.
-    queueMicrotask(() => {
-      if (active) {
-        replacePortfolio([]);
-        setPortfolioHistory([]);
-        resetPortfolioLedgers();
-      }
-    });
-    if (!userId) {
-      dispatch({ type: 'complete' });
-      return () => {
-        active = false;
-      };
-    }
+    replacePortfolio([]);
+    setPortfolioHistory([]);
+    resetPortfolioLedgers();
     dispatch({ type: 'start' });
-    Promise.all([
-      loadPortfolioStocks(userId),
-      loadPortfolioHistory(userId),
-      loadPortfolioLedgers(userId, () => active),
-    ])
-      .then(([stocks, history]) => {
-        if (active) {
+    const synchronizeWorkspace = async () => {
+      if (userId) {
+        const guestLedgers = loadGuestPortfolioWorkspace();
+        const hasGuestHistories = guestLedgers.some((ledger) => ledger.histories.length > 0);
+        if (hasGuestHistories) {
+          const pendingMigrationUserId = getGuestPortfolioMigrationUserId();
+          if (!pendingMigrationUserId || pendingMigrationUserId === userId) {
+            const isResumingMigration = pendingMigrationUserId === userId;
+            let shouldMigrate = isResumingMigration;
+            if (!isResumingMigration) {
+              const canMigrate = await canMigrateGuestPortfolioWorkspace(userId);
+              if (!active) return null;
+              if (!canMigrate) {
+                clearGuestPortfolioMigration();
+              } else {
+                markGuestPortfolioMigrationStarted(userId);
+                shouldMigrate = true;
+              }
+            }
+            if (!active) return null;
+            if (shouldMigrate) {
+              const didMigrate = await migrateGuestPortfolioWorkspace(userId, guestLedgers, {
+                allowExistingHistories: true,
+              });
+              if (didMigrate) clearGuestPortfolioWorkspace();
+              else clearGuestPortfolioMigration();
+            }
+          }
+        }
+      }
+
+      return Promise.all([
+        userId ? loadPortfolioStocks(userId) : Promise.resolve([]),
+        userId ? loadPortfolioHistory(userId) : Promise.resolve([]),
+        loadPortfolioLedgers(userId, () => active),
+      ]);
+    };
+
+    void synchronizeWorkspace()
+      .then((result) => {
+        if (active && result) {
+          const [stocks, history] = result;
           replacePortfolio(stocks);
           setPortfolioHistory(history);
           dispatch({ type: 'complete' });

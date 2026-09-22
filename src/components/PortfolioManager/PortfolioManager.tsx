@@ -35,6 +35,14 @@ const money = (value: number, market: 'KR' | 'US') => {
 
 const EMPTY_HOLDINGS: Holding[] = [];
 const EMPTY_HISTORIES: HoldingHistory[] = [];
+const GUEST_REAL_PORTFOLIO = {
+  id: 'guest-real',
+  userId: 'guest',
+  name: '실제 포트폴리오',
+  type: 'REAL' as const,
+  createdAt: 0,
+  updatedAt: 0,
+};
 const WEEKDAY_LABELS = ['', '월요일', '화요일', '수요일', '목요일', '금요일'];
 const formatRecurringExecutionTime = (value: number) =>
   new Intl.DateTimeFormat('ko-KR', {
@@ -135,7 +143,9 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   );
   const [updatingRecurringRuleId, setUpdatingRecurringRuleId] = useState<string | null>(null);
   const [openRuleStatusId, setOpenRuleStatusId] = useState<string | null>(null);
-  const [recurringExecutions, setRecurringExecutions] = useState<RecurringInvestmentExecution[]>([]);
+  const [recurringExecutions, setRecurringExecutions] = useState<RecurringInvestmentExecution[]>(
+    [],
+  );
   const [recurringExecutionProgress, setRecurringExecutionProgress] = useState<{
     completed: number;
     total: number;
@@ -153,7 +163,10 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const summaryCurrency = useDisplayCurrencyStore((state) => state.displayCurrency);
   const activePortfolio = portfolioType
     ? portfolios.find((portfolio) => portfolio.type === portfolioType)
-    : portfolios.find((portfolio) => portfolio.id === activePortfolioId);
+    : (portfolios.find((portfolio) => portfolio.id === activePortfolioId) ??
+      portfolios.find((portfolio) => portfolio.type === 'REAL') ??
+      (!userId && portfolioType !== 'VIRTUAL' ? GUEST_REAL_PORTFOLIO : undefined));
+  const transactionPortfolio = activePortfolio ?? (!userId ? GUEST_REAL_PORTFOLIO : null);
   const activeRecurringPortfolioId = activePortfolio?.id;
   const holdings = activePortfolio
     ? (portfolioLedgers[activePortfolio.id]?.holdings ?? EMPTY_HOLDINGS)
@@ -363,15 +376,29 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   const combinedSummary = summaryCurrency === 'USD' ? fxPerformance.usd : fxPerformance.krw;
   const isSummaryCurrencyAvailable = combinedSummary !== null;
   const summaryUnavailableMessage =
-    summaryCurrency === 'KRW' &&
-    histories.some((history) => history.market === 'US' && !history.exchangeRate)
-      ? '거래일 환율 보정 중'
-      : summaryCurrency === 'USD'
-        ? '환율 미조회'
-        : '시세 미조회';
+    holdings.length === 0
+      ? '종목을 추가해 주세요'
+      : summaryCurrency === 'KRW' &&
+          histories.some((history) => history.market === 'US' && !history.exchangeRate)
+        ? '환율 없음'
+        : summaryCurrency === 'USD'
+          ? '환율 미조회'
+          : '시세 미조회';
   const summaryMoney = (value: number) => money(value, summaryCurrency === 'USD' ? 'US' : 'KR');
   const currentMoney = (value: number, market: 'KR' | 'US') =>
     formatCurrentMoney(value, market, summaryCurrency, exchangeRate?.rate);
+
+  const hasMissingGuestHistoricalRate =
+    !userId &&
+    summaryCurrency === 'KRW' &&
+    histories.some((history) => history.market === 'US' && !history.exchangeRate);
+
+  useEffect(() => {
+    if (!hasMissingGuestHistoricalRate) return;
+    void loadPortfolioLedgers(undefined).catch(() => {
+      // The summary renders "환율 없음" when a historical rate cannot be retrieved.
+    });
+  }, [hasMissingGuestHistoricalRate, loadPortfolioLedgers]);
 
   const refreshPrices = async () => {
     if (!holdings.length) return;
@@ -390,20 +417,15 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
   };
 
   const openTransaction = (params: Parameters<typeof openTransactionModal>[0] = {}) => {
-    if (!userId) {
-      setActionNotice('로그인 후 거래 기록을 추가할 수 있습니다.');
-      return;
-    }
-    if (!activePortfolio) {
+    if (!transactionPortfolio) {
       setActionNotice('포트폴리오를 불러온 뒤 다시 시도해주세요.');
       return;
     }
     setActionNotice('');
-    openTransactionModal({ ...params, portfolioId: activePortfolio.id });
+    openTransactionModal({ ...params, portfolioId: transactionPortfolio.id });
   };
 
   const submitTransaction = async (input: Parameters<typeof addHoldingHistory>[1]) => {
-    if (!userId) throw new Error('로그인 후 거래 기록을 추가해주세요.');
     await addHoldingHistory(userId, input);
   };
 
@@ -1001,7 +1023,7 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
       <TransactionModal
         isOpen={isTransactionModalOpen}
         type={transactionModalType}
-        portfolio={activePortfolio ?? null}
+        portfolio={transactionPortfolio}
         holdings={holdings}
         preset={transactionModalPreset ?? undefined}
         isSaving={isSaving}

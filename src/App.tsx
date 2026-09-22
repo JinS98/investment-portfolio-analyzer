@@ -52,7 +52,7 @@ function App() {
         onLogin={() => setIsAuthDialogOpen(true)}
         onLogout={logout}
       />
-      <Content page={page} />
+      <Content page={page} onLogin={() => setIsAuthDialogOpen(true)} />
       {isAuthDialogOpen ? (
         <AuthDialog
           onClose={() => setIsAuthDialogOpen(false)}

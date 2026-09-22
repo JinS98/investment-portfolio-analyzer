@@ -192,12 +192,16 @@ export interface PortfolioState {
   setComputedData: (data: ComputedData) => void;
   setRiskData: (data: RiskData | null) => void;
   setSignalData: (data: SignalData) => void;
-  loadPortfolioLedgers: (userId: string, shouldApply?: () => boolean) => Promise<void>;
+  loadPortfolioLedgers: (userId: string | null | undefined, shouldApply?: () => boolean) => Promise<void>;
   addHoldingHistory: (
-    userId: string,
+    userId: string | null | undefined,
     input: import('./portfolio').HoldingHistoryInput,
   ) => Promise<void>;
-  deleteHoldingHistory: (userId: string, portfolioId: string, historyId: string) => Promise<void>;
+  deleteHoldingHistory: (
+    userId: string | null | undefined,
+    portfolioId: string,
+    historyId: string,
+  ) => Promise<void>;
   setActivePortfolioId: (portfolioId: string) => void;
   resetPortfolioLedgers: () => void;
   openTransactionModal: (params?: import('./portfolio').OpenTransactionModalParams) => void;

@@ -6,10 +6,11 @@ import { VirtualPortfolioPage } from '../../../pages/VirtualPortfolio/VirtualPor
 
 interface ContentProps {
   page: AppPage;
+  onLogin: () => void;
 }
 
 /** Routes the currently selected top-level page without owning navigation state. */
-export function Content({ page }: ContentProps) {
+export function Content({ page, onLogin }: ContentProps) {
   switch (page) {
     case 'transactions':
       return <TransactionHistoryPage />;
@@ -19,6 +20,6 @@ export function Content({ page }: ContentProps) {
       return <VirtualPortfolioPage />;
     case 'dashboard':
     case 'analysis':
-      return <Dashboard view={page} />;
+      return <Dashboard view={page} onLogin={onLogin} />;
   }
 }

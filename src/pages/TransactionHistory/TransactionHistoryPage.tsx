@@ -23,7 +23,6 @@ export function TransactionHistoryPage() {
   const realizedPnL = calculateRealizedKrwPnLBreakdown(histories);
 
   const removeTransaction = async (history: HoldingHistory) => {
-    if (!userId) throw new Error('로그인 후 거래 기록을 삭제할 수 있습니다.');
     await deleteHoldingHistory(userId, history.portfolioId, history.id);
   };
 
@@ -113,7 +112,7 @@ export function TransactionHistoryPage() {
         <TransactionHistory
           histories={histories}
           isSaving={isSaving}
-          onDelete={userId ? removeTransaction : undefined}
+          onDelete={removeTransaction}
           onConfirmRecurring={userId ? confirmRecurringTransaction : undefined}
         />
       )}

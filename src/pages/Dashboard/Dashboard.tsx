@@ -17,7 +17,14 @@ import { usePortfolioStore } from '../../store/portfolioStore';
 import styles from './Dashboard.module.scss';
 
 type PanelId =
-  'market' | 'manager' | 'allocation' | 'recurring' | 'performance' | 'history' | 'monthly' | 'guide';
+  | 'market'
+  | 'manager'
+  | 'allocation'
+  | 'recurring'
+  | 'performance'
+  | 'history'
+  | 'monthly'
+  | 'guide';
 type DashboardView = 'dashboard' | 'analysis';
 const EMPTY_HOLDINGS: import('../../types').Holding[] = [];
 const DEFAULT_PANEL_ORDER: PanelId[] = [
@@ -51,9 +58,10 @@ const isValidPanelRows = (value: unknown): value is PanelRow[] =>
 
 interface DashboardProps {
   view: DashboardView;
+  onLogin: () => void;
 }
 
-const Dashboard = ({ view }: DashboardProps) => {
+const Dashboard = ({ view, onLogin }: DashboardProps) => {
   const { isPortfolioLoading, portfolioError } = usePortfolioSync();
   const portfolios = usePortfolioStore((state) => state.portfolios);
   const portfolioLedgers = usePortfolioStore((state) => state.portfolioLedgers);
@@ -68,11 +76,9 @@ const Dashboard = ({ view }: DashboardProps) => {
       ? (portfolioLedgers[realPortfolio.id]?.holdings ?? EMPTY_HOLDINGS)
       : EMPTY_HOLDINGS;
   }, [portfolioLedgers, realPortfolio]);
-  const realHistories = realPortfolio
-    ? (portfolioLedgers[realPortfolio.id]?.histories ?? [])
-    : [];
+  const realHistories = realPortfolio ? (portfolioLedgers[realPortfolio.id]?.histories ?? []) : [];
 
-  const addMarketSearchBuyRecord = userId && realPortfolio
+  const addMarketSearchBuyRecord = realPortfolio
     ? (preset: { ticker: string; name: string; market: 'KR' | 'US'; price: number }) => {
         openTransactionModal({
           ...preset,
@@ -286,6 +292,10 @@ const Dashboard = ({ view }: DashboardProps) => {
   }, [autoRefreshKey, isPortfolioLoading]);
 
   useEffect(() => {
+    void refreshPricesRef.current();
+  }, []);
+
+  useEffect(() => {
     if (!lastUpdated || lastRiskRefresh.current === lastUpdated) return;
     lastRiskRefresh.current = lastUpdated;
     setIsRiskLoading(true);
@@ -369,16 +379,15 @@ const Dashboard = ({ view }: DashboardProps) => {
           failedTickers={priceRefreshFailures}
         />
       ) : null}
-      <div className={styles.componentGrid}>
+      <div
+        className={`${styles.componentGrid} ${view === 'analysis' && !userId ? styles.analysisLockedContent : ''}`}
+      >
         <div {...panelProps('market')}>
           <span className={styles.dragHandle} aria-hidden="true">
             ⠿
           </span>
           {renderResizeHandle('market')}
-          <MarketDataPanel
-            holdings={realHoldings}
-            onAddBuyRecord={addMarketSearchBuyRecord}
-          />
+          <MarketDataPanel holdings={realHoldings} onAddBuyRecord={addMarketSearchBuyRecord} />
         </div>
         <div {...panelProps('manager')}>
           <span className={styles.dragHandle} aria-hidden="true">
@@ -438,18 +447,18 @@ const Dashboard = ({ view }: DashboardProps) => {
           <MonthlyComparisonPanel history={portfolioHistory} />
         </div>
         <div {...panelProps('guide')}>
-            <span className={styles.dragHandle} aria-hidden="true">
-              ⠿
-            </span>
-            {renderResizeHandle('guide')}
-            <PortfolioRiskDiagnostic
-              portfolioId={realPortfolio?.id}
-              holdings={realHoldings}
-              prices={prices}
-              exchangeRate={exchangeRate}
-              riskData={riskData}
-              isRiskLoading={isRiskLoading}
-            />
+          <span className={styles.dragHandle} aria-hidden="true">
+            ⠿
+          </span>
+          {renderResizeHandle('guide')}
+          <PortfolioRiskDiagnostic
+            portfolioId={realPortfolio?.id}
+            holdings={realHoldings}
+            prices={prices}
+            exchangeRate={exchangeRate}
+            riskData={riskData}
+            isRiskLoading={isRiskLoading}
+          />
         </div>
 
         {isPortfolioLoading && (
@@ -489,6 +498,19 @@ const Dashboard = ({ view }: DashboardProps) => {
           <p>🚦 월별 투자 시그널 패널 (Week 8)</p>
         </section>
       </div>
+      {view === 'analysis' && !userId ? (
+        <section className={styles.analysisLoginPrompt} aria-labelledby="analysis-login-title">
+          <p className={styles.analysisLoginEyebrow}>투자 분석은 로그인 후 이용할 수 있습니다</p>
+          <h2 id="analysis-login-title">포트폴리오를 저장하고 분석을 이어가세요</h2>
+          <p>
+            로그인하면 평가금액 이력, 기간별 수익률, 적립식 성과와 리스크 진단을 지속해서 확인할 수
+            있습니다.
+          </p>
+          <button type="button" className={styles.analysisLoginButton} onClick={onLogin}>
+            로그인하고 투자 분석 보기
+          </button>
+        </section>
+      ) : null}
     </main>
   );
 };

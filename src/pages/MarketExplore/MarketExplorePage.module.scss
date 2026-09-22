@@ -533,6 +533,9 @@
 }
 
 .addStockButton {
+  flex: 0 0 auto;
+  min-width: 68px;
+  height: 40px;
   min-height: 40px;
   padding: 0 14px;
   border-radius: 10px;
@@ -540,6 +543,7 @@
   color: #fff;
   font-size: 0.86rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .drawerCloseButton {
@@ -564,6 +568,7 @@
 
 .drawerTitle {
   display: flex;
+  flex: 1 1 auto;
   min-width: 0;
   align-items: center;
   gap: 12px;

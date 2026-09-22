@@ -5,6 +5,11 @@ import {
   deletePortfolioHoldingHistory,
   loadPortfolioWorkspace,
 } from '../services/portfolioLedgerService';
+import {
+  addGuestHoldingHistory,
+  backfillGuestPortfolioHistoricalExchangeRates,
+  deleteGuestHoldingHistory,
+} from '../services/localPortfolioLedgerService';
 import type {
   PortfolioLedger,
   PortfolioState,
@@ -112,7 +117,9 @@ export const usePortfolioStore = create<PortfolioState>()(
       loadPortfolioLedgers: async (userId, shouldApply) => {
         set({ isLoading: true, ledgerError: null });
         try {
-          const ledgers = await loadPortfolioWorkspace(userId);
+          const ledgers = userId
+            ? await loadPortfolioWorkspace(userId)
+            : await backfillGuestPortfolioHistoricalExchangeRates();
           if (shouldApply && !shouldApply()) return;
           set((state) => ({
             ...ledgerPatch(ledgers, state.activePortfolioId),
@@ -133,7 +140,9 @@ export const usePortfolioStore = create<PortfolioState>()(
       addHoldingHistory: async (userId, input) => {
         set({ isSaving: true, ledgerError: null });
         try {
-          const ledger = await addPortfolioHoldingHistory(userId, input);
+          const ledger = userId
+            ? await addPortfolioHoldingHistory(userId, input)
+            : await addGuestHoldingHistory(input);
           set((state) => {
             const ledgers = Object.values({
               ...state.portfolioLedgers,
@@ -157,7 +166,9 @@ export const usePortfolioStore = create<PortfolioState>()(
       deleteHoldingHistory: async (userId, portfolioId, historyId) => {
         set({ isSaving: true, ledgerError: null });
         try {
-          const ledger = await deletePortfolioHoldingHistory(userId, portfolioId, historyId);
+          const ledger = userId
+            ? await deletePortfolioHoldingHistory(userId, portfolioId, historyId)
+            : deleteGuestHoldingHistory(portfolioId, historyId);
           set((state) => {
             const ledgers = Object.values({
               ...state.portfolioLedgers,

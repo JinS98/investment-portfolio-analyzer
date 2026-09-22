@@ -36,6 +36,10 @@ type MarketFilter = 'KR' | 'US';
 type StockDetail = { quote: Quote | null; candles: DailyCandle[]; insights: StockInsights | null };
 type IndicatorCardChart = { candles: MarketIndicatorCandle[]; previousClose: number | null };
 const EMPTY_HOLDINGS: Holding[] = [];
+const GUEST_REAL_PORTFOLIO = {
+  id: 'guest-real', userId: 'guest', name: '실제 포트폴리오', type: 'REAL' as const,
+  createdAt: 0, updatedAt: 0,
+};
 
 const isKoreanMarket = (market: string) => ['KOSPI', 'KOSDAQ', 'KR_ETC'].includes(market);
 
@@ -298,8 +302,8 @@ export function MarketExplorePage() {
   const setExchangeRate = usePortfolioStore((state) => state.setExchangeRate);
   const displayCurrency = useDisplayCurrencyStore((state) => state.displayCurrency);
   const realPortfolio = useMemo(
-    () => portfolios.find((portfolio) => portfolio.type === 'REAL') ?? null,
-    [portfolios],
+    () => portfolios.find((portfolio) => portfolio.type === 'REAL') ?? (!userId ? GUEST_REAL_PORTFOLIO : null),
+    [portfolios, userId],
   );
   const realHoldings = realPortfolio
     ? (portfolioLedgers[realPortfolio.id]?.holdings ?? EMPTY_HOLDINGS)
@@ -538,10 +542,6 @@ export function MarketExplorePage() {
 
   const addStockToPortfolio = () => {
     if (!selectedStock) return;
-    if (!userId) {
-      setPortfolioActionNotice('로그인 후 내 포트폴리오에 담을 수 있습니다.');
-      return;
-    }
     if (!realPortfolio) {
       setPortfolioActionNotice('실제 포트폴리오를 준비하는 중입니다. 잠시 후 다시 시도해 주세요.');
       return;
@@ -563,7 +563,6 @@ export function MarketExplorePage() {
   };
 
   const submitTransaction = async (input: HoldingHistoryInput) => {
-    if (!userId) throw new Error('로그인 후 거래 기록을 추가할 수 있습니다.');
     await addHoldingHistory(userId, input);
   };
 

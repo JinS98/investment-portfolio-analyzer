@@ -537,6 +537,71 @@ export async function loadPortfolioWorkspace(userId: string): Promise<PortfolioL
   );
 }
 
+export async function canMigrateGuestPortfolioWorkspace(userId: string): Promise<boolean> {
+  await ensureDefaultPortfolios(userId);
+  const portfolios = await loadPortfolios(userId);
+  const [ledgers, legacyStocks] = await Promise.all([
+    Promise.all(portfolios.map((portfolio) => loadPortfolioLedger(userId, portfolio))),
+    loadPortfolioStocks(userId),
+  ]);
+  return !ledgers.some((ledger) => ledger.histories.length > 0 || ledger.holdings.length > 0) &&
+    legacyStocks.length === 0;
+}
+
+/**
+ * Moves the browser-only guest ledger into the matching signed-in portfolios.
+ * History ids are retained, making a retry after a partial failure idempotent.
+ */
+export async function migrateGuestPortfolioWorkspace(
+  userId: string,
+  guestLedgers: PortfolioLedger[],
+  options: { allowExistingHistories?: boolean } = {},
+): Promise<boolean> {
+  const ledgersToMigrate = guestLedgers.filter((ledger) => ledger.histories.length > 0);
+  if (!ledgersToMigrate.length) return false;
+
+  await ensureDefaultPortfolios(userId);
+  const portfolios = await loadPortfolios(userId);
+  const portfoliosByType = new Map(portfolios.map((portfolio) => [portfolio.type, portfolio]));
+  const existingLedgers = await Promise.all(
+    portfolios.map((portfolio) => loadPortfolioLedger(userId, portfolio)),
+  );
+  const hasExistingPortfolioData =
+    existingLedgers.some((ledger) => ledger.histories.length > 0 || ledger.holdings.length > 0) ||
+    (await loadPortfolioStocks(userId)).length > 0;
+  if (hasExistingPortfolioData && !options.allowExistingHistories) return false;
+  const ledgerByPortfolioId = new Map(
+    existingLedgers.map((ledger) => [ledger.portfolio.id, ledger]),
+  );
+
+  for (const guestLedger of ledgersToMigrate) {
+    const targetPortfolio = portfoliosByType.get(guestLedger.portfolio.type);
+    if (!targetPortfolio) {
+      throw new Error(`${guestLedger.portfolio.type} 포트폴리오를 찾을 수 없습니다.`);
+    }
+
+    const previous = ledgerByPortfolioId.get(targetPortfolio.id);
+    if (!previous) throw new Error(`${targetPortfolio.type} 포트폴리오 원장을 찾을 수 없습니다.`);
+    const existingHistoryIds = new Set(previous.histories.map((history) => history.id));
+    const historiesToMigrate = guestLedger.histories
+      .filter((history) => !existingHistoryIds.has(history.id))
+      .map((history) => ({
+        ...history,
+        portfolioId: targetPortfolio.id,
+        portfolioType: targetPortfolio.type,
+      }));
+
+    if (historiesToMigrate.length) {
+      await persistLedger(userId, targetPortfolio, previous, [
+        ...previous.histories,
+        ...historiesToMigrate,
+      ]);
+    }
+  }
+
+  return true;
+}
+
 const createHistory = async (
   id: string,
   input: HoldingHistoryInput,
