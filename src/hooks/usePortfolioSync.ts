@@ -64,7 +64,9 @@ export function usePortfolioSync() {
             if (!active) return null;
             if (shouldMigrate) {
               const didMigrate = await migrateGuestPortfolioWorkspace(userId, guestLedgers, {
-                allowExistingHistories: true,
+                // 일반 첫 이전은 서비스 단계에서도 빈 계정인지 다시 확인한다.
+                // 이전 도중 새로고침된 경우에만 같은 이력 ID로 안전하게 이어서 처리한다.
+                allowExistingHistories: isResumingMigration,
               });
               if (didMigrate) clearGuestPortfolioWorkspace();
               else clearGuestPortfolioMigration();

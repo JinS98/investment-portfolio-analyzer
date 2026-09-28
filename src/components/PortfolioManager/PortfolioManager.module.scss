@@ -318,6 +318,10 @@ button {
     white-space: nowrap;
   }
 
+  .recurringLastExecution {
+    color: #64748b;
+  }
+
   .stockAvatar {
     flex: 0 0 28px;
     width: 28px;
@@ -326,6 +330,10 @@ button {
     margin: 0;
     font-size: 0.78rem;
   }
+}
+
+:global(:root[data-theme='dark']) .recurringLastExecution {
+  color: #aeb8c7;
 }
 
 .recurringRulesHeader {

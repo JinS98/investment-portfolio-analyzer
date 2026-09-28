@@ -26,3 +26,9 @@ dist-ssr
 # 환경변수
 .env.local
 .env.*.local
+
+# Firebase Functions build output and server-only runtime configuration
+functions/lib/
+functions/.env
+functions/.env.*
+!functions/.env.example

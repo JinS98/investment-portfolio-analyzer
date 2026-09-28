@@ -86,7 +86,9 @@ npm run dev
 ```text
 Browser (React)
   ├─ Firebase Auth / Firestore: 사용자, 포트폴리오, 거래 원장
-  └─ /api/toss/* (Vite 개발 서버 미들웨어)
+  └─ /api/toss/*
+       ├─ 개발: Vite 개발 서버 미들웨어
+       └─ 배포: Firebase Hosting → tossApi Cloud Function (asia-northeast3)
        └─ Toss Securities Open API: 시세, 환율, 캔들, 순위, 지수
 ```
 
@@ -108,8 +110,19 @@ node --experimental-strip-types --test tests/*.test.ts
 - [거래 기록 UI](docs/week9-transaction-ui.md)
 - [적립식 투자 운영 기준](docs/week17-recurring-operations.md)
 - [투자 분석과 운영 안정화](docs/week18-analysis-and-stability.md)
+- [자동 매수 관리와 알림](docs/week19-automatic-purchase-management.md)
 - [종목 검색과 외부 정보 연동](docs/stock-search.md)
 
-## 배포 전 참고
+## 배포 구성
 
-현재 `/api/toss/*`는 Vite 개발 서버 미들웨어로 제공됩니다. 정적 호스팅 또는 프로덕션 배포 시에는 토스 API 키를 서버 환경 변수로 보관하는 별도 백엔드/서버리스 API를 구현해야 합니다. 브라우저에서 토스 Client Secret을 직접 호출하거나 노출하면 안 됩니다.
+개발 환경에서는 Vite 미들웨어가 `/api/toss/*`를 처리합니다. 배포 환경에서는 Firebase Hosting이 같은 경로를 `tossApi` Cloud Function으로 전달하므로, 브라우저 코드는 개발과 배포에서 같은 API 경로를 사용합니다.
+
+외부 API 키는 [`functions/.env.example`](functions/.env.example)를 복사해 `functions/.env` 또는 배포 환경 변수로 설정합니다. `TOSS_CLIENT_SECRET`을 비롯한 키에는 `VITE_` 접두사를 사용하지 마세요. 이 값은 함수 런타임에서만 읽히며 브라우저 번들에 포함되지 않습니다.
+
+```zsh
+npm run build
+cd functions && npm run build
+firebase deploy --only functions,hosting,firestore:rules
+```
+
+`tossApi`는 엔드포인트별 공유 캐시 헤더와 인스턴스별 요청 제한을 적용합니다. 배포 전 Firebase 프로젝트 연결과 함수 환경 변수 설정을 완료해야 합니다.

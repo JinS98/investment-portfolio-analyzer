@@ -22,6 +22,7 @@ import type {
 import { formatRate } from '../../utils/calculator';
 import { calculatePortfolioFxPerformance } from '../../utils/portfolioFxPerformance';
 import { getNextPendingRecurringInvestmentDate } from '../../utils/recurringInvestment';
+import { getRecurringFailureStates } from '../../utils/recurringExecution';
 import { formatCurrentMoney, formatHistoricalMoney } from '../../utils/displayCurrency';
 import styles from './PortfolioManager.module.scss';
 
@@ -176,29 +177,10 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
     : EMPTY_HISTORIES;
   const recurringRules =
     recurringRuleData.portfolioId === activeRecurringPortfolioId ? recurringRuleData.rules : [];
-  const recurringFailureStateByRule = useMemo(() => {
-    const state = new Map<
-      string,
-      { latest: RecurringInvestmentExecution; consecutiveFailures: number }
-    >();
-    const resolvedRuleIds = new Set<string>();
-    for (const execution of recurringExecutions) {
-      if (resolvedRuleIds.has(execution.ruleId)) continue;
-      const previous = state.get(execution.ruleId);
-      if (!previous) {
-        if (execution.result === 'FAILED') {
-          state.set(execution.ruleId, { latest: execution, consecutiveFailures: 1 });
-        } else {
-          resolvedRuleIds.add(execution.ruleId);
-        }
-      } else if (execution.result === 'FAILED') {
-        previous.consecutiveFailures += 1;
-      } else {
-        resolvedRuleIds.add(execution.ruleId);
-      }
-    }
-    return state;
-  }, [recurringExecutions]);
+  const recurringFailureStateByRule = useMemo(
+    () => getRecurringFailureStates(recurringExecutions),
+    [recurringExecutions],
+  );
 
   const updateRecurringRuleStatus = async (
     rule: RecurringInvestmentRule,
@@ -872,6 +854,18 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
                       rule.market === 'US' && summaryCurrency === 'KRW' ? 'KR' : rule.market,
                     );
               const latestHistory = ruleHistories[0];
+              const latestExecutionLabel = latestHistory
+                ? `최근 실행 ${latestHistory.date} · ${formatHistoricalMoney(
+                    latestHistory.price,
+                    rule.market,
+                    summaryCurrency,
+                    latestHistory.exchangeRate,
+                  )} · ${
+                    latestHistory.recurringExecutionStatus === 'PENDING'
+                      ? '체결 확인 필요'
+                      : '체결 확인 완료'
+                  }`
+                : '최근 실행 내역 없음';
               return (
                 <li key={rule.id}>
                   <strong className={styles.recurringStock}>
@@ -882,6 +876,12 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
                         {ruleHistories.length
                           ? `${ruleHistories.length}회 · ${totalQuantity.toLocaleString('ko-KR')}주 · ${historicalInvestmentLabel}`
                           : '아직 자동매수 이력이 없습니다.'}
+                      </small>
+                      <small
+                        className={styles.recurringLastExecution}
+                        title={latestExecutionLabel}
+                      >
+                        {latestExecutionLabel}
                       </small>
                     </span>
                   </strong>

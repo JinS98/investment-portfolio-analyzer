@@ -375,7 +375,7 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
           </button> */}
         </div>
       </header>
-      {view === 'dashboard' && userId ? (
+      {view === 'dashboard' && userId && realPortfolio ? (
         <PortfolioAlertSummary
           holdings={realHoldings}
           histories={realHistories}
@@ -384,6 +384,8 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
           exchangeRate={exchangeRate}
           lastUpdated={lastUpdated}
           failedTickers={priceRefreshFailures}
+          userId={userId}
+          portfolioId={realPortfolio.id}
         />
       ) : null}
       <div
