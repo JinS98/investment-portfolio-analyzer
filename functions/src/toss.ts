@@ -252,6 +252,7 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
         'indicator-candles',
         'us-indices',
         'stock-insights',
+        'health',
       ].includes(endpoint)
     ) {
       res.statusCode = 404;
@@ -268,6 +269,16 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
       if (req.headers.origin && new URL(req.headers.origin).host !== req.headers.host) {
         res.statusCode = 403;
         res.end('{}');
+        return;
+      }
+      if (endpoint === 'health') {
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(
+          JSON.stringify({
+            status: 'ok',
+            tossConfigured: Boolean(env.TOSS_CLIENT_ID && env.TOSS_CLIENT_SECRET),
+          }),
+        );
         return;
       }
       if (endpoint === 'search') {
