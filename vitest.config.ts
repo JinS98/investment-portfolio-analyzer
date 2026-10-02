@@ -1,13 +1,11 @@
-import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
-import { tossPlugin } from './server/toss.ts';
+import { defineConfig } from 'vitest/config';
 
 const src = (path: string) => fileURLToPath(new URL(`./src/${path}`, import.meta.url));
 
-// https://vite.dev/config/
-export default defineConfig(({ mode }) => ({
-  plugins: [react(), tossPlugin(loadEnv(mode, process.cwd(), ''))],
+export default defineConfig({
+  plugins: [react()],
   resolve: {
     alias: {
       '@app': src('app'),
@@ -18,4 +16,11 @@ export default defineConfig(({ mode }) => ({
       '@shared': src('shared'),
     },
   },
-}));
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
+    include: ['tests/**/*.test.tsx'],
+    clearMocks: true,
+    restoreMocks: true,
+  },
+});
