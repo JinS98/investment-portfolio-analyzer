@@ -1,0 +1,205 @@
+.section {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin-top: 16px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  container-type: inline-size;
+}
+.header,
+.card,
+.failure,
+.analysis {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.header,
+.analysis {
+  flex-wrap: wrap;
+}
+.header h3,
+.header p {
+  margin: 0;
+}
+.header > div,
+.analysis > span {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.header button,
+.analysis button {
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: max-content;
+  white-space: nowrap;
+}
+.header p,
+.card small,
+.failure small,
+.analysis small {
+  display: block;
+  color: var(--color-text-muted);
+}
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.card {
+  flex-wrap: wrap;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--color-surface-muted);
+}
+.identity {
+  display: flex;
+  flex: 1 1 190px;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+.identity span {
+  display: grid;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: flex;
+  gap: 6px;
+}
+.header button,
+.failure button,
+.analysis button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: var(--color-interactive-soft);
+  color: var(--color-interactive);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.actions button {
+  display: inline-grid;
+  flex: 0 0 36px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--color-interactive-soft);
+  color: var(--color-interactive);
+}
+.actions svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+.status {
+  position: relative;
+}
+.status > button {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.statusMenu {
+  position: absolute;
+  z-index: 3;
+  top: 38px;
+  right: 0;
+  display: grid;
+  min-width: 112px;
+  padding: 5px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-overlay);
+}
+.statusMenu button {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  white-space: nowrap;
+}
+.statusMenu button:hover,
+.statusMenu button:focus-visible {
+  background: var(--color-interactive-soft);
+  color: var(--color-interactive);
+}
+.statusMenu button[data-selected='true'] {
+  background: var(--color-surface-muted);
+  font-weight: 700;
+}
+.progress {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+.progress i {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--color-interactive);
+}
+.failure {
+  padding: 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-positive) 10%, transparent);
+  color: var(--color-positive);
+}
+.failureText {
+  display: grid;
+}
+.analysis {
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+}
+@container (max-width: 480px) {
+  .card {
+    align-items: flex-start;
+  }
+  .identity {
+    width: 100%;
+  }
+  .header,
+  .analysis {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .header > div,
+  .analysis > span {
+    flex: 0 1 auto;
+    width: 100%;
+  }
+}
+@container (max-width: 80px) {
+  .header > button,
+  .analysis > button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 6px;
+    white-space: normal;
+  }
+}

@@ -213,17 +213,6 @@
   }
 }
 
-.dialogOverlay {
-  position: fixed;
-  z-index: 200;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(25, 31, 40, 0.52);
-}
-
 .indicatorDialog {
   width: min(680px, 100%);
   padding: 24px;

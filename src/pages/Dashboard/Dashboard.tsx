@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { DragEvent, PointerEvent } from 'react';
 import { FiRefreshCw } from 'react-icons/fi';
 import { usePortfolio } from '../../hooks/usePortfolio';
@@ -14,47 +14,20 @@ import { PortfolioAlertSummary } from '../../components/PortfolioAlertSummary/Po
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
+import {
+  PANEL_REGISTRY,
+  dashboardLayoutReducer,
+  dropPosition,
+  panelGridPosition,
+  readDashboardLayout,
+  saveDashboardLayout,
+  splitFromPointer,
+  visiblePanelRows,
+} from '../../features/dashboard-layout';
+import type { DashboardView, PanelId } from '../../features/dashboard-layout';
 import styles from './Dashboard.module.scss';
 
-type PanelId =
-  | 'market'
-  | 'manager'
-  | 'allocation'
-  | 'recurring'
-  | 'performance'
-  | 'history'
-  | 'monthly'
-  | 'guide';
-type DashboardView = 'dashboard' | 'analysis';
 const EMPTY_HOLDINGS: import('../../types').Holding[] = [];
-const DEFAULT_PANEL_ORDER: PanelId[] = [
-  'market',
-  'manager',
-  'allocation',
-  'recurring',
-  'performance',
-  'history',
-  'monthly',
-  'guide',
-];
-
-interface PanelRow {
-  ids: PanelId[];
-  /** 첫 번째 패널의 너비(%)입니다. 두 패널이 있는 행에서만 사용합니다. */
-  split?: number;
-}
-
-type DropPosition = 'before' | 'after' | 'left' | 'right';
-
-const DEFAULT_PANEL_ROWS: PanelRow[] = DEFAULT_PANEL_ORDER.map((id) => ({ ids: [id] }));
-
-const isValidPanelRows = (value: unknown): value is PanelRow[] =>
-  Array.isArray(value) &&
-  value.flatMap((row) => row?.ids ?? []).length === DEFAULT_PANEL_ORDER.length &&
-  DEFAULT_PANEL_ORDER.every((id) =>
-    value.some((row) => Array.isArray(row?.ids) && row.ids.includes(id)),
-  ) &&
-  value.every((row) => Array.isArray(row?.ids) && row.ids.length >= 1 && row.ids.length <= 2);
 
 interface DashboardProps {
   view: DashboardView;
@@ -108,81 +81,14 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   const lastRiskRefresh = useRef<string | null>(null);
   const recurringAnalysisPanelRef = useRef<HTMLDivElement>(null);
   const [isRiskLoading, setIsRiskLoading] = useState(false);
-  const [panelRows, setPanelRows] = useState<PanelRow[]>(() => {
-    try {
-      const saved = JSON.parse(
-        localStorage.getItem('dashboard-panel-layout-v2') ?? '[]',
-      ) as unknown;
-      if (isValidPanelRows(saved)) return saved;
-
-      const previousOrder = JSON.parse(
-        localStorage.getItem('dashboard-panel-order') ?? '[]',
-      ) as PanelId[];
-      return previousOrder.length === DEFAULT_PANEL_ORDER.length &&
-        DEFAULT_PANEL_ORDER.every((id) => previousOrder.includes(id))
-        ? previousOrder.map((id) => ({ ids: [id] }))
-        : DEFAULT_PANEL_ROWS;
-    } catch {
-      return DEFAULT_PANEL_ROWS;
-    }
-  });
+  const [panelRows, dispatchLayout] = useReducer(dashboardLayoutReducer, undefined, () =>
+    readDashboardLayout(typeof localStorage === 'undefined' ? undefined : localStorage),
+  );
   const [draggingPanel, setDraggingPanel] = useState<PanelId | null>(null);
-  const visiblePanelIds =
-    view === 'dashboard'
-      ? new Set<PanelId>(['market', 'manager', 'allocation'])
-      : new Set<PanelId>(['recurring', 'performance', 'history', 'monthly', 'guide']);
-  const visiblePanelRows = panelRows
-    .map((row) => ({ ...row, ids: row.ids.filter((id) => visiblePanelIds.has(id)) }))
-    .filter((row) => row.ids.length > 0);
+  const shownRows = visiblePanelRows(panelRows, view);
   const autoRefreshKey = realHoldings
     .map((holding) => `${holding.market}:${holding.ticker}:${holding.lastTransactionAt ?? ''}`)
     .join('|');
-  const getPanelPosition = (id: PanelId) => {
-    const rowIndex = visiblePanelRows.findIndex((row) => row.ids.includes(id));
-    const row = visiblePanelRows[rowIndex];
-    const itemIndex = row?.ids.indexOf(id) ?? 0;
-    const split = row?.split ?? 50;
-
-    return {
-      gridRow: rowIndex + 1,
-      gridColumn:
-        row?.ids.length === 2
-          ? itemIndex === 0
-            ? `1 / ${Math.round(split * 10) + 1}`
-            : `${Math.round(split * 10) + 1} / -1`
-          : '1 / -1',
-    };
-  };
-
-  const movePanel = (source: PanelId, target: PanelId, position: DropPosition) => {
-    if (source === target) return;
-
-    setPanelRows((rows) => {
-      const sourceRow = rows.find((row) => row.ids.includes(source));
-      const wasPairedWithTarget = sourceRow?.ids.length === 2 && sourceRow.ids.includes(target);
-      const withoutSource = rows
-        .map((row) => ({ ...row, ids: row.ids.filter((id) => id !== source) }))
-        .filter((row) => row.ids.length > 0);
-      const targetIndex = withoutSource.findIndex((row) => row.ids.includes(target));
-      if (targetIndex < 0) return rows;
-
-      const targetRow = withoutSource[targetIndex];
-      if (position === 'before' || position === 'after') {
-        withoutSource.splice(targetIndex + (position === 'after' ? 1 : 0), 0, { ids: [source] });
-      } else if (wasPairedWithTarget) {
-        // 같은 행의 다른 패널 위로 드롭하면 두 패널을 각각 독립 행으로 분리합니다.
-        withoutSource.splice(targetIndex + (position === 'right' ? 1 : 0), 0, { ids: [source] });
-      } else if (targetRow.ids.length === 1) {
-        targetRow.ids = position === 'right' ? [target, source] : [source, target];
-        targetRow.split = 50;
-      } else {
-        // 이미 두 칸인 행에는 새 행을 만들어, 의도치 않게 세 패널이 겹치지 않게 합니다.
-        withoutSource.splice(targetIndex + (position === 'right' ? 1 : 0), 0, { ids: [source] });
-      }
-      return withoutSource;
-    });
-  };
-
   const handleResizeStart = (id: PanelId, event: PointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -191,13 +97,11 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
     const bounds = grid.getBoundingClientRect();
 
     const resize = (pointerEvent: globalThis.PointerEvent) => {
-      const split = Math.min(
-        80,
-        Math.max(20, ((pointerEvent.clientX - bounds.left) / bounds.width) * 100),
-      );
-      setPanelRows((rows) =>
-        rows.map((row) => (row.ids[0] === id && row.ids.length === 2 ? { ...row, split } : row)),
-      );
+      dispatchLayout({
+        type: 'resize',
+        id,
+        split: splitFromPointer(pointerEvent.clientX, bounds.left, bounds.width),
+      });
     };
     const finish = () => {
       window.removeEventListener('pointermove', resize);
@@ -208,13 +112,13 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   };
 
   const panelProps = (id: PanelId) => {
-    const row = visiblePanelRows.find((item) => item.ids.includes(id));
+    const row = shownRows.find((item) => item.ids.includes(id));
     const pairPosition =
       row?.ids.length === 2 ? (row.ids[0] === id ? styles.pairedFirst : styles.pairedSecond) : '';
 
     return {
-      className: `${styles.panelItem} ${pairPosition} ${draggingPanel === id ? styles.panelDragging : ''} ${(view === 'dashboard' && ['market', 'manager', 'allocation'].includes(id)) || (view === 'analysis' && !['market', 'manager', 'allocation'].includes(id)) ? '' : styles.hiddenPanel}`,
-      style: getPanelPosition(id),
+      className: `${styles.panelItem} ${pairPosition} ${draggingPanel === id ? styles.panelDragging : ''} ${PANEL_REGISTRY[id].view === view ? '' : styles.hiddenPanel}`,
+      style: panelGridPosition(shownRows, id),
       draggable: true,
       onDragStart: (event: DragEvent<HTMLDivElement>) => {
         event.dataTransfer.effectAllowed = 'move';
@@ -225,18 +129,14 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
       onDrop: (event: DragEvent<HTMLDivElement>) => {
         event.preventDefault();
         const source = event.dataTransfer.getData('text/plain') as PanelId;
-        if (!DEFAULT_PANEL_ORDER.includes(source) || source === id) return;
+        if (!Object.hasOwn(PANEL_REGISTRY, source) || source === id) return;
         const targetBounds = event.currentTarget.getBoundingClientRect();
-        const verticalPosition = (event.clientY - targetBounds.top) / targetBounds.height;
-        const position: DropPosition =
-          verticalPosition < 0.25
-            ? 'before'
-            : verticalPosition > 0.75
-              ? 'after'
-              : event.clientX > targetBounds.left + targetBounds.width / 2
-                ? 'right'
-                : 'left';
-        movePanel(source, id, position);
+        dispatchLayout({
+          type: 'move',
+          source,
+          target: id,
+          position: dropPosition(event.clientX, event.clientY, targetBounds),
+        });
         setDraggingPanel(null);
       },
       onDragEnd: () => setDraggingPanel(null),
@@ -244,7 +144,7 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   };
 
   const renderResizeHandle = (id: PanelId) =>
-    visiblePanelRows.some((row) => row.ids[0] === id && row.ids.length === 2) ? (
+    shownRows.some((row) => row.ids[0] === id && row.ids.length === 2) ? (
       <button
         type="button"
         className={styles.resizeHandle}
@@ -265,7 +165,7 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   }, [loadHistoricalData]);
 
   useEffect(() => {
-    localStorage.setItem('dashboard-panel-layout-v2', JSON.stringify(panelRows));
+    saveDashboardLayout(typeof localStorage === 'undefined' ? undefined : localStorage, panelRows);
   }, [panelRows]);
 
   useEffect(() => {
@@ -353,26 +253,6 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
             />
             {isLoading ? '로딩 중...' : '새로고침'}
           </button>
-          {/* <button
-            type="button"
-            className={styles.layoutToggle}
-            onClick={() => {
-              setPanelRows(DEFAULT_PANEL_ROWS);
-              setLayoutMode('single');
-            }}
-            aria-label={layoutMode === 'single' ? '2열 보기로 변경' : '1열 보기로 변경'}
-            title={layoutMode === 'single' ? '2열 보기로 변경' : '1열 보기로 변경'}
-          >
-            <span
-              className={`${styles.layoutIcon} ${layoutMode === 'single' ? styles.twoColumnIcon : styles.singleColumnIcon}`}
-              aria-hidden="true"
-            >
-              <i />
-              <i />
-              <i />
-              <i />
-            </span>
-          </button> */}
         </div>
       </header>
       {view === 'dashboard' && userId && realPortfolio ? (

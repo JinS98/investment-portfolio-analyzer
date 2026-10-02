@@ -7,12 +7,9 @@ import {
   updateRecurringInvestmentRule,
 } from '../../services/portfolioLedgerService';
 import { searchStocks } from '../../services/tossApi';
-import type {
-  Portfolio,
-  RecurringInvestmentFrequency,
-  RecurringInvestmentRule,
-} from '../../types';
+import type { Portfolio, RecurringInvestmentFrequency, RecurringInvestmentRule } from '../../types';
 import type { StockSearchItem } from '../../types/market';
+import { Dialog } from '@shared/ui';
 import styles from './RecurringInvestmentModal.module.scss';
 
 type Draft = {
@@ -83,15 +80,6 @@ export function RecurringInvestmentModal({
     };
   }, [draft.ticker, isOpen, query]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isSaving) onClose();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, isSaving, onClose]);
-
   if (!isOpen) return null;
 
   const selectStock = (stock: StockSearchItem) => {
@@ -145,7 +133,12 @@ export function RecurringInvestmentModal({
   };
 
   const removeRule = async () => {
-    if (!rule || isSaving || !window.confirm(`${draft.name || draft.ticker} 적립식 투자 규칙을 삭제할까요?`)) return;
+    if (
+      !rule ||
+      isSaving ||
+      !window.confirm(`${draft.name || draft.ticker} 적립식 투자 규칙을 삭제할까요?`)
+    )
+      return;
     setIsSaving(true);
     setError('');
     try {
@@ -160,24 +153,36 @@ export function RecurringInvestmentModal({
   };
 
   return (
-    <div className={styles.backdrop} onMouseDown={(event) => event.target === event.currentTarget && !isSaving && onClose()}>
-      <section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="recurring-investment-title">
-        <header>
-          <div>
-            <p>{portfolio.type === 'REAL' ? '실제 포트폴리오' : '가상 포트폴리오'}</p>
-            <h2 id="recurring-investment-title">{rule ? '적립식 투자 수정' : '적립식 투자 설정'}</h2>
+    <Dialog
+      open={isOpen}
+      labelledBy="recurring-investment-title"
+      onClose={onClose}
+      closeDisabled={isSaving}
+      mobileBottom
+      className={styles.dialog}
+    >
+      <header>
+        <div>
+          <p>{portfolio.type === 'REAL' ? '실제 포트폴리오' : '가상 포트폴리오'}</p>
+          <h2 id="recurring-investment-title">{rule ? '적립식 투자 수정' : '적립식 투자 설정'}</h2>
+        </div>
+        <button
+          type="button"
+          className={styles.closeButton}
+          onClick={onClose}
+          disabled={isSaving}
+          aria-label="닫기"
+        >
+          <FiX />
+        </button>
+      </header>
+      <form onSubmit={(event) => void submit(event)}>
+        {rule ? (
+          <div className={styles.stockReadOnly}>
+            <span>종목</span>
+            <strong>{draft.name || draft.ticker}</strong>
           </div>
-          <button type="button" className={styles.closeButton} onClick={onClose} disabled={isSaving} aria-label="닫기">
-            <FiX />
-          </button>
-        </header>
-        <form onSubmit={(event) => void submit(event)}>
-          {rule ? (
-            <div className={styles.stockReadOnly}>
-              <span>종목</span>
-              <strong>{draft.name || draft.ticker}</strong>
-            </div>
-          ) : (
+        ) : (
           <label className={styles.searchField}>
             종목 검색
             <input
@@ -198,7 +203,11 @@ export function RecurringInvestmentModal({
                 {isSearching ? <li>검색 중...</li> : null}
                 {matches.map((stock) => (
                   <li key={`${stock.market}-${stock.symbol}`}>
-                    <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => selectStock(stock)}>
+                    <button
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => selectStock(stock)}
+                    >
                       {stock.name}
                     </button>
                   </li>
@@ -206,46 +215,114 @@ export function RecurringInvestmentModal({
               </ul>
             ) : null}
           </label>
-          )}
-          <div className={styles.fields}>
-            <label>
-              매수 수량
-              <input inputMode="decimal" value={draft.quantity} onChange={(event) => setDraft((current) => ({ ...current, quantity: event.target.value }))} disabled={isSaving} required />
-            </label>
-            <label>
-              시작일
-              <input type="date" value={draft.startDate} onChange={(event) => setDraft((current) => ({ ...current, startDate: event.target.value }))} disabled={isSaving} required />
-            </label>
+        )}
+        <div className={styles.fields}>
+          <label>
+            매수 수량
+            <input
+              inputMode="decimal"
+              value={draft.quantity}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, quantity: event.target.value }))
+              }
+              disabled={isSaving}
+              required
+            />
+          </label>
+          <label>
+            시작일
+            <input
+              type="date"
+              value={draft.startDate}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, startDate: event.target.value }))
+              }
+              disabled={isSaving}
+              required
+            />
+          </label>
+        </div>
+        <fieldset>
+          <legend>매수 주기</legend>
+          <div className={styles.frequencyButtons}>
+            <button
+              type="button"
+              className={draft.frequency === 'WEEKLY' ? styles.active : undefined}
+              onClick={() => setDraft((current) => ({ ...current, frequency: 'WEEKLY' }))}
+            >
+              매주
+            </button>
+            <button
+              type="button"
+              className={draft.frequency === 'MONTHLY' ? styles.active : undefined}
+              onClick={() => setDraft((current) => ({ ...current, frequency: 'MONTHLY' }))}
+            >
+              매월
+            </button>
           </div>
-          <fieldset>
-            <legend>매수 주기</legend>
-            <div className={styles.frequencyButtons}>
-              <button type="button" className={draft.frequency === 'WEEKLY' ? styles.active : undefined} onClick={() => setDraft((current) => ({ ...current, frequency: 'WEEKLY' }))}>매주</button>
-              <button type="button" className={draft.frequency === 'MONTHLY' ? styles.active : undefined} onClick={() => setDraft((current) => ({ ...current, frequency: 'MONTHLY' }))}>매월</button>
-            </div>
-            {draft.frequency === 'WEEKLY' ? (
-              <select value={draft.weeklyDay} onChange={(event) => setDraft((current) => ({ ...current, weeklyDay: event.target.value }))} disabled={isSaving}>
-                {['월요일', '화요일', '수요일', '목요일', '금요일'].map((label, index) => <option key={label} value={index + 1}>{label}</option>)}
-              </select>
-            ) : (
-              <select value={draft.monthlyDay} onChange={(event) => setDraft((current) => ({ ...current, monthlyDay: event.target.value }))} disabled={isSaving}>
-                {Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>매월 {index + 1}일</option>)}
-              </select>
-            )}
-          </fieldset>
-          <p className={styles.guide}>주말·휴장일 또는 해당 일이 없는 달은 다음 거래일에 실행합니다. 모의 포트폴리오는 거래일 종가를 사용하고, 실제 포트폴리오는 토스 체결가를 확인한 뒤 확정합니다.</p>
-          {error ? <p className={styles.error} role="alert">{error}</p> : null}
-          <footer>
-            {rule ? (
-              <button type="button" className={styles.deleteButton} onClick={() => void removeRule()} disabled={isSaving}>
-                삭제
-              </button>
-            ) : null}
-            <button type="button" className={styles.cancelButton} onClick={onClose} disabled={isSaving}>취소</button>
-            <button type="submit" disabled={isSaving}>{isSaving ? '저장 중...' : rule ? '수정 저장' : '규칙 저장'}</button>
-          </footer>
-        </form>
-      </section>
-    </div>
+          {draft.frequency === 'WEEKLY' ? (
+            <select
+              value={draft.weeklyDay}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, weeklyDay: event.target.value }))
+              }
+              disabled={isSaving}
+            >
+              {['월요일', '화요일', '수요일', '목요일', '금요일'].map((label, index) => (
+                <option key={label} value={index + 1}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select
+              value={draft.monthlyDay}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, monthlyDay: event.target.value }))
+              }
+              disabled={isSaving}
+            >
+              {Array.from({ length: 31 }, (_, index) => (
+                <option key={index + 1} value={index + 1}>
+                  매월 {index + 1}일
+                </option>
+              ))}
+            </select>
+          )}
+        </fieldset>
+        <p className={styles.guide}>
+          주말·휴장일 또는 해당 일이 없는 달은 다음 거래일에 실행합니다. 모의 포트폴리오는 거래일
+          종가를 사용하고, 실제 포트폴리오는 토스 체결가를 확인한 뒤 확정합니다.
+        </p>
+        {error ? (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        ) : null}
+        <footer>
+          {rule ? (
+            <button
+              type="button"
+              className={styles.deleteButton}
+              onClick={() => void removeRule()}
+              disabled={isSaving}
+            >
+              삭제
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={styles.cancelButton}
+            onClick={onClose}
+            disabled={isSaving}
+          >
+            취소
+          </button>
+          <button type="submit" disabled={isSaving}>
+            {isSaving ? '저장 중...' : rule ? '수정 저장' : '규칙 저장'}
+          </button>
+        </footer>
+      </form>
+    </Dialog>
   );
 }

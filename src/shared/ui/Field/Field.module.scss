@@ -1,0 +1,27 @@
+.field {
+  display: grid;
+  gap: 6px;
+  color: var(--color-text);
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.required {
+  color: var(--color-positive);
+}
+
+.hint,
+.error {
+  font-size: 12px;
+}
+
+.hint {
+  color: var(--color-text-muted);
+}
+
+.error {
+  color: var(--color-positive);
+}

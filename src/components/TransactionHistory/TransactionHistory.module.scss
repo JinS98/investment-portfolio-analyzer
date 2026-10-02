@@ -143,6 +143,71 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.mobileList {
+  display: none;
+}
+
+.mobileCard {
+  list-style: none;
+  padding: $spacing-md;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+
+  > small {
+    display: block;
+    margin-top: $spacing-sm;
+    color: var(--color-text-muted);
+  }
+}
+
+.mobileCardHeader,
+.mobileCardMeta,
+.mobileCardActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+}
+
+.mobileCardHeader span,
+.mobileCardMeta {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.mobileCardMeta {
+  justify-content: flex-start;
+  margin-top: $spacing-sm;
+}
+
+.mobileCardValues {
+  display: grid;
+  gap: $spacing-sm;
+  margin: $spacing-md 0 0;
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    gap: $spacing-md;
+  }
+
+  dt {
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    text-align: right;
+  }
+}
+
+.mobileCardActions {
+  justify-content: flex-end;
+  margin-top: $spacing-md;
+}
+
 table {
   width: 100%;
   min-width: 1060px;
@@ -255,8 +320,15 @@ td small {
   font-weight: 700;
 }
 
-.confirmButton { border: 1px solid rgba($color-warning, .5); background: rgba($color-warning, .1); color: #b45309; }
-.confirmed { background: rgba($color-success, .12); color: $color-success; }
+.confirmButton {
+  border: 1px solid rgba($color-warning, 0.5);
+  background: rgba($color-warning, 0.1);
+  color: #b45309;
+}
+.confirmed {
+  background: rgba($color-success, 0.12);
+  color: $color-success;
+}
 
 .empty {
   margin: $spacing-lg 0 0;
@@ -360,17 +432,13 @@ td small {
   }
 
   .tableWrap {
-    margin-right: -$spacing-md;
-    margin-left: -$spacing-md;
-    padding: 0 $spacing-md 4px;
+    display: none;
   }
 
-  table {
-    min-width: 940px;
-  }
-
-  th,
-  td {
-    padding: 12px 8px;
+  .mobileList {
+    display: grid;
+    gap: $spacing-sm;
+    margin: $spacing-md 0 0;
+    padding: 0;
   }
 }

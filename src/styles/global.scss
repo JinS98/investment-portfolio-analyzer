@@ -1,4 +1,5 @@
 @use './variables' as *;
+@use '../shared/styles/tokens';
 
 *,
 *::before,
@@ -15,8 +16,8 @@ html {
 
 body {
   font-family: $font-family;
-  background-color: $color-bg;
-  color: $color-text;
+  background-color: var(--color-canvas);
+  color: var(--color-text);
   line-height: 1.5;
   min-height: 100vh;
 }
@@ -168,7 +169,7 @@ summary:focus-visible {
   color: #aeb8c7;
 }
 
-:root[data-theme='dark'] input,
+:root[data-theme='dark'] input:not([type='checkbox']):not([type='radio']),
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
   border-color: #363e4d !important;
