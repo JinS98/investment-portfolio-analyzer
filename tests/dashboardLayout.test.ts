@@ -1,17 +1,30 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  createDashboardLayout,
+  dropPosition,
+  splitFromPointer,
+} from '../src/features/dashboard-layout/model/dashboardLayout.ts';
+
+const {
   DEFAULT_PANEL_ORDER,
   DEFAULT_PANEL_ROWS,
   dashboardLayoutReducer,
-  dropPosition,
   isValidPanelRows,
   panelGridPosition,
   readDashboardLayout,
   saveDashboardLayout,
-  splitFromPointer,
   visiblePanelRows,
-} from '../src/features/dashboard-layout/model/dashboardLayout.ts';
+} = createDashboardLayout({
+  market: { view: 'dashboard' },
+  manager: { view: 'dashboard' },
+  allocation: { view: 'dashboard' },
+  recurring: { view: 'analysis' },
+  performance: { view: 'analysis' },
+  history: { view: 'analysis' },
+  monthly: { view: 'analysis' },
+  guide: { view: 'analysis' },
+});
 
 const createStorage = (initial: Record<string, string> = {}) => {
   const values = new Map(Object.entries(initial));
@@ -110,4 +123,15 @@ test('dashboard layout rejects duplicate, unknown, and malformed saved panels', 
     ),
     DEFAULT_PANEL_ROWS,
   );
+});
+
+test('a newly registered panel joins the default layout and its destination view', () => {
+  const layout = createDashboardLayout({
+    market: { view: 'dashboard' },
+    news: { view: 'analysis' },
+  });
+  assert.deepEqual(layout.DEFAULT_PANEL_ORDER, ['market', 'news']);
+  assert.deepEqual(layout.visiblePanelRows(layout.DEFAULT_PANEL_ROWS, 'analysis'), [
+    { ids: ['news'] },
+  ]);
 });

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { TransactionModal } from '../src/components/TransactionModal/TransactionModal';
+import { TransactionModal } from '@features/transaction';
 import type { Holding, Portfolio } from '../src/types';
 
 const portfolio: Portfolio = {

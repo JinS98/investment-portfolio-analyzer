@@ -1,31 +1,23 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { DragEvent, PointerEvent, ReactNode } from 'react';
+import type { DragEvent, PointerEvent } from 'react';
 import { FiRefreshCw } from 'react-icons/fi';
 import { usePortfolio } from '../../hooks/usePortfolio';
-import { MarketDataPanel } from '../../components/MarketDataPanel/MarketDataPanel';
-import { PortfolioManager } from '../../components/PortfolioManager/PortfolioManager';
-import { PortfolioAllocationChart } from '../../components/PortfolioAllocationChart/PortfolioAllocationChart';
-import { PortfolioPerformanceChart } from '../../components/PortfolioPerformanceChart/PortfolioPerformanceChart';
-import { PortfolioRiskDiagnostic } from '../../components/PortfolioRiskDiagnostic/PortfolioRiskDiagnostic';
-import { PortfolioHistoryPanel } from '../../components/PortfolioHistoryPanel/PortfolioHistoryPanel';
-import { MonthlyComparisonPanel } from '../../components/MonthlyComparisonPanel/MonthlyComparisonPanel';
-import { RecurringInvestmentAnalysisPanel } from '../../components/RecurringInvestmentAnalysisPanel/RecurringInvestmentAnalysisPanel';
 import { PortfolioAlertSummary } from '../../components/PortfolioAlertSummary/PortfolioAlertSummary';
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
+import { dropPosition, splitFromPointer } from '../../features/dashboard-layout';
+import type { DashboardView } from '../../features/dashboard-layout';
 import {
   DEFAULT_PANEL_ORDER,
   PANEL_REGISTRY,
   dashboardLayoutReducer,
-  dropPosition,
   panelGridPosition,
   readDashboardLayout,
   saveDashboardLayout,
-  splitFromPointer,
   visiblePanelRows,
-} from '../../features/dashboard-layout';
-import type { DashboardView, PanelId } from '../../features/dashboard-layout';
+} from './panelRegistry';
+import type { DashboardPanelContext, PanelId } from './panelRegistry';
 import styles from './Dashboard.module.scss';
 
 const EMPTY_HOLDINGS: import('../../types').Holding[] = [];
@@ -215,45 +207,18 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
       .finally(() => setIsRiskLoading(false));
   }, [lastUpdated]);
 
-  const panelContent: Record<PanelId, ReactNode> = {
-    market: <MarketDataPanel holdings={realHoldings} onAddBuyRecord={addMarketSearchBuyRecord} />,
-    manager: <PortfolioManager portfolioType="REAL" />,
-    allocation: (
-      <PortfolioAllocationChart
-        portfolio={realHoldings}
-        prices={prices}
-        exchangeRate={exchangeRate}
-      />
-    ),
-    recurring: (
-      <RecurringInvestmentAnalysisPanel
-        portfolioId={realPortfolio?.id}
-        histories={realHistories}
-        prices={prices}
-      />
-    ),
-    performance: (
-      <PortfolioPerformanceChart
-        portfolio={portfolio}
-        historicalData={historicalData}
-        portfolioHistory={portfolioHistory}
-        holdingHistories={realHistories}
-        exchangeRate={exchangeRate}
-        isLoading={isRiskLoading}
-      />
-    ),
-    history: <PortfolioHistoryPanel history={portfolioHistory} />,
-    monthly: <MonthlyComparisonPanel history={portfolioHistory} />,
-    guide: (
-      <PortfolioRiskDiagnostic
-        portfolioId={realPortfolio?.id}
-        holdings={realHoldings}
-        prices={prices}
-        exchangeRate={exchangeRate}
-        riskData={riskData}
-        isRiskLoading={isRiskLoading}
-      />
-    ),
+  const panelContext: DashboardPanelContext = {
+    realHoldings,
+    realHistories,
+    realPortfolioId: realPortfolio?.id,
+    addMarketSearchBuyRecord,
+    portfolio,
+    prices,
+    exchangeRate,
+    historicalData,
+    portfolioHistory,
+    riskData,
+    isRiskLoading,
   };
 
   return (
@@ -323,7 +288,7 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
               ⠿
             </span>
             {renderResizeHandle(id)}
-            {panelContent[id]}
+            {PANEL_REGISTRY[id].render(panelContext)}
           </div>
         ))}
 
