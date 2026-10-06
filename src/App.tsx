@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { pageFromHash, type AppPage } from './app/navigation';
-import { Content } from './components/layout/Content/Content';
-import { Header } from './components/layout/Header/Header';
-import { AuthDialog } from './components/AuthDialog/AuthDialog';
+import { Content } from './app/ui/Content/Content';
+import { Header } from './app/ui/Header/Header';
+import { AuthDialog } from '@features/auth';
 import { useAuth } from './hooks/useAuth';
 import { useDisplayCurrencyStore } from './store/displayCurrencyStore';
 import styles from './App.module.scss';

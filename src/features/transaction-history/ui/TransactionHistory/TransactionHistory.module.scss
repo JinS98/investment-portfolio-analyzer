@@ -1,0 +1,482 @@
+@use '../../../../styles/variables' as *;
+
+.section {
+  margin-top: $spacing-xl;
+  padding: 28px;
+  border: 0;
+  border-radius: 20px;
+  background: $color-surface;
+  box-shadow: 0 1px 3px rgba(25, 31, 40, 0.04);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+  }
+
+  p,
+  > span {
+    color: $color-text-muted;
+    font-size: 0.85rem;
+  }
+
+  p {
+    margin-top: $spacing-xs;
+  }
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-top: $spacing-lg;
+
+  input,
+  select {
+    height: 42px;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid #e5e8eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    color: $color-text;
+    font: inherit;
+    font-size: 0.82rem;
+  }
+
+  input[placeholder] {
+    width: 180px;
+  }
+}
+
+.typeFilters {
+  display: flex;
+  gap: $spacing-xs;
+
+  button {
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: #f2f4f6;
+    color: $color-text-muted;
+    font: inherit;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  button.active {
+    background: #edf5ff;
+    color: $color-primary;
+  }
+}
+
+.sourceFilters {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: #f2f4f6;
+
+  button {
+    min-height: 34px;
+    padding: 6px 9px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: $color-text-muted;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  button.active {
+    background: $color-surface;
+    color: $color-text;
+    box-shadow: 0 1px 3px rgba(25, 31, 40, 0.08);
+  }
+}
+
+.dateSeparator {
+  color: $color-text-muted;
+}
+.dateLabel {
+  @extend .srOnly;
+}
+
+.ruleFilterNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f2f4f6;
+  color: $color-text-muted;
+  font-size: 0.78rem;
+
+  button {
+    flex: 0 0 auto;
+    padding: 4px 7px;
+    border: 0;
+    border-radius: 7px;
+    background: $color-surface;
+    color: $color-text;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+}
+
+.tableWrap {
+  position: relative;
+  overflow-x: auto;
+  margin-top: $spacing-md;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobileList {
+  display: none;
+}
+
+.mobileCard {
+  list-style: none;
+  padding: $spacing-md;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+
+  > small {
+    display: block;
+    margin-top: $spacing-sm;
+    color: var(--color-text-muted);
+  }
+}
+
+.mobileCardHeader,
+.mobileCardMeta,
+.mobileCardActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+}
+
+.mobileCardHeader span,
+.mobileCardMeta {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.mobileCardMeta {
+  justify-content: flex-start;
+  margin-top: $spacing-sm;
+}
+
+.mobileCardValues {
+  display: grid;
+  gap: $spacing-sm;
+  margin: $spacing-md 0 0;
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    gap: $spacing-md;
+  }
+
+  dt {
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    text-align: right;
+  }
+}
+
+.mobileCardActions {
+  justify-content: flex-end;
+  margin-top: $spacing-md;
+}
+
+table {
+  width: 100%;
+  min-width: 1060px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 14px 8px;
+  border-bottom: 1px solid $color-border;
+  text-align: right;
+  white-space: nowrap;
+}
+
+th {
+  color: $color-text-muted;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+th:nth-child(2),
+td:nth-child(2),
+th:nth-child(3),
+td:nth-child(3) {
+  text-align: left;
+}
+
+td strong {
+  font-size: 0.9rem;
+}
+
+td small {
+  display: block;
+  margin-top: 3px;
+  color: $color-text-muted;
+}
+
+.buyBadge,
+.sellBadge {
+  display: inline-flex;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.buyBadge {
+  background: rgba($color-success, 0.16);
+  color: $color-success;
+}
+
+.sellBadge {
+  background: rgba($color-danger, 0.16);
+  color: $color-danger;
+}
+
+.recurringSource,
+.manualSource {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  color: $color-text-muted;
+  font-size: 0.72rem;
+  white-space: nowrap;
+
+  strong {
+    color: $color-text;
+    font-size: 0.76rem;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: 0.7rem;
+  }
+}
+
+.manualSource {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #f2f4f6;
+  font-weight: 700;
+}
+
+.positive {
+  color: $color-success;
+}
+
+.negative {
+  color: $color-danger;
+}
+
+.deleteButton {
+  padding: 6px 9px;
+  border: 1px solid rgba($color-danger, 0.6);
+  border-radius: 5px;
+  background: transparent;
+  color: $color-danger;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.confirmButton,
+.confirmed {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.confirmButton {
+  border: 1px solid rgba($color-warning, 0.5);
+  background: rgba($color-warning, 0.1);
+  color: #b45309;
+}
+.confirmed {
+  background: rgba($color-success, 0.12);
+  color: $color-success;
+}
+
+.empty {
+  margin: $spacing-lg 0 0;
+  padding: $spacing-lg 0;
+  color: $color-text-muted;
+  text-align: center;
+}
+
+.error {
+  margin: $spacing-md 0 0;
+  color: $color-danger;
+  font-size: 0.85rem;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+:global(:root[data-theme='dark']) .sourceFilters,
+:global(:root[data-theme='dark']) .manualSource {
+  background: #252b37;
+}
+
+:global(:root[data-theme='dark']) .ruleFilterNotice {
+  background: #252b37;
+  color: #aeb8c7;
+
+  button {
+    background: #3a4658;
+    color: #f2f4f6;
+  }
+}
+
+:global(:root[data-theme='dark']) .sourceFilters button.active {
+  background: #3a4658;
+  color: #f2f4f6;
+}
+
+:global(:root[data-theme='dark']) .recurringSource strong {
+  color: #f2f4f6;
+}
+
+@include mobile {
+  .section {
+    padding: $spacing-md;
+  }
+
+  .header {
+    align-items: center;
+  }
+
+  .filters {
+    gap: $spacing-sm;
+
+    > label:nth-child(3),
+    > select {
+      flex: 1 0 100%;
+    }
+
+    > label:nth-child(4),
+    > label:nth-child(6) {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    > label input,
+    > select {
+      width: 100%;
+    }
+  }
+
+  .typeFilters {
+    width: 100%;
+
+    button {
+      flex: 1;
+      min-width: 0;
+      min-height: 44px;
+    }
+  }
+
+  .sourceFilters {
+    width: 100%;
+
+    button {
+      flex: 1;
+      min-width: 0;
+      min-height: 40px;
+      padding-right: 6px;
+      padding-left: 6px;
+      font-size: 0.72rem;
+    }
+  }
+
+  .filters input[placeholder] {
+    width: 100%;
+  }
+
+  .tableWrap {
+    display: none;
+  }
+
+  .mobileList {
+    display: grid;
+    gap: $spacing-sm;
+    margin: $spacing-md 0 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .filters {
+    > label:nth-child(4),
+    > label:nth-child(6) {
+      flex: 1 0 100%;
+    }
+
+    input[type='date'] {
+      min-width: 0;
+    }
+  }
+
+  .dateLabel {
+    position: static;
+    display: block;
+    width: auto;
+    height: auto;
+    margin-bottom: 4px;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    color: $color-text-muted;
+    font-size: 0.75rem;
+  }
+
+  .dateSeparator {
+    display: none;
+  }
+}

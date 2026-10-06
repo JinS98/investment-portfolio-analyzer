@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "npm run lint:eslint && npm run lint:oxlint",
+    "lint": "npm run lint:eslint && npm run lint:oxlint && npm run lint:architecture",
+    "lint:architecture": "node scripts/check-import-boundaries.mjs",
     "lint:eslint": "eslint src tests vite.config.ts vitest.config.ts",
     "lint:oxlint": "oxlint",
     "format": "prettier --write .",

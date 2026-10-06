@@ -2,7 +2,7 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useTransactionFilters } from '@features/transaction-history';
-import { TransactionMobileList } from '../src/components/TransactionHistory/TransactionMobileList';
+import { TransactionMobileList } from '@features/transaction-history';
 import type { HoldingHistory } from '../src/types';
 
 const manual: HoldingHistory = {

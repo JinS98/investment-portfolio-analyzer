@@ -1,5 +1,5 @@
 import { FiX } from 'react-icons/fi';
-import { SidePanel } from '../../components/layout/SidePanel/SidePanel';
+import { Drawer } from '@shared/ui';
 import { StockAvatar } from '@entities/stock';
 import type { DisplayCurrency } from '../../store/displayCurrencyStore';
 import type { MarketExploreStock } from '../../services/marketExploreService';
@@ -41,7 +41,7 @@ export function StockDetailDrawer({
   onRetry,
 }: StockDetailDrawerProps) {
   return (
-    <SidePanel isOpen={selectedStock !== null} labelledBy="stock-drawer-title" onClose={onClose}>
+    <Drawer open={selectedStock !== null} labelledBy="stock-drawer-title" onClose={onClose}>
       {selectedStock ? (
         <>
           <header className={styles.drawerHeader}>
@@ -187,6 +187,6 @@ export function StockDetailDrawer({
           ) : null}
         </>
       ) : null}
-    </SidePanel>
+    </Drawer>
   );
 }

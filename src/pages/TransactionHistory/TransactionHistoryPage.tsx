@@ -1,7 +1,7 @@
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
-import { TransactionHistory } from '../../components/TransactionHistory/TransactionHistory';
+import { TransactionHistory } from '@features/transaction-history';
 import type { HoldingHistory } from '../../types';
 import { calculateRealizedKrwPnLBreakdown } from '../../utils/portfolioFxPerformance';
 import { confirmRecurringHoldingHistory } from '../../services/portfolioLedgerService';

@@ -2,12 +2,12 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { DragEvent, PointerEvent } from 'react';
 import { FiRefreshCw } from 'react-icons/fi';
 import { usePortfolio } from '../../hooks/usePortfolio';
-import { PortfolioAlertSummary } from '../../components/PortfolioAlertSummary/PortfolioAlertSummary';
+import { PortfolioAlertSummary } from '@widgets/dashboard-panels';
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
-import { dropPosition, splitFromPointer } from '../../features/dashboard-layout';
-import type { DashboardView } from '../../features/dashboard-layout';
+import { dropPosition, splitFromPointer } from '@features/dashboard-layout';
+import type { DashboardView } from '@features/dashboard-layout';
 import {
   DEFAULT_PANEL_ORDER,
   PANEL_REGISTRY,

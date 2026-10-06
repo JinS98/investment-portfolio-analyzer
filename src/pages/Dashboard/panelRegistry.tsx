@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react';
-import { MarketDataPanel } from '../../components/MarketDataPanel/MarketDataPanel';
-import { PortfolioManager } from '../../components/PortfolioManager/PortfolioManager';
-import { PortfolioAllocationChart } from '../../components/PortfolioAllocationChart/PortfolioAllocationChart';
-import { PortfolioPerformanceChart } from '../../components/PortfolioPerformanceChart/PortfolioPerformanceChart';
-import { PortfolioRiskDiagnostic } from '../../components/PortfolioRiskDiagnostic/PortfolioRiskDiagnostic';
-import { PortfolioHistoryPanel } from '../../components/PortfolioHistoryPanel/PortfolioHistoryPanel';
-import { MonthlyComparisonPanel } from '../../components/MonthlyComparisonPanel/MonthlyComparisonPanel';
-import { RecurringInvestmentAnalysisPanel } from '../../components/RecurringInvestmentAnalysisPanel/RecurringInvestmentAnalysisPanel';
-import { createDashboardLayout, type DashboardView } from '../../features/dashboard-layout';
+import { PortfolioManager } from '@features/portfolio-management';
+import {
+  MarketDataPanel,
+  PortfolioAllocationChart,
+  PortfolioPerformanceChart,
+  PortfolioRiskDiagnostic,
+  PortfolioHistoryPanel,
+  MonthlyComparisonPanel,
+  RecurringInvestmentAnalysisPanel,
+} from '@widgets/dashboard-panels';
+import { createDashboardLayout, type DashboardView } from '@features/dashboard-layout';
 import type {
   ExchangeRate,
   Holding,

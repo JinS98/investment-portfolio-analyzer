@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { PortfolioAllocationChart } from '../../components/PortfolioAllocationChart/PortfolioAllocationChart';
-import { PortfolioManager } from '../../components/PortfolioManager/PortfolioManager';
+import { PortfolioAllocationChart } from '@widgets/dashboard-panels';
+import { PortfolioManager } from '@features/portfolio-management';
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import { fetchCurrentPrices, fetchUsdKrwExchangeRate } from '../../services/tossApi';
 import { usePortfolioStore } from '../../store/portfolioStore';

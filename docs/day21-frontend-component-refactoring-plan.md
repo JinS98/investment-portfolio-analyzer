@@ -319,7 +319,7 @@ MarketExplorePage
 - [ ] D21-15 거래 내역 화면 분해
 - [ ] D21-16 대시보드 layout engine 분리
 - [x] D21-17 `usePortfolio` 책임 분리
-- [ ] D21-18 폴더 이동과 공개 API 정리
+- [x] D21-18 폴더 이동과 공개 API 정리
 - [ ] D21-19 전역 스타일 부채 제거
 - [ ] D21-20 최종 회귀 검증과 문서 정리
 
@@ -331,7 +331,9 @@ D21-01~03은 완료로 확정했다. D21-04~16은 아래 완료 조건 중 시�
 
 2026-10-02 당시 구현 검증은 typecheck, lint, 단위 테스트 87개, 컴포넌트 테스트 36개, production build가 통과했다. 시각 회귀와 guest smoke 시나리오는 아직 실행 결과를 기록하지 않아 D21-04~16의 완료 체크를 보류한다.
 
-2026-10-06에는 D21-17의 가격 갱신·과거 시세/위험·종목 CRUD를 전용 hook으로 분리하고 기존 `usePortfolio` API를 facade로 유지했다. 현재가 일부 실패, 이력 저장 실패, 일봉 일부 실패 테스트를 추가해 통과했다. 단위 테스트 88개, 컴포넌트 테스트 40개, lint, build가 통과했다. D21-18~20과 D21-04~16의 화면 검증은 남아 있다.
+2026-10-06에는 D21-17의 가격 갱신·과거 시세/위험·종목 CRUD를 전용 hook으로 분리하고 기존 `usePortfolio` API를 facade로 유지했다. 현재가 일부 실패, 이력 저장 실패, 일봉 일부 실패 테스트를 추가해 통과했다. 단위 테스트 88개, 컴포넌트 테스트 40개, lint, build가 통과했다. D21-04~16의 화면 검증은 남아 있다.
+
+같은 날 D21-18의 컴포넌트 폴더 이동과 feature/widget 공개 API 전환을 마쳤다. 사용하지 않는 `TransactionModal` re-export와 `SidePanel` 호환 wrapper를 제거하고, `npm run lint:architecture`로 계층 역참조·feature/widget 내부 직접 import·런타임 순환 의존을 검사한다. typecheck, lint, 단위 테스트 88개, 컴포넌트 테스트 40개, production build가 통과했다. D21-19~20은 남아 있다.
 
 ### 묶음 A: 회귀 방지 기반
 

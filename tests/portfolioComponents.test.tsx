@@ -9,8 +9,7 @@ import {
   HOLDING_COLUMN_OPTIONS,
 } from '@features/portfolio-management';
 import { RecurringInvestmentSection } from '@features/recurring-investment';
-import { PortfolioHeader } from '../src/components/PortfolioManager/PortfolioHeader';
-import { PortfolioSummary } from '../src/components/PortfolioManager/PortfolioSummary';
+import { PortfolioHeader, PortfolioSummary } from '@features/portfolio-management';
 import type { Holding, MarketType, Portfolio, RecurringInvestmentRule } from '../src/types';
 import type { HoldingColumnId } from '@features/portfolio-management';
 
