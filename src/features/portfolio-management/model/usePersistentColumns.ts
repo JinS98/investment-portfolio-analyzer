@@ -39,12 +39,28 @@ function readColumns(market: MarketType, portfolioType?: PortfolioType): Holding
   }
 }
 
+const readColumnsByMarket = (
+  portfolioType?: PortfolioType,
+): Record<MarketType, HoldingColumnId[]> => ({
+  KR: readColumns('KR', portfolioType),
+  US: readColumns('US', portfolioType),
+});
+
 export function usePersistentColumns(portfolioType?: PortfolioType) {
-  const [visibleColumnsByMarket, setVisibleColumnsByMarket] = useState<
-    Record<MarketType, HoldingColumnId[]>
-  >(() => ({ KR: readColumns('KR', portfolioType), US: readColumns('US', portfolioType) }));
+  const portfolioKey = portfolioType ?? 'all';
+  const [columnsByPortfolio, setColumnsByPortfolio] = useState<
+    Record<string, Record<MarketType, HoldingColumnId[]>>
+  >(() => ({ [portfolioKey]: readColumnsByMarket(portfolioType) }));
+  const visibleColumnsByMarket =
+    columnsByPortfolio[portfolioKey] ?? readColumnsByMarket(portfolioType);
   const updateColumns = (market: MarketType, columns: HoldingColumnId[]) => {
-    setVisibleColumnsByMarket((current) => ({ ...current, [market]: columns }));
+    setColumnsByPortfolio((current) => ({
+      ...current,
+      [portfolioKey]: {
+        ...(current[portfolioKey] ?? readColumnsByMarket(portfolioType)),
+        [market]: columns,
+      },
+    }));
     try {
       localStorage.setItem(storageKey(market, portfolioType), JSON.stringify(columns));
     } catch {

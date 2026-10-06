@@ -102,30 +102,33 @@ npm run build
 node --experimental-strip-types --test tests/*.test.ts
 ```
 
-## 주차별 개발 문서
+## 일차별 개발 문서
 
-| 주차 | 주제 | 문서 |
-| --- | --- | --- |
-| 1주차 | 프로젝트 기반 구성 | [문서](docs/week1-project-foundation.md) |
-| 2주차 | 시장 데이터 조회 기반 | [문서](docs/week2-market-data-foundation.md) |
-| 3주차 | 토스 API와 종목 검색 연결 | [문서](docs/week3-toss-api-and-stock-search.md) |
-| 4주차 | Firebase 포트폴리오 연동 | [문서](docs/week4-firebase-integration.md) |
-| 5주차 | 포트폴리오 시각화와 리스크 분석 | [문서](docs/week5-risk-and-visualization.md) |
-| 6주차 | 이력 분석·인증·대시보드 고도화 | [문서](docs/week6-history-auth-dashboard.md) |
-| 7주차 | 거래 원장 계산 정책 | [문서](docs/week7-calculation-policy.md) |
-| 8주차 | 거래 원장 저장·복원 | [문서](docs/week8-ledger-storage.md) |
-| 9주차 | 거래 기록 UI와 가상 포트폴리오 | [문서](docs/week9-transaction-ui.md) |
-| 10주차 | 포트폴리오 표시 설정과 시세 UX | [문서](docs/week10-portfolio-display-and-quote-ux.md) |
-| 11주차 | 테마와 대시보드 UX 개선 | [문서](docs/week11-theme-and-dashboard-ux.md) |
-| 12주차 | 거래 원장과 대시보드 정교화 | [문서](docs/week12-ledger-and-dashboard-refinement.md) |
-| 13주차 | 거래일 환율 기반 손익 | [문서](docs/week13-transaction-date-exchange-rate.md) |
-| 14주차 | 시장 탐색과 외부 정보 | [문서](docs/week14-market-exploration.md), [API·검색 상세](docs/stock-search.md) |
-| 15주차 | 시장 차트와 포트폴리오 UX 개선 | [문서](docs/week15-market-charts-and-portfolio-ux.md) |
-| 16주차 | 적립식 투자 자동 반영 | [문서](docs/week16-recurring-investment-automation.md) |
-| 17주차 | 적립식 투자 운영과 거래 이력 | [문서](docs/week17-recurring-operations.md) |
-| 18주차 | 투자 분석과 운영 안정화 | [문서](docs/week18-analysis-and-stability.md) |
-| 19주차 | 자동 매수 관리와 알림 | [문서](docs/week19-automatic-purchase-management.md) |
-| 20주차 | 배포용 API 전환 | [문서](docs/week20-deployment-api-transition.md) |
+| 일차      | 주제                            | 문서                                                                                                    |
+| --------- | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| 1일차     | 프로젝트 기반 구성              | [문서](docs/day1-project-foundation.md)                                                                 |
+| 2일차     | 시장 데이터 조회 기반           | [문서](docs/day2-market-data-foundation.md)                                                             |
+| 3일차     | 토스 API와 종목 검색 연결       | [문서](docs/day3-toss-api-and-stock-search.md)                                                          |
+| 4일차     | Firebase 포트폴리오 연동        | [문서](docs/day4-firebase-integration.md)                                                               |
+| 5일차     | 포트폴리오 시각화와 리스크 분석 | [문서](docs/day5-risk-and-visualization.md)                                                             |
+| 6일차     | 이력 분석·인증·대시보드 고도화  | [문서](docs/day6-history-auth-dashboard.md)                                                             |
+| 7일차     | 거래 원장 계산 정책             | [문서](docs/day7-calculation-policy.md)                                                                 |
+| 8일차     | 거래 원장 저장·복원             | [문서](docs/day8-ledger-storage.md)                                                                     |
+| 9일차     | 거래 기록 UI와 가상 포트폴리오  | [문서](docs/day9-transaction-ui.md)                                                                     |
+| 10일차    | 포트폴리오 표시 설정과 시세 UX  | [문서](docs/day10-portfolio-display-and-quote-ux.md)                                                    |
+| 11일차    | 테마와 대시보드 UX 개선         | [문서](docs/day11-theme-and-dashboard-ux.md)                                                            |
+| 12일차    | 거래 원장과 대시보드 정교화     | [문서](docs/day12-ledger-and-dashboard-refinement.md)                                                   |
+| 13일차    | 거래일 환율 기반 손익           | [문서](docs/day13-transaction-date-exchange-rate.md)                                                    |
+| 14일차    | 시장 탐색과 외부 정보           | [문서](docs/day14-market-exploration.md), [API·검색 상세](docs/stock-search.md)                         |
+| 15일차    | 시장 차트와 포트폴리오 UX 개선  | [문서](docs/day15-market-charts-and-portfolio-ux.md)                                                    |
+| 16일차    | 적립식 투자 자동 반영           | [문서](docs/day16-recurring-investment-automation.md)                                                   |
+| 17일차    | 적립식 투자 운영과 거래 이력    | [문서](docs/day17-recurring-operations.md)                                                              |
+| 18일차    | 투자 분석과 운영 안정화         | [문서](docs/day18-analysis-and-stability.md)                                                            |
+| 19일차    | 자동 매수 관리와 알림           | [문서](docs/day19-automatic-purchase-management.md)                                                     |
+| 20일차    | 배포용 API 전환                 | [문서](docs/day20-deployment-api-transition.md)                                                         |
+| 21일차    | 프런트엔드 컴포넌트 리팩토링    | [계획](docs/day21-frontend-component-refactoring-plan.md), [기준선](docs/day21-refactoring-baseline.md) |
+| 22~31일차 | UI·기능 수정과 회귀 검증        | [작업 계획](docs/day22-31-ui-feature-roadmap.md)                                                        |
+| 32~41일차 | 배포 준비·설정·출시 검증        | [배포 계획](docs/day32-41-deployment-roadmap.md)                                                        |
 
 ## 배포 구성
 

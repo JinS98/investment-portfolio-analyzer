@@ -1,4 +1,4 @@
-# Week 7 업무 1 — 기존 구조와 계산 정책
+# Day 7 업무 1 — 기존 구조와 계산 정책
 
 - 작성일: 2026-09-15
 - 상태: 업무 1 정책 확정, 업무 2 공통 타입 정의 완료. 계산 엔진 구현은 업무 3부터 진행한다.
@@ -12,11 +12,11 @@
 | `src/types/index.ts`                                                                                    | `StockItem`은 `id`, `ticker`, `market`, `name?`, `buyPrice`, `quantity`, `addedAt` 보유 | `market`은 이미 존재. 포트폴리오 식별자와 이력 모델은 신규 필요           |
 | `src/utils/calculator.ts`                                                                               | `calcPortfolio()`가 현재가와 매수가로 평가손익 계산                                     | 보유 재계산과 현재가 평가를 분리. 현재 함수의 호출 계약은 단계적으로 전환 |
 | `src/services/portfolioService.ts`                                                                      | `portfolios/{userId}/stocks/{stockId}`에 보유 결과만 저장                               | 원장 기반 저장 구조로 이관 필요. 현재 수정은 매수가·총수량 덮어쓰기       |
-| `src/store/portfolioStore.ts`                                                                           | 보유 배열 CRUD, 가격·환율·계산 결과 관리                                                | portfolioId별 이력 및 요약 상태는 8주차에 추가                            |
+| `src/store/portfolioStore.ts`                                                                           | 보유 배열 CRUD, 가격·환율·계산 결과 관리                                                | portfolioId별 이력 및 요약 상태는 8일차에 추가                            |
 | `src/hooks/usePortfolio.ts`                                                                             | 서버 저장 성공 후 로컬 반영 및 평가 계산                                                | 보유 직접 수정 대신 이력 저장·재계산 연결 필요                            |
 | `src/hooks/usePortfolioSync.ts`                                                                         | 로그인 시 보유 상태와 일별 히스토리 로드                                                | 이력 로딩·복원과 계정/포트폴리오 분리 필요                                |
-| `src/components/PortfolioManager/PortfolioManager.tsx`                                                  | 동일 티커 추가 차단, 행에서 매수가·수량 직접 수정, KR/US별 표시                         | 9주차에 추가 매수/매도 기록 UI로 전환                                     |
-| `src/utils/portfolioSnapshot.ts`                                                                        | USD를 조회 환율로 환산해 원화 일별 스냅샷 저장                                          | 기존 스냅샷은 보존하고 새 손익 필드는 10주차에 연결                       |
+| `src/components/PortfolioManager/PortfolioManager.tsx`                                                  | 동일 티커 추가 차단, 행에서 매수가·수량 직접 수정, KR/US별 표시                         | 9일차에 추가 매수/매도 기록 UI로 전환                                     |
+| `src/utils/portfolioSnapshot.ts`                                                                        | USD를 조회 환율로 환산해 원화 일별 스냅샷 저장                                          | 기존 스냅샷은 보존하고 새 손익 필드는 10일차에 연결                       |
 | `src/components/PortfolioAllocationChart/PortfolioAllocationChart.tsx`, `usePortfolio.ts`의 리스크 계산 | `buyPrice`를 가격 누락 시 대체값으로 사용                                               | 평균단가 호환 필드 제거 시 함께 전환                                      |
 | `tests/calculator.test.ts`                                                                              | 현재가 평가 및 가격 누락 대체 동작 검증                                                 | 이력 엔진 테스트를 추가하되 기존 평가 테스트 유지                         |
 
@@ -86,18 +86,18 @@ netPnL = totalPnL - 매수 비용 합계
 - 매도 시점의 보유량으로 검증한다. 미래 매수를 앞당겨 초과 매도를 상쇄하지 않는다.
 - 과거 기록 삽입·삭제는 전체 이력을 다시 계산한다. 과거 매수 삭제로 이후 매도가 불가능해지면 변경 전체를 거부한다.
 - 오류에는 원인과 해당 이력 ID를 제공한다. 일부 계산 결과를 성공 결과로 반환하지 않는다.
-- 8주차 저장 연결에서는 후보 이력 전체를 먼저 검증·재계산하고, 저장 성공 후 상태를 반영한다.
+- 8일차 저장 연결에서는 후보 이력 전체를 먼저 검증·재계산하고, 저장 성공 후 상태를 반영한다.
 
 ## 6. 기존 데이터 호환 및 이관 정책
 
-### 7주차: 기존 사용처 유지
+### 7일차: 기존 사용처 유지
 
 1. 새 도메인 타입은 `src/types/portfolio.ts`에 작성하고 기존 import 경로를 위해 `src/types/index.ts`에서 재수출한다.
 2. 현재 보유 모델은 호환용 `LegacyStockItem`으로 명시적으로 분리한다. 새 필드를 무조건 optional로 추가해 불완전한 새 모델을 허용하지 않는다.
 3. 신규 보유 모델은 `averagePrice`를 기준으로 삼는다. 기존 UI가 필요로 하는 `buyPrice`는 어댑터에서 `averagePrice`로부터 만든다. 두 값을 독립 수정·저장하지 않는다.
 4. 기존 서비스·스토어는 호환 모델을 유지하며 새 순수 엔진은 독립 검증한다. 기존 `id`, `addedAt`은 호환 계층에서 보존한다.
 
-### 8주차: 저장 구조 이관
+### 8일차: 저장 구조 이관
 
 대상 경로는 `users/{userId}/portfolios/{portfolioId}` 아래 `holdings`, `holdingHistories`, `snapshots`다.
 
@@ -123,4 +123,4 @@ Firestore 규칙은 [firestore.rules](../firestore.rules)에서 기존 `portfoli
 | 5. 재계산 | 완료 — `recalculatePortfolio()` 구현. 과거 기록 변경, 동일 날짜/시각 정렬, 중복 ID, 불변성, 잘못된 이력 전체 거부 검증 |
 | 6. 통합   | 완료 — REAL/VIRTUAL 독립성, KR/USD 통화 분리, 금액 표시 반올림, 기존 평가 테스트, 타입 검사·빌드 검증                  |
 
-업무 1은 문서 변경만 수행했다. 업무 2~6에서 새 타입과 순수 계산 엔진을 추가했으며, 현재 앱의 UI·Firestore 저장 경로는 변경하지 않았다. 거래 원장의 저장·복원은 Week 8, 매수/매도 UI는 Week 9에서 연결한다.
+업무 1은 문서 변경만 수행했다. 업무 2~6에서 새 타입과 순수 계산 엔진을 추가했으며, 현재 앱의 UI·Firestore 저장 경로는 변경하지 않았다. 거래 원장의 저장·복원은 Day 8, 매수/매도 UI는 Day 9에서 연결한다.

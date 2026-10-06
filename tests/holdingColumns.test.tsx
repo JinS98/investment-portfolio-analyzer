@@ -4,8 +4,11 @@ import { usePersistentColumns } from '@features/portfolio-management';
 
 afterEach(() => {
   localStorage.removeItem('portfolio-table-columns-v1-REAL');
+  localStorage.removeItem('portfolio-table-columns-v1-VIRTUAL');
   localStorage.removeItem('portfolio-table-columns-v2-REAL-KR');
   localStorage.removeItem('portfolio-table-columns-v2-REAL-US');
+  localStorage.removeItem('portfolio-table-columns-v2-VIRTUAL-KR');
+  localStorage.removeItem('portfolio-table-columns-v2-VIRTUAL-US');
 });
 
 describe('portfolio column preferences', () => {
@@ -41,5 +44,21 @@ describe('portfolio column preferences', () => {
       KR: ['quantity', 'averagePrice'],
       US: ['quantity'],
     });
+  });
+
+  it('restores each portfolio type when the active workspace changes', () => {
+    localStorage.setItem('portfolio-table-columns-v2-REAL-KR', JSON.stringify(['quantity']));
+    localStorage.setItem('portfolio-table-columns-v2-VIRTUAL-KR', JSON.stringify(['profitRate']));
+    const { result, rerender } = renderHook(
+      ({ type }: { type: 'REAL' | 'VIRTUAL' }) => usePersistentColumns(type),
+      { initialProps: { type: 'REAL' } },
+    );
+    expect(result.current.visibleColumnsByMarket.KR).toEqual(['quantity']);
+
+    rerender({ type: 'VIRTUAL' });
+    expect(result.current.visibleColumnsByMarket.KR).toEqual(['profitRate']);
+
+    rerender({ type: 'REAL' });
+    expect(result.current.visibleColumnsByMarket.KR).toEqual(['quantity']);
   });
 });

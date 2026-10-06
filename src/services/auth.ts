@@ -11,7 +11,7 @@ import type { AppUser } from '../types';
 
 export const signInWithGoogle = async (): Promise<AppUser> => {
   if (!isFirebaseConfigured || !auth) {
-    throw new Error('Firebase 미설정 — .env.local을 먼저 구성해주세요 (Week 4)');
+    throw new Error('Firebase 미설정 — .env.local을 먼저 구성해주세요 (Day 4)');
   }
   const result = await signInWithPopup(auth, new GoogleAuthProvider());
   return toAppUser(result.user);

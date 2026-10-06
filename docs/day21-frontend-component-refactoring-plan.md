@@ -1,4 +1,4 @@
-# 21주차: 프론트엔드 컴포넌트 아키텍처 리팩토링 계획
+# 21일차: 프론트엔드 컴포넌트 아키텍처 리팩토링 계획
 
 ## 목표
 
@@ -298,42 +298,44 @@ MarketExplorePage
 
 아래 번호를 티켓과 PR의 기본 단위로 사용한다. 원칙적으로 한 작업이 검증을 통과한 뒤 다음 작업을 시작하며, 같은 묶음 안에서 선행 작업이 없는 항목만 병렬로 진행한다.
 
+남은 작업은 [22~31일차 UI·기능 수정과 회귀 검증](./day22-31-ui-feature-roadmap.md), [32~41일차 배포 준비·설정·출시 검증](./day32-41-deployment-roadmap.md)에 나눠 정리한다. 아래 D21 완료 조건과 체크 상태는 실제 검증 결과에 따라 갱신한다.
+
 ### 진행 현황
 
-- [x] W21-01 현재 동작 기준선 고정
-- [x] W21-02 테스트 도구와 공통 render 환경 추가
-- [x] W21-03 경로 alias와 계층 규칙 준비
-- [ ] W21-04 디자인 token 정리
-- [ ] W21-05 기본 UI primitive 추가
-- [ ] W21-06 overlay 공통 동작 구현
-- [ ] W21-07 엔티티 공통 표현 통합
-- [ ] W21-08 종목 검색 feature 추출
-- [ ] W21-09 거래 폼 모델 분리
-- [ ] W21-10 거래 모달 UI 분해
-- [ ] W21-11 포트폴리오 selector와 view model 추출
-- [ ] W21-12 보유 종목 영역 분해
-- [ ] W21-13 자동매수 영역 분리
-- [ ] W21-14 시장 탐색 화면 분해
-- [ ] W21-15 거래 내역 화면 분해
-- [ ] W21-16 대시보드 layout engine 분리
-- [ ] W21-17 `usePortfolio` 책임 분리
-- [ ] W21-18 폴더 이동과 공개 API 정리
-- [ ] W21-19 전역 스타일 부채 제거
-- [ ] W21-20 최종 회귀 검증과 문서 정리
+- [x] D21-01 현재 동작 기준선 고정
+- [x] D21-02 테스트 도구와 공통 render 환경 추가
+- [x] D21-03 경로 alias와 계층 규칙 준비
+- [ ] D21-04 디자인 token 정리
+- [ ] D21-05 기본 UI primitive 추가
+- [ ] D21-06 overlay 공통 동작 구현
+- [ ] D21-07 엔티티 공통 표현 통합
+- [ ] D21-08 종목 검색 feature 추출
+- [ ] D21-09 거래 폼 모델 분리
+- [ ] D21-10 거래 모달 UI 분해
+- [ ] D21-11 포트폴리오 selector와 view model 추출
+- [ ] D21-12 보유 종목 영역 분해
+- [ ] D21-13 자동매수 영역 분리
+- [ ] D21-14 시장 탐색 화면 분해
+- [ ] D21-15 거래 내역 화면 분해
+- [ ] D21-16 대시보드 layout engine 분리
+- [ ] D21-17 `usePortfolio` 책임 분리
+- [ ] D21-18 폴더 이동과 공개 API 정리
+- [ ] D21-19 전역 스타일 부채 제거
+- [ ] D21-20 최종 회귀 검증과 문서 정리
 
-W21-01~03은 완료로 확정했다. W21-04 이후 구현은 아래 완료 조건 중 시각 회귀와 guest smoke 검증이 남아 있어 체크를 보류한다.
+D21-01~03은 완료로 확정했다. D21-04 이후 구현은 아래 완료 조건 중 시각 회귀와 guest smoke 검증이 남아 있어 체크를 보류한다.
 
-2026-10-02에는 W21-04~16의 일부 구현을 반영했다. 디자인 token, 기본 UI, 공통 Dialog/Drawer, 종목 표현·검색, 거래 폼 모델·UI, 포트폴리오 selector·보유 종목·자동매수 영역을 추가했다. 거래 UI는 `features/transaction/ui`로 옮기고 기존 import 경로는 호환 wrapper로 유지한다. `PortfolioManager`의 비활성화된 중복 JSX를 제거하고 제목·요약·보유 종목 표시를 분리했다. 시장별 컬럼 설정 저장과 현재가 갱신을 hook으로 옮기고 `useRecurringRules`를 실제 화면에 연결했다. 자동매수 설정·체결 확인 모달도 공통 Dialog를 사용한다.
+2026-10-02에는 D21-04~16의 일부 구현을 반영했다. 디자인 token, 기본 UI, 공통 Dialog/Drawer, 종목 표현·검색, 거래 폼 모델·UI, 포트폴리오 selector·보유 종목·자동매수 영역을 추가했다. 거래 UI는 `features/transaction/ui`로 옮기고 기존 import 경로는 호환 wrapper로 유지한다. `PortfolioManager`의 비활성화된 중복 JSX를 제거하고 제목·요약·보유 종목 표시를 분리했다. 시장별 컬럼 설정 저장과 현재가 갱신을 hook으로 옮기고 `useRecurringRules`를 실제 화면에 연결했다. 자동매수 설정·체결 확인 모달도 공통 Dialog를 사용한다.
 
 시장 탐색 화면은 지수·검색·상세 요청 hook과 표현 컴포넌트로, 거래 내역 화면은 필터 hook과 데스크톱 표·모바일 목록으로 나눴다. 대시보드 배치는 패널 registry, 순수 reducer, 위치·분할 계산 함수, 저장·이전 adapter로 분리했다. `Dashboard`의 패널 콘텐츠 JSX는 아직 기존 위치에 있다.
 
-현재 구현 검증은 typecheck, lint, 단위 테스트 87개, 컴포넌트 테스트 36개, production build가 통과했다. 시각 회귀와 guest smoke 시나리오는 아직 실행 결과를 기록하지 않아 W21-04 이후 항목의 완료 체크를 보류한다. `usePortfolio` 책임 분리, 폴더·공개 API 정리, 전역 스타일 정리도 남아 있다.
+현재 구현 검증은 typecheck, lint, 단위 테스트 87개, 컴포넌트 테스트 36개, production build가 통과했다. 시각 회귀와 guest smoke 시나리오는 아직 실행 결과를 기록하지 않아 D21-04 이후 항목의 완료 체크를 보류한다. `usePortfolio` 책임 분리, 폴더·공개 API 정리, 전역 스타일 정리도 남아 있다.
 
 ### 묶음 A: 회귀 방지 기반
 
-#### W21-01. 현재 동작 기준선 고정
+#### D21-01. 현재 동작 기준선 고정
 
-상태: **완료** — 자동 검사 기준선과 smoke 시나리오는 [`week21-refactoring-baseline.md`](./week21-refactoring-baseline.md)에 기록한다. 연결 가능한 브라우저가 없어 수동 시나리오 실행 결과는 미수행으로 명시했다.
+상태: **완료** — 자동 검사 기준선과 smoke 시나리오는 [`day21-refactoring-baseline.md`](./day21-refactoring-baseline.md)에 기록한다. 연결 가능한 브라우저가 없어 수동 시나리오 실행 결과는 미수행으로 명시했다.
 
 - 기존 typecheck, lint, test, production build 결과를 기록한다.
 - 로그인 없이 확인 가능한 포트폴리오 거래, 시장 탐색, 대시보드 레이아웃 복원 smoke 시나리오를 작성한다.
@@ -341,7 +343,7 @@ W21-01~03은 완료로 확정했다. W21-04 이후 구현은 아래 완료 조�
 
 완료 조건: 실패 중인 기존 검사가 있다면 원인과 허용 여부가 문서화되고, 이후 작업에서 새 실패를 구분할 수 있다.
 
-#### W21-02. 테스트 도구와 공통 render 환경 추가
+#### D21-02. 테스트 도구와 공통 render 환경 추가
 
 상태: **완료** — Vitest, React Testing Library, user-event, jest-dom, jsdom을 추가하고 `tests/setup.ts`에서 브라우저 API와 Zustand store를 초기화한다. `SidePanel` smoke test 2건으로 환경을 검증했다.
 
@@ -349,10 +351,11 @@ W21-01~03은 완료로 확정했다. W21-04 이후 구현은 아래 완료 조�
 - Zustand 상태와 브라우저 API를 초기화하는 공통 test setup을 만든다.
 - 최소 한 개의 기존 컴포넌트 smoke test로 환경을 검증한다.
 
-선행 작업: W21-01  
+선행 작업: D21-01
+
 완료 조건: 컴포넌트 테스트가 로컬과 CI에서 동일하게 실행된다.
 
-#### W21-03. 경로 alias와 계층 규칙 준비
+#### D21-03. 경로 alias와 계층 규칙 준비
 
 상태: **완료** — TypeScript, Vite, Vitest에 `@app`, `@pages`, `@widgets`, `@features`, `@entities`, `@shared` alias를 동일하게 구성했다. ESLint는 `shared → entities → features → widgets → pages → app` 순서에서 하위 계층의 상위 계층 import를 차단한다. 기존 파일은 대량 이동하지 않았으며 신규·이전 파일부터 적용한다.
 
@@ -360,178 +363,196 @@ W21-01~03은 완료로 확정했다. W21-04 이후 구현은 아래 완료 조�
 - 아직 파일은 대량 이동하지 않고 신규 파일부터 alias를 사용한다.
 - 상위 계층을 역참조하지 못하도록 import 제한 규칙을 준비한다.
 
-선행 작업: W21-01  
+선행 작업: D21-01
+
 완료 조건: typecheck, lint, build 통과. 기존 경로를 한 번에 변경하지 않는다.
 
 ### 묶음 B: 공통 기반
 
-#### W21-04. 디자인 token 정리
+#### D21-04. 디자인 token 정리
 
 - 기존 SCSS 변수를 semantic CSS custom property로 연결한다.
 - light/dark surface, text, border, interactive, positive, negative token을 정의한다.
 - 기존 컴포넌트 외형은 유지하고 token 도입만 수행한다.
 
-선행 작업: W21-03  
+선행 작업: D21-03
+
 완료 조건: 두 테마의 시각 회귀가 없고 신규 공통 UI가 클래스명 추론 없이 테마를 사용할 수 있다.
 
-#### W21-05. 기본 UI primitive 추가
+#### D21-05. 기본 UI primitive 추가
 
 - `Button`, `IconButton`, `Field`, `Card`, `AsyncState`를 `shared/ui`에 추가한다.
 - 먼저 신규 또는 단순 컴포넌트 한 곳에만 적용해 API를 검증한다.
 - 모든 기존 버튼을 한 PR에서 일괄 치환하지 않는다.
 
-선행 작업: W21-02, W21-04  
+선행 작업: D21-02, D21-04
+
 완료 조건: variant, disabled, loading, error 연결에 대한 컴포넌트 테스트 통과.
 
-#### W21-06. overlay 공통 동작 구현
+#### D21-06. overlay 공통 동작 구현
 
 - `useBodyScrollLock`, `useEscapeKey`, focus return/focus trap을 구현한다.
 - 이를 사용하는 `Dialog`와 `Drawer` shell을 추가한다.
 - 기존 `SidePanel`은 `Drawer`의 호환 wrapper로 전환하거나 사용처를 직접 이전한다.
 
-선행 작업: W21-02, W21-04  
+선행 작업: D21-02, D21-04
+
 완료 조건: ESC, backdrop, Tab 이동, 닫힌 뒤 trigger 포커스 복귀 테스트 통과.
 
-#### W21-07. 엔티티 공통 표현 통합
+#### D21-07. 엔티티 공통 표현 통합
 
 - `StockAvatar`, `StockIdentity`, 시장 판별 함수를 `entities/stock`으로 이동한다.
 - 금액·등락률·날짜 formatter를 `shared/lib`에 모은다.
 - `PortfolioManager`와 `MarketExplorePage`의 중복 구현을 교체한다.
 
-선행 작업: W21-03, W21-04  
+선행 작업: D21-03, D21-04
+
 완료 조건: 종목 이미지 fallback과 KR/US 금액 표시 테스트 통과, 중복 함수 제거.
 
 ### 묶음 C: 거래 기능 분리
 
-#### W21-08. 종목 검색 feature 추출
+#### D21-08. 종목 검색 feature 추출
 
 - `useStockSearch`, `StockSearchField`, `StockSearchResults`를 분리한다.
 - debounce, abort, 최근 검색 저장과 stale response 차단을 hook 내부로 옮긴다.
 - 먼저 `TransactionModal`에서 사용한 뒤 시장 탐색 적용 가능성을 검증한다.
 
-선행 작업: W21-05, W21-07  
+선행 작업: D21-05, D21-07
+
 완료 조건: 검색 성공·빈 결과·오류·빠른 연속 입력 테스트 통과.
 
-#### W21-09. 거래 폼 모델 분리
+#### D21-09. 거래 폼 모델 분리
 
 - 초기 draft, 시장 변환, 수수료·세금 계산, validation payload 변환을 순수 함수로 옮긴다.
 - `useTransactionForm`이 입력 상태와 submit 상태를 담당하게 한다.
 - 현재 매수·매도 계산 결과를 그대로 유지한다.
 
-선행 작업: W21-08  
+선행 작업: D21-08
+
 완료 조건: 기존 calculator 테스트와 신규 form model 테스트 통과.
 
-#### W21-10. 거래 모달 UI 분해
+#### D21-10. 거래 모달 UI 분해
 
 - `TransactionModal`을 `TransactionDialog`, `TransactionForm`, 검색 영역으로 분해한다.
-- W21-06의 `Dialog`와 W21-05의 form primitive를 적용한다.
+- D21-06의 `Dialog`와 D21-05의 form primitive를 적용한다.
 - 기존 공개 props를 호환 wrapper로 유지해 호출부를 한 번에 바꾸지 않는다.
 
-선행 작업: W21-06, W21-09  
+선행 작업: D21-06, D21-09
+
 완료 조건: 매수·매도·preset·submit·닫기 흐름 테스트 통과, 기존 호출부 기능 유지.
 
 ### 묶음 D: 포트폴리오 관리 분리
 
-#### W21-11. 포트폴리오 selector와 view model 추출
+#### D21-11. 포트폴리오 selector와 view model 추출
 
 - real/virtual/active portfolio 및 ledger 선택 로직을 selector로 모은다.
 - 요약 금액, 시장별 보유 종목, 환율 성과를 `usePortfolioManager`의 view model로 만든다.
 - UI 이동 전에 계산 결과를 characterization test로 고정한다.
 
-선행 작업: W21-07  
+선행 작업: D21-07
+
 완료 조건: 로그인·guest·REAL·VIRTUAL 조합의 selector 테스트 통과.
 
-#### W21-12. 보유 종목 영역 분해
+#### D21-12. 보유 종목 영역 분해
 
 - `PortfolioHeader`, `PortfolioSummary`, `HoldingsSection`, `HoldingsTable`, `HoldingsCardList`, `ColumnVisibilityMenu`로 나눈다.
 - 하위 UI는 store와 service를 직접 import하지 않는다.
 - 국내·미국 시장의 공통 JSX는 `HoldingsSection` props로 통합하되 표 자체는 도메인 컴포넌트로 유지한다.
 
-선행 작업: W21-05, W21-10, W21-11  
+선행 작업: D21-05, D21-10, D21-11
+
 완료 조건: 가격 갱신, 컬럼 저장, 모바일 카드, 거래 열기 흐름 유지.
 
-#### W21-13. 자동매수 영역 분리
+#### D21-13. 자동매수 영역 분리
 
 - 규칙 조회·실행·재시도·상태 변경을 `useRecurringRules`로 이동한다.
 - `RecurringInvestmentSection`, `RecurringRuleList`, `RecurringRuleCard`, `RecurringExecutionList`로 나눈다.
 - 자동매수 modal과 체결 확인 modal을 공통 `Dialog`로 이전한다.
 
-선행 작업: W21-06, W21-12  
+선행 작업: D21-06, D21-12
+
 완료 조건: 규칙 생성·수정·중지·재개·실행·실패 재시도 흐름 유지.
 
 ### 묶음 E: 나머지 대형 화면 분리
 
-#### W21-14. 시장 탐색 화면 분해
+#### D21-14. 시장 탐색 화면 분해
 
 - 지수, 검색/목록, 종목 상세 요청을 각각 hook으로 분리한다.
 - `MarketIndicatorSection`, `MarketStockList`, `StockDetailDrawer`와 상세 하위 섹션을 추출한다.
 - `StockDetailDrawer`는 데이터와 callback만 받는 표현 컴포넌트로 만든다.
 
-선행 작업: W21-06, W21-07, W21-08  
+선행 작업: D21-06, D21-07, D21-08
+
 완료 조건: 지수 상세, 종목 검색, 상세 조회, 매수 연결, 요청 취소 흐름 테스트 통과.
 
-#### W21-15. 거래 내역 화면 분해
+#### D21-15. 거래 내역 화면 분해
 
 - filter state를 hook으로 옮기고 `TransactionFilterBar`, `TransactionTable`, 모바일 목록을 분리한다.
 - 공통 `Field`, `Button`, `AsyncState`를 적용한다.
 - 자동매수 규칙 필터 deep link 동작을 유지한다.
 
-선행 작업: W21-05, W21-13  
+선행 작업: D21-05, D21-13
+
 완료 조건: 타입·출처·기간·정렬·규칙 필터와 수정 action 테스트 통과.
 
-#### W21-16. 대시보드 layout engine 분리
+#### D21-16. 대시보드 layout engine 분리
 
 - `PANEL_REGISTRY`, layout reducer, validation, persistence adapter를 만든다.
 - drag/drop과 split resize 계산을 DOM 없는 순수 함수로 이동한다.
 - 기존 localStorage layout version의 읽기와 마이그레이션을 보존한다.
 
-선행 작업: W21-12, W21-13, W21-14  
+선행 작업: D21-12, D21-13, D21-14
+
 완료 조건: 패널 이동·쌍 구성·분할 크기·저장 복원 테스트 통과, 새 패널은 registry 한 곳에서 등록 가능.
 
 ### 묶음 F: 상태와 구조 마무리
 
-#### W21-17. `usePortfolio` 책임 분리
+#### D21-17. `usePortfolio` 책임 분리
 
 - 가격 갱신, 과거 시세·위험 계산, 종목 CRUD를 전용 hook으로 나눈다.
 - 기존 `usePortfolio`는 이전 기간 동안 facade로 유지한다.
 - 전체 store 구독을 필요한 selector 구독으로 바꾼다.
 
-선행 작업: W21-11, W21-16  
+선행 작업: D21-11, D21-16
+
 완료 조건: 가격 일부 실패, snapshot 저장 실패, 과거 시세 일부 실패 동작이 기존과 동일하다.
 
-#### W21-18. 폴더 이동과 공개 API 정리
+#### D21-18. 폴더 이동과 공개 API 정리
 
 - 안정화된 컴포넌트를 목표 폴더로 이동한다.
 - feature별 공개 `index.ts`만 남기고 내부 파일 직접 import를 제거한다.
 - 임시 re-export와 기존 빈 폴더를 제거한다.
 
-선행 작업: W21-10부터 W21-17까지 완료  
+선행 작업: D21-10부터 D21-17까지 완료
+
 완료 조건: 순환 의존 없음, restricted import 규칙 활성화, typecheck/lint/build 통과.
 
-#### W21-19. 전역 스타일 부채 제거
+#### D21-19. 전역 스타일 부채 제거
 
 - `[class*='...']` 기반 dark theme selector를 제거한다.
 - 남은 중복 버튼, 입력, 상태 스타일을 token 또는 공통 UI로 전환한다.
 - feature SCSS가 각 feature의 배치와 특화 표현만 담당하도록 정리한다.
 
-선행 작업: W21-18  
+선행 작업: D21-18
+
 완료 조건: light/dark 및 mobile/desktop 시각 회귀 확인, 전역 부분 일치 selector 0개.
 
-#### W21-20. 최종 회귀 검증과 문서 정리
+#### D21-20. 최종 회귀 검증과 문서 정리
 
 - 전체 단위·컴포넌트·smoke 테스트와 production build를 실행한다.
-- W21-01 기준선과 핵심 화면을 비교한다.
+- D21-01 기준선과 핵심 화면을 비교한다.
 - 새 컴포넌트 위치, 계층 의존 규칙, 신규 feature 추가 방법을 README 또는 architecture 문서에 반영한다.
 
-선행 작업: W21-19  
+선행 작업: D21-19
+
 완료 조건: 아래 완료 기준을 모두 충족하고 임시 호환 계층 제거 여부를 확인한다.
 
 ### 병렬 진행 가능 범위
 
-- W21-02와 W21-03은 W21-01 이후 병렬 가능하다.
-- W21-05, W21-06, W21-07은 token과 명명 규칙이 합의된 뒤 서로 다른 파일에서 병렬 가능하다.
-- W21-14와 W21-15는 공통 기반과 자동매수 의존 작업이 끝난 뒤 병렬 가능하다.
-- W21-16 이후 작업은 상태 및 폴더 경계를 확정하므로 순차 진행을 권장한다.
+- D21-02와 D21-03은 D21-01 이후 병렬 가능하다.
+- D21-05, D21-06, D21-07은 token과 명명 규칙이 합의된 뒤 서로 다른 파일에서 병렬 가능하다.
+- D21-14와 D21-15는 공통 기반과 자동매수 의존 작업이 끝난 뒤 병렬 가능하다.
+- D21-16 이후 작업은 상태 및 폴더 경계를 확정하므로 순차 진행을 권장한다.
 
 각 작업은 파일 이동과 동작 변경을 가능한 한 섞지 않는다. 예상 diff가 너무 크면 UI 하위 컴포넌트 단위로 PR을 더 나누되 작업 번호는 유지한다.
 

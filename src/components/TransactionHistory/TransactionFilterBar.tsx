@@ -71,7 +71,7 @@ export function TransactionFilterBar({ filters }: TransactionFilterBarProps) {
           />
         </label>
         <label>
-          <span className={styles.srOnly}>시작일</span>
+          <span className={styles.dateLabel}>시작일</span>
           <input
             type="date"
             value={fromDate}
@@ -80,7 +80,7 @@ export function TransactionFilterBar({ filters }: TransactionFilterBarProps) {
         </label>
         <span className={styles.dateSeparator}>~</span>
         <label>
-          <span className={styles.srOnly}>종료일</span>
+          <span className={styles.dateLabel}>종료일</span>
           <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} />
         </label>
         <select

@@ -79,7 +79,7 @@
 .header button,
 .failure button,
 .analysis button {
-  min-height: 34px;
+  min-height: 40px;
   padding: 7px 10px;
   border-radius: 9px;
   background: var(--color-interactive-soft);
@@ -114,6 +114,7 @@
   border-radius: 9px;
   background: var(--color-surface);
   color: var(--color-text);
+  white-space: nowrap;
 }
 .statusMenu {
   position: absolute;
@@ -169,8 +170,14 @@
   background: color-mix(in srgb, var(--color-positive) 10%, transparent);
   color: var(--color-positive);
 }
+.failure button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
 .failureText {
   display: grid;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .analysis {
   padding-top: 14px;
@@ -193,13 +200,21 @@
     flex: 0 1 auto;
     width: 100%;
   }
-}
-@container (max-width: 80px) {
-  .header > button,
-  .analysis > button {
-    width: 100%;
-    min-width: 0;
-    padding-inline: 6px;
-    white-space: normal;
+
+  .failure {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .actions button {
+    flex-basis: 40px;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  .status > button {
+    min-height: 40px;
   }
 }

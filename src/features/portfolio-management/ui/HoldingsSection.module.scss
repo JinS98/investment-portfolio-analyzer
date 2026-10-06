@@ -1,6 +1,6 @@
 .section {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 .market {
   overflow: hidden;
@@ -118,6 +118,7 @@
 }
 .tableWrap {
   overflow-x: auto;
+  border-radius: 0 0 15px 15px;
 }
 .table {
   width: 100%;
@@ -157,11 +158,14 @@
   display: none;
   padding: 12px;
   gap: 10px;
+  overflow: hidden;
+  border-radius: 0 0 15px 15px;
 }
 .card {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
+  min-width: 0;
   padding: 14px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -170,6 +174,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+.cardHeader strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .card dl {
   display: grid;
@@ -187,6 +197,10 @@
   text-align: right;
 }
 @media (max-width: 768px) {
+  .section {
+    gap: 16px;
+  }
+
   .tableWrap {
     display: none;
   }
@@ -196,5 +210,48 @@
   .summary {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .settingsTrigger,
+  .record {
+    flex-basis: 40px;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 520px) {
+  .header {
+    padding: 12px;
+  }
+
+  .summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .summary span {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .summary strong {
+    flex: 0 0 auto;
+    margin-left: 0;
+    white-space: nowrap;
+  }
+
+  .cards {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 12px;
   }
 }

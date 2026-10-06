@@ -11,11 +11,13 @@
   top: 0;
   z-index: 100;
 
-  @include mobile {
-    padding: $spacing-md;
-    grid-template-columns: 1fr;
-    justify-items: start;
-    gap: $spacing-sm;
+  @media (max-width: 1000px) {
+    grid-template-areas:
+      'brand controls'
+      'menu menu';
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px $spacing-sm;
+    padding: 10px $spacing-md;
   }
 }
 
@@ -26,12 +28,19 @@
   font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+
+  @media (max-width: 1000px) {
+    grid-area: brand;
+    min-width: 0;
+    white-space: nowrap;
+  }
 }
 
 .navLogo {
-  width: 42px;
-  flex: 0 0 32px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 8px;
   object-fit: cover;
 }
 
@@ -54,22 +63,33 @@
     }
   }
 
-  @include mobile {
+  @media (max-width: 1000px) {
+    grid-area: menu;
     width: 100%;
     max-width: 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
     gap: $spacing-xs;
+    justify-content: flex-start;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
 
     &::-webkit-scrollbar {
       display: none;
     }
 
     a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       flex: 0 0 auto;
-      min-height: 44px;
-      padding: 11px 12px;
+      height: 42px;
+      padding: 0 12px;
+      line-height: 1.2;
+      scroll-snap-align: start;
       white-space: nowrap;
     }
   }
@@ -86,10 +106,12 @@
   gap: $spacing-md;
   justify-self: end;
 
-  @include mobile {
-    width: 100%;
-    justify-content: space-between;
-    justify-self: stretch;
+  @media (max-width: 1000px) {
+    grid-area: controls;
+    width: auto;
+    min-width: 0;
+    justify-content: flex-end;
+    justify-self: end;
     gap: $spacing-sm;
   }
 }
@@ -106,7 +128,7 @@
   border-radius: 12px;
   background: #f2f4f6;
   color: $color-text;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
 }
 
 .currencyToggle {
@@ -155,7 +177,7 @@
   font-size: 0.9rem;
   color: $color-text-muted;
 
-  @include mobile {
+  @media (max-width: 1000px) {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -166,6 +188,9 @@
 .accountMenu {
   position: relative;
   min-width: 0;
+}
+.accountIcon {
+  display: none;
 }
 
 .accountTrigger {
@@ -194,10 +219,13 @@
 
   svg {
     flex: 0 0 auto;
+  }
+
+  .accountChevron {
     transition: transform 0.16s ease;
   }
 
-  &[aria-expanded='true'] svg {
+  &[aria-expanded='true'] .accountChevron {
     transform: rotate(180deg);
   }
 }
@@ -270,8 +298,115 @@
   border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 500;
+  white-space: nowrap;
   transition: opacity 0.2s;
   &:hover {
     opacity: 0.85;
+  }
+}
+
+@media (min-width: 1001px) and (max-width: 1100px) {
+  .navMenu {
+    gap: $spacing-sm;
+
+    a {
+      padding-inline: $spacing-sm;
+    }
+  }
+
+  .navUser {
+    max-width: 110px;
+  }
+}
+
+@media (max-width: 600px) {
+  .accountTrigger {
+    justify-content: center;
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    padding: 0;
+  }
+
+  .accountIcon {
+    display: block;
+    width: 18px;
+    height: 18px;
+  }
+
+  .navUser,
+  .accountChevron {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .nav {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .navBrand {
+    gap: 6px;
+    font-size: 0.88rem;
+  }
+
+  .navLogo {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+  }
+
+  .navMenu {
+    a {
+      height: 40px;
+      padding: 0 12px;
+      font-size: 0.78rem;
+    }
+  }
+
+  .navRight {
+    gap: 5px;
+  }
+
+  .currencyToggle,
+  .currencyToggle button,
+  .themeToggle,
+  .accountTrigger {
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .currencyToggle button,
+  .themeToggle,
+  .accountTrigger {
+    width: 36px;
+    min-width: 36px;
+  }
+
+  .accountTrigger {
+    max-width: 36px;
+  }
+
+  .navBtn {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav {
+    grid-template-areas:
+      'brand'
+      'controls'
+      'menu';
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .navRight {
+    width: 100%;
+    justify-content: space-between;
+    justify-self: stretch;
   }
 }

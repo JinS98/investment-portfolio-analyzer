@@ -2,7 +2,7 @@ import type { RiskData, StockRiskData, TossCandleItem } from '../types';
 
 /**
  * 변동성 계산 (연율화 표준편차)
- * 토스 캔들 일봉 데이터 기반 — Week 5에서 연동
+ * 토스 캔들 일봉 데이터 기반 — Day 5에서 연동
  */
 export const calcDailyReturns = (candles: TossCandleItem[]): number[] => {
   if (candles.length < 2) return [];

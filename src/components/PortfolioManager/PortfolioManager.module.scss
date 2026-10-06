@@ -37,6 +37,7 @@
   color: $color-primary;
   font-size: 0.78rem;
   font-weight: 700;
+  white-space: nowrap;
   background: #edf5ff;
 }
 
@@ -72,6 +73,7 @@
     border: 0;
     background: #f7f8fa;
     border-radius: 999px;
+    white-space: nowrap;
   }
 
   strong {
@@ -234,7 +236,7 @@ button {
   justify-content: space-between;
   align-items: center;
   margin-top: 28px;
-  margin-bottom: $spacing-md;
+  margin-bottom: $spacing-lg;
   padding: $spacing-md;
   border: 0;
   border-radius: 16px;
@@ -669,16 +671,20 @@ button {
   position: relative;
 }
 .settingsButton {
+  display: inline-grid;
   width: 34px;
+  min-width: 34px;
   min-height: 34px;
   height: 34px;
   aspect-ratio: 1;
   padding: 0;
+  place-items: center;
   border: 0;
   border-radius: 10px;
   background: #fff;
   color: $color-text-muted;
   font-size: 1.1rem;
+  line-height: 1;
 
   &:hover,
   &[aria-expanded='true'] {
@@ -884,30 +890,66 @@ td small {
 
 @include mobile {
   .summaryControls {
-    width: 100%;
-    justify-content: space-between;
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
   }
 
   .section {
     padding: $spacing-md;
   }
 
-  .titleRow,
+  .titleRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: $spacing-xs $spacing-sm;
+
+    > :first-child {
+      display: contents;
+    }
+
+    h2 {
+      grid-column: 1;
+      grid-row: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .description {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+  }
+
   .emptyState {
     align-items: flex-start;
     flex-direction: column;
   }
   .actions {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+
+    span {
+      flex: 0 1 auto;
+      width: 100%;
+      min-width: 0;
+    }
   }
 
   .actionButtons {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     width: 100%;
 
     button {
-      flex: 1;
+      width: 100%;
+      min-width: 0;
       min-height: 48px;
+      padding-inline: 8px;
+      white-space: nowrap;
     }
   }
 
@@ -1004,5 +1046,26 @@ td small {
     width: min(260px, calc(100vw - #{$spacing-xl}));
     max-height: min(420px, calc(100dvh - 32px));
     overflow-y: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .actionButtons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    button:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .combinedSummary strong {
+    font-size: clamp(1.05rem, 5vw, 1.25rem);
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 360px) {
+  .actionButtons {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

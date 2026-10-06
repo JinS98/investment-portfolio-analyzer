@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { DragEvent, PointerEvent } from 'react';
+import type { DragEvent, PointerEvent, ReactNode } from 'react';
 import { FiRefreshCw } from 'react-icons/fi';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import { MarketDataPanel } from '../../components/MarketDataPanel/MarketDataPanel';
@@ -15,6 +15,7 @@ import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
 import {
+  DEFAULT_PANEL_ORDER,
   PANEL_REGISTRY,
   dashboardLayoutReducer,
   dropPosition,
@@ -214,6 +215,47 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
       .finally(() => setIsRiskLoading(false));
   }, [lastUpdated]);
 
+  const panelContent: Record<PanelId, ReactNode> = {
+    market: <MarketDataPanel holdings={realHoldings} onAddBuyRecord={addMarketSearchBuyRecord} />,
+    manager: <PortfolioManager portfolioType="REAL" />,
+    allocation: (
+      <PortfolioAllocationChart
+        portfolio={realHoldings}
+        prices={prices}
+        exchangeRate={exchangeRate}
+      />
+    ),
+    recurring: (
+      <RecurringInvestmentAnalysisPanel
+        portfolioId={realPortfolio?.id}
+        histories={realHistories}
+        prices={prices}
+      />
+    ),
+    performance: (
+      <PortfolioPerformanceChart
+        portfolio={portfolio}
+        historicalData={historicalData}
+        portfolioHistory={portfolioHistory}
+        holdingHistories={realHistories}
+        exchangeRate={exchangeRate}
+        isLoading={isRiskLoading}
+      />
+    ),
+    history: <PortfolioHistoryPanel history={portfolioHistory} />,
+    monthly: <MonthlyComparisonPanel history={portfolioHistory} />,
+    guide: (
+      <PortfolioRiskDiagnostic
+        portfolioId={realPortfolio?.id}
+        holdings={realHoldings}
+        prices={prices}
+        exchangeRate={exchangeRate}
+        riskData={riskData}
+        isRiskLoading={isRiskLoading}
+      />
+    ),
+  };
+
   return (
     <main className={styles.dashboard}>
       <header className={styles.header}>
@@ -271,84 +313,19 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
       <div
         className={`${styles.componentGrid} ${view === 'analysis' && !userId ? styles.analysisLockedContent : ''}`}
       >
-        <div {...panelProps('market')}>
-          <span className={styles.dragHandle} aria-hidden="true">
-            ⠿
-          </span>
-          {renderResizeHandle('market')}
-          <MarketDataPanel holdings={realHoldings} onAddBuyRecord={addMarketSearchBuyRecord} />
-        </div>
-        <div {...panelProps('manager')}>
-          <span className={styles.dragHandle} aria-hidden="true">
-            ⠿
-          </span>
-          {renderResizeHandle('manager')}
-          <PortfolioManager portfolioType="REAL" />
-        </div>
-        <div {...panelProps('allocation')}>
-          <span className={styles.dragHandle} aria-hidden="true">
-            ⠿
-          </span>
-          {renderResizeHandle('allocation')}
-          <PortfolioAllocationChart
-            portfolio={realHoldings}
-            prices={prices}
-            exchangeRate={exchangeRate}
-          />
-        </div>
-        <div {...panelProps('recurring')} ref={recurringAnalysisPanelRef}>
-          <span className={styles.dragHandle} aria-hidden="true">
-            ⠿
-          </span>
-          {renderResizeHandle('recurring')}
-          <RecurringInvestmentAnalysisPanel
-            portfolioId={realPortfolio?.id}
-            histories={realHistories}
-            prices={prices}
-          />
-        </div>
-        <div {...panelProps('performance')}>
-          <span className={styles.dragHandle} aria-hidden="true">
-            ⠿
-          </span>
-          {renderResizeHandle('performance')}
-          <PortfolioPerformanceChart
-            portfolio={portfolio}
-            historicalData={historicalData}
-            portfolioHistory={portfolioHistory}
-            holdingHistories={realHistories}
-            exchangeRate={exchangeRate}
-            isLoading={isRiskLoading}
-          />
-        </div>
-        <div {...panelProps('history')}>
-          <span className={styles.dragHandle} aria-hidden="true">
-            ⠿
-          </span>
-          {renderResizeHandle('history')}
-          <PortfolioHistoryPanel history={portfolioHistory} />
-        </div>
-        <div {...panelProps('monthly')}>
-          <span className={styles.dragHandle} aria-hidden="true">
-            ⠿
-          </span>
-          {renderResizeHandle('monthly')}
-          <MonthlyComparisonPanel history={portfolioHistory} />
-        </div>
-        <div {...panelProps('guide')}>
-          <span className={styles.dragHandle} aria-hidden="true">
-            ⠿
-          </span>
-          {renderResizeHandle('guide')}
-          <PortfolioRiskDiagnostic
-            portfolioId={realPortfolio?.id}
-            holdings={realHoldings}
-            prices={prices}
-            exchangeRate={exchangeRate}
-            riskData={riskData}
-            isRiskLoading={isRiskLoading}
-          />
-        </div>
+        {DEFAULT_PANEL_ORDER.map((id) => (
+          <div
+            key={id}
+            {...panelProps(id)}
+            ref={id === 'recurring' ? recurringAnalysisPanelRef : undefined}
+          >
+            <span className={styles.dragHandle} aria-hidden="true">
+              ⠿
+            </span>
+            {renderResizeHandle(id)}
+            {panelContent[id]}
+          </div>
+        ))}
 
         {isPortfolioLoading && (
           <p className={styles.storageStatus}>저장된 포트폴리오를 불러오는 중...</p>
@@ -372,19 +349,19 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
           </div>
         )}
 
-        {/* 차트 — Week 5 */}
+        {/* 차트 — Day 5 */}
         <section className={styles.placeholder}>
-          <p>📈 차트 영역 (Week 5)</p>
+          <p>📈 차트 영역 (Day 5)</p>
         </section>
 
-        {/* 리스크 패널 — Week 5 */}
+        {/* 리스크 패널 — Day 5 */}
         <section className={styles.placeholder}>
-          <p>🛡️ 리스크 분석 패널 (Week 5) — 토스 캔들 데이터 기반</p>
+          <p>🛡️ 리스크 분석 패널 (Day 5) — 토스 캔들 데이터 기반</p>
         </section>
 
-        {/* 시그널 패널 — Week 8 */}
+        {/* 시그널 패널 — Day 8 */}
         <section className={styles.placeholder}>
-          <p>🚦 월별 투자 시그널 패널 (Week 8)</p>
+          <p>🚦 월별 투자 시그널 패널 (Day 8)</p>
         </section>
       </div>
       {view === 'analysis' && !userId ? (

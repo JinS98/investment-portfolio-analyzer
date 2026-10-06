@@ -67,6 +67,7 @@
 
   footer {
     justify-content: flex-end;
+    flex-wrap: wrap;
     margin-top: $spacing-xl;
   }
 
@@ -76,6 +77,7 @@
     border-radius: 10px;
     font: inherit;
     font-weight: 700;
+    white-space: nowrap;
   }
 
   footer button:last-child {

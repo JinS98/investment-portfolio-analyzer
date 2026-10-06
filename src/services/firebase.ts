@@ -11,7 +11,7 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Firebase 환경변수 미설정 시 안전하게 스킵 (Week 4 이전에도 앱 실행 가능)
+// Firebase 환경변수 미설정 시 안전하게 스킵 (Day 4 이전에도 앱 실행 가능)
 export const isFirebaseConfigured = !!firebaseConfig.apiKey;
 
 let app: FirebaseApp | null = null;

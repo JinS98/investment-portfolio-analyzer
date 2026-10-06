@@ -34,8 +34,8 @@ export type {
 // 종목 정보
 // ────────────────────────────────────────────
 /**
- * Week 6까지 Firestore와 화면에서 사용한 직접 입력형 보유 모델.
- * Week 8 이관 전까지 유지하며, 새 이력 기반 `Holding`과 섞어 쓰지 않는다.
+ * Day 6까지 Firestore와 화면에서 사용한 직접 입력형 보유 모델.
+ * Day 8 이관 전까지 유지하며, 새 이력 기반 `Holding`과 섞어 쓰지 않는다.
  */
 export interface LegacyStockItem {
   id: string;
@@ -47,7 +47,7 @@ export interface LegacyStockItem {
   addedAt: string;
 }
 
-/** @deprecated Week 8 이관 전 기존 UI·저장 계층과의 호환을 위한 별칭이다. */
+/** @deprecated Day 8 이관 전 기존 UI·저장 계층과의 호환을 위한 별칭이다. */
 export type StockItem = LegacyStockItem;
 
 // 현재가 맵 { AAPL: 182.3, '005930': 72000 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FiChevronDown, FiLogOut } from 'react-icons/fi';
+import { FiChevronDown, FiLogOut, FiUser } from 'react-icons/fi';
 import { NAVIGATION_ITEMS, type AppPage } from '../../../app/navigation';
 import type { AppUser, Currency } from '../../../types';
 import styles from './Header.module.scss';
@@ -27,6 +27,21 @@ export function Header({
 }: HeaderProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
+  const navMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const menu = navMenuRef.current;
+    const activeLink = menu?.querySelector<HTMLAnchorElement>('a[aria-current="page"]');
+    if (!menu || !activeLink) return;
+
+    const menuBounds = menu.getBoundingClientRect();
+    const activeBounds = activeLink.getBoundingClientRect();
+    if (activeBounds.left < menuBounds.left) {
+      menu.scrollLeft -= menuBounds.left - activeBounds.left + 12;
+    } else if (activeBounds.right > menuBounds.right) {
+      menu.scrollLeft += activeBounds.right - menuBounds.right + 12;
+    }
+  }, [activePage]);
 
   useEffect(() => {
     if (!isAccountMenuOpen) return;
@@ -57,12 +72,13 @@ export function Header({
         <img className={styles.navLogo} src="/portfolio-logo.png" alt="" />
         Portfolio Platform
       </span>
-      <div className={styles.navMenu}>
+      <div className={styles.navMenu} ref={navMenuRef}>
         {NAVIGATION_ITEMS.map((item) => (
           <a
             key={item.page}
             href={item.hash}
             className={activePage === item.page ? styles.navMenuActive : undefined}
+            aria-current={activePage === item.page ? 'page' : undefined}
           >
             {item.label}
           </a>
@@ -104,9 +120,11 @@ export function Header({
               onClick={() => setIsAccountMenuOpen((current) => !current)}
               aria-haspopup="menu"
               aria-expanded={isAccountMenuOpen}
+              aria-label={`${user.displayName ?? user.email ?? '사용자'} 계정 메뉴`}
             >
+              <FiUser className={styles.accountIcon} aria-hidden="true" />
               <span className={styles.navUser}>{user.displayName ?? user.email}</span>
-              <FiChevronDown aria-hidden="true" />
+              <FiChevronDown className={styles.accountChevron} aria-hidden="true" />
             </button>
             {isAccountMenuOpen ? (
               <div className={styles.accountDropdown} role="menu">

@@ -43,6 +43,7 @@
     color: $color-text-muted;
     font-size: 0.78rem;
     font-weight: 600;
+    white-space: nowrap;
     background: transparent;
     transition:
       color 0.18s,
@@ -99,6 +100,9 @@
 @container (max-width: 560px) {
   .header {
     flex-wrap: wrap;
+  }
+  .rangeButtons button {
+    min-height: 40px;
   }
   .summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));

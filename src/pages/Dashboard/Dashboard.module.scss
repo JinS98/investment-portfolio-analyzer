@@ -346,13 +346,14 @@
   }
 
   .componentGrid {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xl;
     margin-bottom: 0;
   }
 
   .panelItem {
     height: auto;
-    margin-bottom: $spacing-xl;
     cursor: default;
 
     > :not(.dragHandle) {
@@ -372,6 +373,27 @@
   .dragHandle,
   .resizeHandle {
     display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  .updated,
+  .exchangeRate {
+    grid-column: 1;
+    justify-self: start;
+    white-space: nowrap;
+  }
+
+  .refreshBtn {
+    grid-column: 2;
+    grid-row: 1;
   }
 }
 

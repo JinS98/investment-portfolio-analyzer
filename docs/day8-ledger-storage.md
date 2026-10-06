@@ -1,4 +1,4 @@
-# Week 8 — 거래 원장 저장·복원
+# Day 8 — 거래 원장 저장·복원
 
 ## 저장 구조
 
@@ -34,4 +34,4 @@ users/{userId}/portfolios/{portfolioId}
 
 ## 운영 전 준비
 
-[firestore.rules](../firestore.rules)를 Firebase Console에 Publish해야 새 `users/{userId}/portfolios/{portfolioId}` 경로가 허용된다. 현재 UI는 기존 직접 입력형 보유 화면을 유지한다. 거래 입력·이력 UI는 Week 9에서 새 원장 액션과 연결한다.
+[firestore.rules](../firestore.rules)를 Firebase Console에 Publish해야 새 `users/{userId}/portfolios/{portfolioId}` 경로가 허용된다. 현재 UI는 기존 직접 입력형 보유 화면을 유지한다. 거래 입력·이력 UI는 Day 9에서 새 원장 액션과 연결한다.
