@@ -42,6 +42,13 @@ export function MarketIndicatorSection({
         <div className={styles.indicatorCards}>
           {(['KOSPI', 'KOSDAQ', 'NASDAQ', 'SP500'] as const).map((symbol) => {
             const indicator = indicators.find((item) => item.symbol === symbol);
+            const previousClose = intradayIndicators[symbol]?.previousClose ?? null;
+            const isPositive =
+              indicator?.changeRate != null
+                ? indicator.changeRate >= 0
+                : indicator && previousClose !== null && previousClose > 0
+                  ? indicator.price >= previousClose
+                  : null;
             return (
               <button
                 key={symbol}
@@ -69,8 +76,8 @@ export function MarketIndicatorSection({
                   </strong>
                   <IndicatorSparkline
                     candles={intradayIndicators[symbol]?.candles ?? []}
-                    positive={(indicator?.changeRate ?? 0) >= 0}
-                    previousClose={intradayIndicators[symbol]?.previousClose ?? null}
+                    positive={isPositive}
+                    previousClose={previousClose}
                   />
                 </span>
               </button>

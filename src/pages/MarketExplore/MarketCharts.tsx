@@ -121,7 +121,7 @@ export function IndicatorSparkline({
   previousClose,
 }: {
   candles: MarketIndicatorCandle[];
-  positive: boolean;
+  positive: boolean | null;
   previousClose: number | null;
 }) {
   const chart = useMemo(() => {
@@ -146,7 +146,13 @@ export function IndicatorSparkline({
   if (!chart) return <span className={styles.sparklinePlaceholder} aria-hidden="true" />;
   return (
     <svg
-      className={positive ? styles.positiveSparkline : styles.negativeSparkline}
+      className={
+        positive === null
+          ? styles.neutralSparkline
+          : positive
+            ? styles.positiveSparkline
+            : styles.negativeSparkline
+      }
       viewBox="0 0 100 48"
       preserveAspectRatio="none"
       aria-hidden="true"
