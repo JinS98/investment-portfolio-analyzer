@@ -335,6 +335,8 @@ D21-01~03은 완료로 확정했다. D21-04~16은 아래 완료 조건 중 시�
 
 같은 날 D21-18의 컴포넌트 폴더 이동과 feature/widget 공개 API 전환을 마쳤다. 사용하지 않는 `TransactionModal` re-export와 `SidePanel` 호환 wrapper를 제거하고, `npm run lint:architecture`로 계층 역참조·feature/widget 내부 직접 import·런타임 순환 의존을 검사한다. typecheck, lint, 단위 테스트 88개, 컴포넌트 테스트 40개, production build가 통과했다. D21-19~20은 남아 있다.
 
+D21-19의 전역 부분 일치 선택자 제거와 테마 토큰 전환은 코드와 자동 검사를 마쳤다. 라이트·다크 및 모바일·데스크톱 화면 검증은 요청에 따라 보류했으므로 완료 상태는 갱신하지 않았다.
+
 ### 묶음 A: 회귀 방지 기반
 
 #### D21-01. 현재 동작 기준선 고정

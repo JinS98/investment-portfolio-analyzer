@@ -13,8 +13,8 @@
   position: relative;
   width: min(100%, 400px);
   padding: $spacing-xl;
-  background: $color-surface;
-  border: 1px solid $color-border;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
@@ -23,7 +23,7 @@
   margin-bottom: $spacing-xs;
 }
 .dialog > p {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
   margin-bottom: $spacing-lg;
 }
@@ -41,11 +41,11 @@
   aspect-ratio: 1;
   padding: 0;
   border-radius: 6px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 1.4rem;
   &:hover {
-    background: rgba($color-text-muted, 0.12);
-    color: $color-text;
+    background: color-mix(in srgb, var(--color-text-muted) 12%, transparent);
+    color: var(--color-text);
   }
 }
 
@@ -66,15 +66,15 @@
   font-weight: 600;
 }
 .google {
-  border: 1px solid $color-border;
-  color: $color-text;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
   &:hover {
-    background: rgba($color-text-muted, 0.1);
+    background: color-mix(in srgb, var(--color-text-muted) 10%, transparent);
   }
 }
 .submit {
   margin-top: $spacing-md;
-  background: $color-primary;
+  background: var(--color-action);
   color: #fff;
   &:disabled {
     opacity: 0.6;
@@ -85,14 +85,14 @@
   align-items: center;
   gap: $spacing-sm;
   margin: $spacing-lg 0;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   &::before,
   &::after {
     content: '';
     height: 1px;
     flex: 1;
-    background: $color-border;
+    background: var(--color-border);
   }
 }
 .dialog form {
@@ -102,19 +102,19 @@
 .dialog label {
   display: grid;
   gap: $spacing-xs;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 }
 .dialog input {
   padding: 10px;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: $color-bg;
-  color: $color-text;
+  background: var(--color-input-surface);
+  color: var(--color-text);
   font: inherit;
 }
 .error {
-  color: $color-danger;
+  color: var(--color-danger);
   font-size: 0.85rem;
 }
 .modeButton {

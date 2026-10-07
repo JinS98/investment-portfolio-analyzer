@@ -18,7 +18,7 @@
   padding: 32px;
   border: 0;
   border-radius: 24px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 24px 80px rgba(25, 31, 40, 0.2);
 }
 
@@ -42,16 +42,16 @@
 
 .eyebrow {
   margin-bottom: $spacing-xs !important;
-  color: $color-primary;
+  color: var(--color-action);
   font-size: 0.78rem;
   font-weight: 700;
 }
 
 .closeButton,
 .cancelButton {
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   background: transparent;
-  color: $color-text;
+  color: var(--color-text);
 }
 
 .closeButton {
@@ -93,21 +93,21 @@
   margin-bottom: $spacing-lg;
   padding: $spacing-xs;
   border-radius: 14px;
-  background: #f2f4f6;
+  background: var(--color-control-surface);
 
   button {
     border: 0;
     background: transparent;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
   }
 
   button.activeBuy {
-    background: $color-primary;
+    background: var(--color-action);
     color: #fff;
   }
 
   button.activeSell {
-    background: $color-danger;
+    background: var(--color-danger);
     color: #fff;
   }
 }
@@ -115,11 +115,11 @@
 .dialog label {
   display: grid;
   gap: 6px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 
   span {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.75rem;
     font-weight: 400;
   }
@@ -131,10 +131,10 @@
   height: 48px;
   box-sizing: border-box;
   padding: 10px;
-  border: 1px solid #dfe3e8;
+  border: 1px solid var(--color-input-border);
   border-radius: 12px;
-  background: #fff;
-  color: $color-text;
+  background: var(--color-field-surface);
+  color: var(--color-text);
   font: inherit;
 }
 
@@ -158,7 +158,7 @@
   position: relative;
   display: grid;
   gap: 6px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 }
 
@@ -167,10 +167,10 @@
   width: 100%;
   height: 48px;
   padding: 10px 38px 10px 12px;
-  border: 1px solid #dfe3e8;
+  border: 1px solid var(--color-input-border);
   border-radius: 12px;
-  background: #fff;
-  color: $color-text;
+  background: var(--color-field-surface);
+  color: var(--color-text);
   text-align: left;
   font: inherit;
 
@@ -197,9 +197,9 @@
   overflow-y: auto;
   margin: 0;
   padding: 6px;
-  border: 1px solid rgba($color-border, 0.9);
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
   border-radius: 12px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 14px 30px rgba(25, 31, 40, 0.12);
   list-style: none;
 
@@ -209,11 +209,11 @@
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: $color-text;
+    color: var(--color-text);
     text-align: left;
 
     &:hover {
-      background: #f2f4f6;
+      background: var(--color-control-surface);
     }
   }
 
@@ -224,7 +224,7 @@
 
   span {
     margin-top: 3px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.75rem;
   }
 }
@@ -239,9 +239,9 @@
   overflow-y: auto;
   margin: 0;
   padding: 6px;
-  border: 1px solid rgba($color-border, 0.9);
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
   border-radius: 12px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 14px 30px rgba(25, 31, 40, 0.12);
   list-style: none;
 
@@ -251,13 +251,13 @@
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: $color-text;
+    color: var(--color-text);
     text-align: left;
     font-weight: 600;
   }
 
   button:hover {
-    background: #f2f4f6;
+    background: var(--color-control-surface);
   }
 
   button strong,
@@ -267,14 +267,14 @@
 
   button span {
     margin-top: 3px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.75rem;
   }
 }
 
 .searchResultsTitle {
   padding: 7px 12px 5px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -312,7 +312,7 @@
 }
 
 .searchHint {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.75rem;
 }
 
@@ -333,24 +333,24 @@
 .holdingInfo {
   padding: $spacing-sm;
   border-radius: 6px;
-  background: rgba($color-primary, 0.07);
-  color: $color-text-muted;
+  background: color-mix(in srgb, var(--color-action) 7%, transparent);
+  color: var(--color-text-muted);
 
   strong {
-    color: $color-text;
+    color: var(--color-text);
   }
 }
 
 .selectedStockInfo {
   margin: 0;
   padding: $spacing-sm;
-  border: 1px solid rgba($color-primary, 0.26);
+  border: 1px solid color-mix(in srgb, var(--color-action) 26%, transparent);
   border-radius: 6px;
-  background: rgba($color-primary, 0.07);
-  color: $color-text-muted;
+  background: color-mix(in srgb, var(--color-action) 7%, transparent);
+  color: var(--color-text-muted);
 
   strong {
-    color: $color-text;
+    color: var(--color-text);
   }
 }
 
@@ -359,46 +359,52 @@
 
   summary {
     cursor: pointer;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.85rem;
   }
 }
 
 .preview {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
   gap: $spacing-sm $spacing-md;
   margin-top: $spacing-lg;
   padding: $spacing-md;
   border-radius: 16px;
-  background: #f2f7ff;
-  color: $color-text-muted;
+  background: var(--color-info-surface);
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 
   strong {
-    color: $color-text;
+    color: var(--color-text);
     text-align: right;
+    overflow-wrap: anywhere;
   }
 
   strong.positive {
-    color: $color-success;
+    color: var(--color-positive);
   }
 
   strong.negative {
-    color: $color-danger;
+    color: var(--color-negative);
+  }
+
+  .previewNote {
+    grid-column: 1 / -1;
+    font-size: 0.78rem;
   }
 }
 
 .helpText {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
 }
 
 .costGuide {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
 }
 
 .error {
-  color: $color-danger;
+  color: var(--color-danger);
 }
 
 .footer {
@@ -412,11 +418,11 @@
 }
 
 .submitBuy {
-  background: $color-success;
+  background: var(--color-success);
 }
 
 .submitSell {
-  background: $color-danger;
+  background: var(--color-danger);
 }
 
 @include mobile {

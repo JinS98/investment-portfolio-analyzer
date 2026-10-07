@@ -6,7 +6,7 @@
   margin: auto 0;
   padding: 28px;
   border-radius: 22px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
 
   header,
@@ -28,7 +28,7 @@
 
   header p {
     margin-bottom: 4px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.78rem;
     font-weight: 700;
   }
@@ -38,7 +38,7 @@
     display: grid;
     gap: 7px;
     margin: 0;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.85rem;
   }
 
@@ -48,10 +48,10 @@
     height: 46px;
     box-sizing: border-box;
     padding: 10px 12px;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
-    background: $color-surface;
-    color: $color-text;
+    background: var(--color-surface);
+    color: var(--color-text);
     font: inherit;
   }
 
@@ -83,7 +83,7 @@
   footer button:last-child {
     padding: 0 16px;
     border: 0;
-    background: $color-primary;
+    background: var(--color-action);
     color: #fff;
   }
 }
@@ -99,8 +99,8 @@
   border: 0;
   border-radius: 50%;
   place-items: center;
-  background: #f2f4f6;
-  color: $color-text;
+  background: var(--color-control-surface);
+  color: var(--color-text);
 }
 
 .cancelButton {
@@ -113,8 +113,8 @@
   padding: 0 12px;
   border: 0;
   border-radius: 10px;
-  background: rgba($color-danger, 0.1);
-  color: $color-danger;
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
   font: inherit;
   font-weight: 700;
 }
@@ -126,7 +126,7 @@
 .stockReadOnly {
   display: grid;
   gap: 7px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 
   strong {
@@ -135,10 +135,10 @@
     min-height: 46px;
     box-sizing: border-box;
     padding: 10px 12px;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
-    background: #f7f8fa;
-    color: $color-text;
+    background: var(--color-surface-muted);
+    color: var(--color-text);
     font-size: 0.95rem;
   }
 }
@@ -153,9 +153,9 @@
   overflow-y: auto;
   margin: 0;
   padding: 6px;
-  border: 1px solid rgba($color-border, 0.9);
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
   border-radius: 12px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 14px 30px rgba(25, 31, 40, 0.12);
   list-style: none;
 
@@ -169,13 +169,13 @@
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: $color-text;
+    color: var(--color-text);
     text-align: left;
     font: inherit;
     font-weight: 700;
 
     &:hover {
-      background: #f2f4f6;
+      background: var(--color-control-surface);
     }
   }
 }
@@ -193,30 +193,30 @@
   gap: 4px;
   padding: 4px;
   border-radius: 12px;
-  background: #f2f4f6;
+  background: var(--color-control-surface);
 
   button {
     border: 0;
     background: transparent;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
   }
 
   button.active {
-    background: $color-primary;
+    background: var(--color-action);
     color: #fff;
   }
 }
 
 .guide {
   margin-top: $spacing-lg !important;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   line-height: 1.5;
 }
 
 .error {
   margin-top: $spacing-sm !important;
-  color: $color-danger;
+  color: var(--color-danger);
   font-size: 0.82rem;
 }
 
@@ -243,7 +243,7 @@
 }
 
 :global(:root[data-theme='dark']) .deleteButton {
-  background: rgba($color-danger, 0.16);
+  background: color-mix(in srgb, var(--color-danger) 16%, transparent);
 }
 
 :global(:root[data-theme='dark']) .frequencyButtons button {
@@ -251,7 +251,7 @@
 }
 
 :global(:root[data-theme='dark']) .frequencyButtons button.active {
-  background: $color-primary;
+  background: var(--color-action);
   color: #fff;
 }
 

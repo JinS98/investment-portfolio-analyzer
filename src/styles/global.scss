@@ -15,16 +15,17 @@ html {
 }
 
 body {
-  font-family: $font-family;
-  background-color: var(--color-canvas);
-  color: var(--color-text);
-  line-height: 1.5;
   min-height: 100vh;
+  background: var(--color-canvas);
+  color: var(--color-text);
+  font-family: $font-family;
+  line-height: 1.5;
 }
 
 a {
-  color: $color-primary;
+  color: var(--color-interactive);
   text-decoration: none;
+
   &:hover {
     text-decoration: underline;
   }
@@ -32,8 +33,8 @@ a {
 
 button {
   cursor: pointer;
-  border: none;
-  background: none;
+  border: 0;
+  background: transparent;
   font-family: inherit;
 }
 
@@ -60,30 +61,40 @@ a:active {
 }
 
 :focus-visible {
-  outline: none;
-  box-shadow: none;
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  border-color: rgba(#64748b, 0.72) !important;
-  box-shadow: none;
+  border-color: var(--color-focus-ring);
 }
 
-button:focus-visible,
-a:focus-visible,
-summary:focus-visible {
-  box-shadow: inset 0 0 0 1px rgba(#64748b, 0.72);
+// Native select menus and scrollbars follow the same palette as app controls.
+:root[data-theme='dark'] option {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
 }
 
-// Korean market convention: rising values are red and falling values are blue.
-[class*='positive'] {
-  color: $color-bull !important;
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-[class*='negative'] {
-  color: $color-bear !important;
+::-webkit-scrollbar-track {
+  background: var(--color-canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--color-border);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -94,142 +105,4 @@ summary:focus-visible {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
   }
-}
-
-:root[data-theme='dark'] {
-  color-scheme: dark;
-}
-
-:root[data-theme='dark'] body {
-  background: #10131a;
-  color: #f2f4f6;
-}
-
-:root[data-theme='dark'] [class*='app'] {
-  background: #10131a;
-}
-
-:root[data-theme='dark'] nav {
-  background: #171b24;
-  color: #f2f4f6;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-:root[data-theme='dark'] nav a,
-:root[data-theme='dark'] nav span,
-:root[data-theme='dark'] nav button {
-  color: #f2f4f6;
-}
-
-:root[data-theme='dark'] [class*='navMenuActive'] {
-  background: rgba(49, 130, 246, 0.22);
-  color: #7ab5ff !important;
-}
-
-:root[data-theme='dark'] [class*='themeToggle'] {
-  background: #252b37;
-}
-
-// Page-level cards use semantic sections. Targeting the element keeps nested
-// headers and controls transparent in the dark theme.
-:root[data-theme='dark'] section,
-:root[data-theme='dark'] [class*='tableWrap'],
-:root[data-theme='dark'] [class*='status'] {
-  background: #171b24;
-  color: #f2f4f6;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
-}
-
-:root[data-theme='dark'] [class*='page'] {
-  color: #f2f4f6;
-}
-
-:root[data-theme='dark'] h1,
-:root[data-theme='dark'] h2,
-:root[data-theme='dark'] h3,
-:root[data-theme='dark'] strong,
-:root[data-theme='dark'] td {
-  color: #f2f4f6;
-}
-
-// Keep financial direction immediately recognisable on dark surfaces.
-:root[data-theme='dark'] [class*='positive'] {
-  color: #ff6b76 !important;
-}
-
-:root[data-theme='dark'] [class*='negative'] {
-  color: #60a5fa !important;
-}
-
-:root[data-theme='dark'] p,
-:root[data-theme='dark'] th,
-:root[data-theme='dark'] small,
-:root[data-theme='dark'] label,
-:root[data-theme='dark'] [class*='description'] {
-  color: #aeb8c7;
-}
-
-:root[data-theme='dark'] input:not([type='checkbox']):not([type='radio']),
-:root[data-theme='dark'] select,
-:root[data-theme='dark'] textarea {
-  border-color: #363e4d !important;
-  background: #252b37 !important;
-  color: #f2f4f6 !important;
-}
-
-:root[data-theme='dark'] [class*='marketSummary'] > span,
-:root[data-theme='dark'] [class*='combinedSummary'] > span,
-:root[data-theme='dark'] [class*='preview'],
-:root[data-theme='dark'] [class*='actions'],
-:root[data-theme='dark'] [class*='typeTabs'],
-:root[data-theme='dark'] [class*='scroll'] {
-  background: #252b37;
-}
-
-:root[data-theme='dark'] th,
-:root[data-theme='dark'] td,
-:root[data-theme='dark'] [class*='columnMenuHeader'] {
-  border-color: #363e4d !important;
-}
-
-:root[data-theme='dark'] [class*='settingsButton'],
-:root[data-theme='dark'] [class*='columnMenu'],
-:root[data-theme='dark'] [class*='suggestions'] {
-  background: #252b37;
-  color: #f2f4f6;
-}
-
-:root[data-theme='dark'] [class*='emptyState'] {
-  background: #252b37;
-}
-
-:root[data-theme='dark'] option {
-  background: #252b37;
-  color: #f2f4f6;
-}
-
-:root[data-theme='dark'] ::-webkit-scrollbar-track {
-  background: #10131a;
-}
-
-:root[data-theme='dark'] ::-webkit-scrollbar-thumb {
-  background: #4a5363;
-}
-
-input,
-select,
-textarea {
-  font-family: inherit;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: $color-bg;
-}
-::-webkit-scrollbar-thumb {
-  background: $color-border;
-  border-radius: 3px;
 }

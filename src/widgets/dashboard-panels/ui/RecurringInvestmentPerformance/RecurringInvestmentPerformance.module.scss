@@ -4,8 +4,8 @@
   container-type: inline-size;
   margin-top: $spacing-md;
   padding: $spacing-md;
-  border-top: 1px solid $color-border;
-  background: rgba($color-surface, 0.55);
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 55%, transparent);
 }
 
 .standalone {
@@ -25,7 +25,7 @@
 
   h4, p { margin: 0; }
   h4 { font-size: 0.95rem; }
-  p { margin-top: 3px; color: $color-text-muted; font-size: 0.75rem; }
+  p { margin-top: 3px; color: var(--color-text-muted); font-size: 0.75rem; }
 }
 
 .rulePicker {
@@ -41,10 +41,10 @@
   width: 100%;
   min-height: 38px;
   padding: 8px 11px;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: $color-surface;
-  color: $color-text;
+  background: var(--color-surface);
+  color: var(--color-text);
   text-align: left;
   font: inherit;
   font-size: 0.82rem;
@@ -72,9 +72,9 @@
   overflow-y: auto;
   margin: 0;
   padding: 6px;
-  border: 1px solid rgba($color-border, 0.9);
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
   border-radius: 12px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 14px 30px rgba(25, 31, 40, 0.12);
   list-style: none;
 
@@ -93,12 +93,12 @@
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: $color-text;
+    color: var(--color-text);
     text-align: left;
     font: inherit;
     font-size: 0.82rem;
 
-    &:hover { background: #f2f4f6; }
+    &:hover { background: var(--color-control-surface); }
   }
 
   [aria-selected='true'] button {
@@ -113,8 +113,8 @@
   gap: $spacing-sm;
   margin-top: $spacing-sm;
 
-  > div { padding: 12px; border-radius: 11px; background: #f2f4f6; }
-  small { display: block; margin-bottom: 5px; color: $color-text-muted; font-size: 0.7rem; }
+  > div { padding: 12px; border-radius: 11px; background: var(--color-control-surface); }
+  small { display: block; margin-bottom: 5px; color: var(--color-text-muted); font-size: 0.7rem; }
   strong { font-size: 0.92rem; }
 }
 
@@ -122,20 +122,20 @@
 .comparison, .trend { min-width: 0; }
 .comparison h5, .trend h5 { margin: 0 0 $spacing-sm; font-size: 0.82rem; }
 .comparisonHead, .comparisonRow { display: grid; grid-template-columns: 90px repeat(4, minmax(82px, 1fr)); gap: $spacing-sm; align-items: center; padding: 9px 6px; font-size: 0.74rem; text-align: right; }
-.comparisonHead { color: $color-text-muted; border-bottom: 1px solid $color-border; }
+.comparisonHead { color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); }
 .comparisonHead span:first-child, .comparisonRow b { text-align: left; }
-.comparisonRow + .comparisonRow { border-top: 1px solid rgba($color-border, 0.65); }
+.comparisonRow + .comparisonRow { border-top: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent); }
 .comparisonRow b { font-size: 0.76rem; }
 
 .trendRow { display: grid; grid-template-columns: 92px minmax(70px, 1fr) auto; align-items: center; gap: $spacing-sm; padding: 7px 0; }
 .trendRow > div:first-child { display: grid; }
 .trendRow b, .trendRow strong { font-size: 0.72rem; }
-.trendRow span { color: $color-text-muted; font-size: 0.66rem; }
+.trendRow span { color: var(--color-text-muted); font-size: 0.66rem; }
 .bar { height: 6px; overflow: hidden; border-radius: 99px; background: rgba(#64748b, 0.13); }
 .bar i { display: block; height: 100%; border-radius: inherit; background: #64748b; }
-.empty { margin: 0; padding: $spacing-md 0; color: $color-text-muted; font-size: 0.76rem; }
-.positive { color: $color-bull; }
-.negative { color: $color-bear; }
+.empty { margin: 0; padding: $spacing-md 0; color: var(--color-text-muted); font-size: 0.76rem; }
+.positive { color: var(--color-positive); }
+.negative { color: var(--color-negative); }
 
 :global(:root[data-theme='dark']) {
   .analysis { border-color: #354052; background: rgba(#171b24, 0.35); }

@@ -12,3 +12,5 @@ export { usePortfolioPrices } from './model/usePortfolioPrices';
 export { PortfolioManager } from './ui/PortfolioManager/PortfolioManager';
 export { PortfolioHeader } from './ui/PortfolioManager/PortfolioHeader';
 export { PortfolioSummary } from './ui/PortfolioManager/PortfolioSummary';
+export { PortfolioSummaryMetric } from './ui/PortfolioManager/PortfolioSummaryMetric';
+export type { PortfolioSummaryMetricType } from './ui/PortfolioManager/PortfolioSummaryMetric';

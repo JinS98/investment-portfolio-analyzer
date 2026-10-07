@@ -3,7 +3,7 @@
   width: min(460px, 100%);
   padding: 24px;
   border-radius: 20px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 24px 70px rgba(25, 31, 40, 0.2);
 }
 .dialog header,
@@ -21,7 +21,7 @@
 .dialog header p,
 .description,
 .dialog label {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.82rem;
 }
 .dialog header button {
@@ -36,8 +36,8 @@
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: #f2f4f6;
-  color: $color-text;
+  background: var(--color-control-surface);
+  color: var(--color-text);
 }
 .description {
   margin-top: $spacing-md;
@@ -57,10 +57,10 @@
   height: 42px;
   box-sizing: border-box;
   padding: 8px 10px;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: $color-surface;
-  color: $color-text;
+  background: var(--color-surface);
+  color: var(--color-text);
   font: inherit;
 }
 .dialog footer {
@@ -72,17 +72,17 @@
   padding: 8px 12px;
   border: 0;
   border-radius: 10px;
-  background: #f2f4f6;
-  color: $color-text;
+  background: var(--color-control-surface);
+  color: var(--color-text);
   font: inherit;
   font-weight: 700;
 }
 .dialog footer button:last-child {
-  background: $color-primary;
+  background: var(--color-action);
   color: #fff;
 }
 .error {
-  color: $color-danger;
+  color: var(--color-danger);
   font-size: 0.8rem;
 }
 :global(:root[data-theme='dark']) .dialog,

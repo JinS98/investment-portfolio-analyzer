@@ -36,6 +36,8 @@ export function TransactionForm({
     error,
     selectedHolding,
     grossAmount,
+    expectedSettlement,
+    expectedAveragePrice,
     expectedPnL,
     setTradeNumeric,
     setCost,
@@ -182,6 +184,21 @@ export function TransactionForm({
       <div className={styles.preview}>
         <span>예상 거래금액</span>
         <strong>{grossAmount === null ? '입력 필요' : money(grossAmount, draft.market)}</strong>
+        <span>{type === 'BUY' ? '예상 결제금액' : '예상 수령금액'}</span>
+        <strong>
+          {expectedSettlement === null ? '입력 필요' : money(expectedSettlement, draft.market)}
+        </strong>
+        {type === 'BUY' && (
+          <>
+            <span>매수 후 예상 평단가</span>
+            <strong>
+              {expectedAveragePrice === null
+                ? '입력 필요'
+                : money(expectedAveragePrice, draft.market)}
+            </strong>
+            <span className={styles.previewNote}>평단가에는 수수료·세금을 포함하지 않습니다.</span>
+          </>
+        )}
         {type === 'SELL' && (
           <>
             <span>예상 실현손익</span>

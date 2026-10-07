@@ -2,11 +2,11 @@
 
 .app {
   min-height: 100vh;
-  background: $color-bg;
+  background: var(--color-canvas);
 }
 
 .loading {
   @include flex-center;
   min-height: 100vh;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
 }

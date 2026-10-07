@@ -1,26 +1,19 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { DragEvent, PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FiRefreshCw } from 'react-icons/fi';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import { PortfolioAlertSummary } from '@widgets/dashboard-panels';
 import { usePortfolioSync } from '../../hooks/usePortfolioSync';
 import { useAuthStore } from '../../store/authStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
-import { dropPosition, splitFromPointer } from '@features/dashboard-layout';
+import { useDisplayCurrencyStore } from '../../store/displayCurrencyStore';
 import type { DashboardView } from '@features/dashboard-layout';
-import {
-  DEFAULT_PANEL_ORDER,
-  PANEL_REGISTRY,
-  dashboardLayoutReducer,
-  panelGridPosition,
-  readDashboardLayout,
-  saveDashboardLayout,
-  visiblePanelRows,
-} from './panelRegistry';
-import type { DashboardPanelContext, PanelId } from './panelRegistry';
+import { createPortfolioManagerViewModel } from '@features/portfolio-management';
+import { DashboardWidgetLayout } from './DashboardWidgetLayout';
+import type { DashboardPanelContext } from './panelRegistry';
 import styles from './Dashboard.module.scss';
 
 const EMPTY_HOLDINGS: import('../../types').Holding[] = [];
+const EMPTY_HISTORIES: import('../../types').HoldingHistory[] = [];
 
 interface DashboardProps {
   view: DashboardView;
@@ -33,6 +26,7 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   const portfolioLedgers = usePortfolioStore((state) => state.portfolioLedgers);
   const openTransactionModal = usePortfolioStore((state) => state.openTransactionModal);
   const userId = useAuthStore((state) => state.user?.uid);
+  const summaryCurrency = useDisplayCurrencyStore((state) => state.displayCurrency);
   const realPortfolio = useMemo(
     () => portfolios.find((portfolio) => portfolio.type === 'REAL'),
     [portfolios],
@@ -42,7 +36,9 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
       ? (portfolioLedgers[realPortfolio.id]?.holdings ?? EMPTY_HOLDINGS)
       : EMPTY_HOLDINGS;
   }, [portfolioLedgers, realPortfolio]);
-  const realHistories = realPortfolio ? (portfolioLedgers[realPortfolio.id]?.histories ?? []) : [];
+  const realHistories = realPortfolio
+    ? (portfolioLedgers[realPortfolio.id]?.histories ?? EMPTY_HISTORIES)
+    : EMPTY_HISTORIES;
 
   const addMarketSearchBuyRecord = realPortfolio
     ? (preset: { ticker: string; name: string; market: 'KR' | 'US'; price: number }) => {
@@ -68,87 +64,26 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
     refreshPrices,
     loadHistoricalData,
   } = usePortfolio();
+  const summaryViewModel = useMemo(
+    () =>
+      createPortfolioManagerViewModel(
+        realHoldings,
+        realHistories,
+        prices,
+        exchangeRate?.rate ?? null,
+        summaryCurrency,
+      ),
+    [realHoldings, realHistories, prices, exchangeRate?.rate, summaryCurrency],
+  );
   const refreshPricesRef = useRef(refreshPrices);
   const lastAutoRefreshKey = useRef<string | null>(null);
   const loadHistoricalDataRef = useRef(loadHistoricalData);
   const lastRiskRefresh = useRef<string | null>(null);
   const recurringAnalysisPanelRef = useRef<HTMLDivElement>(null);
   const [isRiskLoading, setIsRiskLoading] = useState(false);
-  const [panelRows, dispatchLayout] = useReducer(dashboardLayoutReducer, undefined, () =>
-    readDashboardLayout(typeof localStorage === 'undefined' ? undefined : localStorage),
-  );
-  const [draggingPanel, setDraggingPanel] = useState<PanelId | null>(null);
-  const shownRows = visiblePanelRows(panelRows, view);
   const autoRefreshKey = realHoldings
     .map((holding) => `${holding.market}:${holding.ticker}:${holding.lastTransactionAt ?? ''}`)
     .join('|');
-  const handleResizeStart = (id: PanelId, event: PointerEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const grid = event.currentTarget.closest(`.${styles.componentGrid}`);
-    if (!grid) return;
-    const bounds = grid.getBoundingClientRect();
-
-    const resize = (pointerEvent: globalThis.PointerEvent) => {
-      dispatchLayout({
-        type: 'resize',
-        id,
-        split: splitFromPointer(pointerEvent.clientX, bounds.left, bounds.width),
-      });
-    };
-    const finish = () => {
-      window.removeEventListener('pointermove', resize);
-      window.removeEventListener('pointerup', finish);
-    };
-    window.addEventListener('pointermove', resize);
-    window.addEventListener('pointerup', finish);
-  };
-
-  const panelProps = (id: PanelId) => {
-    const row = shownRows.find((item) => item.ids.includes(id));
-    const pairPosition =
-      row?.ids.length === 2 ? (row.ids[0] === id ? styles.pairedFirst : styles.pairedSecond) : '';
-
-    return {
-      className: `${styles.panelItem} ${pairPosition} ${draggingPanel === id ? styles.panelDragging : ''} ${PANEL_REGISTRY[id].view === view ? '' : styles.hiddenPanel}`,
-      style: panelGridPosition(shownRows, id),
-      draggable: true,
-      onDragStart: (event: DragEvent<HTMLDivElement>) => {
-        event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/plain', id);
-        setDraggingPanel(id);
-      },
-      onDragOver: (event: DragEvent<HTMLDivElement>) => event.preventDefault(),
-      onDrop: (event: DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        const source = event.dataTransfer.getData('text/plain') as PanelId;
-        if (!Object.hasOwn(PANEL_REGISTRY, source) || source === id) return;
-        const targetBounds = event.currentTarget.getBoundingClientRect();
-        dispatchLayout({
-          type: 'move',
-          source,
-          target: id,
-          position: dropPosition(event.clientX, event.clientY, targetBounds),
-        });
-        setDraggingPanel(null);
-      },
-      onDragEnd: () => setDraggingPanel(null),
-    };
-  };
-
-  const renderResizeHandle = (id: PanelId) =>
-    shownRows.some((row) => row.ids[0] === id && row.ids.length === 2) ? (
-      <button
-        type="button"
-        className={styles.resizeHandle}
-        aria-label="같은 행 패널의 너비 조절"
-        title="드래그하여 너비 조절"
-        draggable={false}
-        onDragStart={(event) => event.preventDefault()}
-        onPointerDown={(event) => handleResizeStart(id, event)}
-      />
-    ) : null;
-
   useEffect(() => {
     refreshPricesRef.current = refreshPrices;
   }, [refreshPrices]);
@@ -156,10 +91,6 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   useEffect(() => {
     loadHistoricalDataRef.current = loadHistoricalData;
   }, [loadHistoricalData]);
-
-  useEffect(() => {
-    saveDashboardLayout(typeof localStorage === 'undefined' ? undefined : localStorage, panelRows);
-  }, [panelRows]);
 
   useEffect(() => {
     if (view !== 'analysis') return;
@@ -208,6 +139,8 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   }, [lastUpdated]);
 
   const panelContext: DashboardPanelContext = {
+    summaryViewModel,
+    summaryCurrency,
     realHoldings,
     realHistories,
     realPortfolioId: realPortfolio?.id,
@@ -275,23 +208,15 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
           portfolioId={realPortfolio.id}
         />
       ) : null}
-      <div
-        className={`${styles.componentGrid} ${view === 'analysis' && !userId ? styles.analysisLockedContent : ''}`}
-      >
-        {DEFAULT_PANEL_ORDER.map((id) => (
-          <div
-            key={id}
-            {...panelProps(id)}
-            ref={id === 'recurring' ? recurringAnalysisPanelRef : undefined}
-          >
-            <span className={styles.dragHandle} aria-hidden="true">
-              ⠿
-            </span>
-            {renderResizeHandle(id)}
-            {PANEL_REGISTRY[id].render(panelContext)}
-          </div>
-        ))}
-
+      <DashboardWidgetLayout
+        key={`${view}:${userId ?? 'guest'}`}
+        view={view}
+        userId={userId}
+        context={panelContext}
+        recurringPanelRef={recurringAnalysisPanelRef}
+        locked={view === 'analysis' && !userId}
+      />
+      <div className={styles.dashboardStatus}>
         {isPortfolioLoading && (
           <p className={styles.storageStatus}>저장된 포트폴리오를 불러오는 중...</p>
         )}
@@ -313,21 +238,6 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
             <p className={styles.emptyHint}>종목을 검색하고 매수가와 수량을 입력하세요.</p>
           </div>
         )}
-
-        {/* 차트 — Day 5 */}
-        <section className={styles.placeholder}>
-          <p>📈 차트 영역 (Day 5)</p>
-        </section>
-
-        {/* 리스크 패널 — Day 5 */}
-        <section className={styles.placeholder}>
-          <p>🛡️ 리스크 분석 패널 (Day 5) — 토스 캔들 데이터 기반</p>
-        </section>
-
-        {/* 시그널 패널 — Day 8 */}
-        <section className={styles.placeholder}>
-          <p>🚦 월별 투자 시그널 패널 (Day 8)</p>
-        </section>
       </div>
       {view === 'analysis' && !userId ? (
         <section className={styles.analysisLoginPrompt} aria-labelledby="analysis-login-title">

@@ -21,7 +21,7 @@
 
   p {
     margin-bottom: $spacing-xs;
-    color: $color-primary;
+    color: var(--color-action);
     font-size: 0.85rem;
     font-weight: 700;
   }
@@ -35,7 +35,7 @@
   span {
     display: block;
     margin-top: $spacing-sm;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.9rem;
   }
 }
@@ -48,17 +48,17 @@
 
   button {
     padding: $spacing-sm $spacing-md;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     background: transparent;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font: inherit;
   }
 
   button.activeTab {
-    border-color: $color-primary;
-    background: rgba($color-primary, 0.15);
-    color: $color-primary;
+    border-color: var(--color-action);
+    background: color-mix(in srgb, var(--color-action) 15%, transparent);
+    color: var(--color-action);
   }
 }
 
@@ -69,12 +69,12 @@
   margin-bottom: $spacing-xl;
   padding: $spacing-lg;
   border-radius: 20px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 1px 3px rgba(25, 31, 40, 0.04);
 
   span,
   small {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.85rem;
   }
 
@@ -92,8 +92,8 @@
   span {
     padding: 6px 10px;
     border-radius: 999px;
-    background: #f2f4f6;
-    color: $color-text-muted;
+    background: var(--color-control-surface);
+    color: var(--color-text-muted);
     font-size: 0.8rem;
   }
 
@@ -103,11 +103,11 @@
 }
 
 .positive {
-  color: $color-success;
+  color: var(--color-positive);
 }
 
 .negative {
-  color: $color-danger;
+  color: var(--color-negative);
 }
 
 :global(:root[data-theme='dark']) .realizedSummary {
@@ -132,8 +132,8 @@
 }
 
 :global(:root[data-theme='dark']) .tabs button.activeTab {
-  border-color: $color-primary;
-  background: rgba($color-primary, 0.2);
+  border-color: var(--color-action);
+  background: color-mix(in srgb, var(--color-action) 20%, transparent);
   color: #7ab5ff;
 }
 
@@ -142,11 +142,11 @@
   padding: $spacing-lg;
   border: 0;
   border-radius: 16px;
-  background: $color-surface;
-  color: $color-text-muted;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
 }
 
 .error {
-  border-color: $color-danger;
-  color: $color-danger;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }

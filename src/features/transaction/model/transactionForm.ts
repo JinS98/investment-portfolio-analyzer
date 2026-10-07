@@ -84,7 +84,26 @@ export function calculateDraftValues(
     Number.isFinite(tax)
       ? (price - holding.averagePrice) * quantity - fee - tax
       : null;
-  return { price, quantity, fee, tax, grossAmount, expectedPnL };
+  const expectedSettlement =
+    grossAmount !== null && Number.isFinite(fee) && Number.isFinite(tax)
+      ? type === 'BUY'
+        ? grossAmount + fee + tax
+        : grossAmount - fee - tax
+      : null;
+  const expectedAveragePrice =
+    type === 'BUY' && grossAmount !== null && quantity > 0
+      ? ((holding?.investedAmount ?? 0) + grossAmount) / ((holding?.quantity ?? 0) + quantity)
+      : null;
+  return {
+    price,
+    quantity,
+    fee,
+    tax,
+    grossAmount,
+    expectedSettlement,
+    expectedAveragePrice,
+    expectedPnL,
+  };
 }
 
 export function createTransactionInput(

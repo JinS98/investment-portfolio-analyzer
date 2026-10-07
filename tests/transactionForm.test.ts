@@ -52,7 +52,37 @@ test('transaction costs and sell profit retain the existing calculation policy',
     holding,
   );
   assert.equal(values.grossAmount, 240_000);
+  assert.equal(values.expectedSettlement, 239_700);
   assert.equal(values.expectedPnL, 29_700);
+});
+
+test('buy preview recalculates settlement and average price from price and quantity', () => {
+  const holding: Holding = {
+    portfolioId: portfolio.id,
+    ticker: '005930',
+    market: 'KR',
+    quantity: 10,
+    averagePrice: 70_000,
+    investedAmount: 700_000,
+  };
+  const draft = {
+    ...createTransactionDraft({ ticker: holding.ticker, market: 'KR', price: 80_000 }),
+    quantity: '3',
+    fee: '100',
+    tax: '0',
+  };
+  const values = calculateDraftValues(draft, 'BUY', holding);
+  assert.equal(values.grossAmount, 240_000);
+  assert.equal(values.expectedSettlement, 240_100);
+  assert.equal(values.expectedAveragePrice, 940_000 / 13);
+  assert.equal(
+    calculateDraftValues({ ...draft, quantity: '4' }, 'BUY', holding).expectedAveragePrice,
+    1_020_000 / 14,
+  );
+  assert.equal(
+    calculateDraftValues({ ...draft, quantity: '' }, 'BUY', holding).expectedAveragePrice,
+    null,
+  );
 });
 
 test('transaction payload validation rejects a sale above the held quantity', () => {

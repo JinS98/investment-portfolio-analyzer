@@ -18,9 +18,13 @@ import styles from './PortfolioManager.module.scss';
 
 interface PortfolioManagerProps {
   portfolioType?: PortfolioType;
+  hideSummaryCards?: boolean;
 }
 
-export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
+export function PortfolioManager({
+  portfolioType,
+  hideSummaryCards = false,
+}: PortfolioManagerProps) {
   const userId = useAuthStore((state) => state.user?.uid);
   const selectedHoldings = usePortfolioStore((state) => state.holdings);
   const portfolios = usePortfolioStore((state) => state.portfolios);
@@ -141,7 +145,11 @@ export function PortfolioManager({ portfolioType }: PortfolioManagerProps) {
         onSelectPortfolio={setActivePortfolioId}
       />
 
-      <PortfolioSummary viewModel={viewModel} displayCurrency={summaryCurrency} />
+      <PortfolioSummary
+        viewModel={viewModel}
+        displayCurrency={summaryCurrency}
+        showCards={!hideSummaryCards}
+      />
 
       {ledgerError && (
         <p className={styles.error} role="alert">

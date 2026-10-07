@@ -19,7 +19,7 @@
 
   > p {
     margin-top: 8px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.9rem;
   }
 
@@ -27,8 +27,8 @@
     margin-top: 16px;
     padding: 12px 14px;
     border-radius: 12px;
-    background: #fff1f1;
-    color: $color-danger;
+    background: var(--color-danger-surface);
+    color: var(--color-danger);
     font-size: 0.86rem;
   }
 }
@@ -43,7 +43,7 @@
   > label {
     display: block;
     width: 100%;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.85rem;
     font-weight: 600;
   }
@@ -58,15 +58,15 @@
   input {
     width: 100%;
     padding: 0 14px;
-    border: 1px solid $color-border;
-    background: #f9fafb;
-    color: $color-text;
+    border: 1px solid var(--color-border);
+    background: var(--color-input-surface);
+    color: var(--color-text);
   }
 
   button {
     min-width: 106px;
     border: 0;
-    background: $color-primary;
+    background: var(--color-action);
     color: #fff;
     font-weight: 700;
   }
@@ -87,7 +87,7 @@
   overflow-x: auto;
   margin-top: 16px;
   border-radius: 12px;
-  background: #f7f8fa;
+  background: var(--color-surface-muted);
 }
 
 table {
@@ -105,23 +105,23 @@ table {
 }
 
 .positiveChange {
-  color: $color-success !important;
+  color: var(--color-positive) !important;
 }
 
 .negativeChange {
-  color: $color-danger !important;
+  color: var(--color-negative) !important;
 }
 
 th,
 td {
   padding: 12px;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid var(--color-border);
   text-align: right;
   white-space: nowrap;
 }
 
 th {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   font-weight: 600;
 }
@@ -135,19 +135,19 @@ th {
   max-height: 320px;
   overflow-y: auto;
   border-radius: 14px;
-  background: $color-surface;
+  background: var(--color-popover-surface);
   box-shadow: 0 12px 28px rgba(25, 31, 40, 0.14);
 
   p {
     padding: 12px 14px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.82rem;
   }
 
   .suggestionTitle {
     margin: 0;
     padding-bottom: 4px;
-    color: $color-text;
+    color: var(--color-text);
     font-size: 0.75rem;
     font-weight: 700;
   }
@@ -166,13 +166,13 @@ th {
 
   li:hover,
   li[aria-selected='true'] {
-    background: #edf5ff;
+    background: var(--color-primary-soft);
   }
 
   span {
     display: block;
     margin-top: 3px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.78rem;
   }
 }
@@ -182,8 +182,8 @@ th {
   margin-top: 18px;
   padding: 0 16px;
   border-radius: 12px;
-  background: #edf5ff;
-  color: $color-primary;
+  background: var(--color-primary-soft);
+  color: var(--color-action);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
@@ -202,7 +202,7 @@ th {
   padding: 0 16px;
   border: 0;
   border-radius: 12px;
-  background: $color-primary;
+  background: var(--color-action);
   color: #fff;
   font: inherit;
   font-size: 0.9rem;
@@ -216,11 +216,11 @@ th {
 }
 
 .holdingNotice {
-  color: $color-success !important;
+  color: var(--color-success) !important;
 }
 
 .loginNotice {
-  color: $color-text-muted !important;
+  color: var(--color-text-muted) !important;
 }
 
 .dialogOverlay {
@@ -240,7 +240,7 @@ th {
   overflow: hidden;
   padding: 24px;
   border-radius: 20px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 16px 44px rgba(25, 31, 40, 0.24);
 }
 
@@ -258,7 +258,7 @@ th {
 
   p {
     margin-top: 4px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.86rem;
   }
 }
@@ -275,8 +275,8 @@ th {
   aspect-ratio: 1;
   padding: 0;
   border-radius: 50%;
-  background: #f2f4f6;
-  color: $color-text;
+  background: var(--color-control-surface);
+  color: var(--color-text);
   font-size: 1.45rem;
   line-height: 1;
 }
@@ -292,17 +292,17 @@ th {
   min-height: 44px;
   margin: 16px auto 0;
   padding: 0 18px;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   background: transparent;
-  color: $color-primary;
+  color: var(--color-action);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
 }
 
 :global(:root[data-theme='dark']) .candleButton {
-  background: rgba($color-primary, 0.18);
+  background: color-mix(in srgb, var(--color-action) 18%, transparent);
   color: #7ab5ff;
 }
 
@@ -312,7 +312,7 @@ th {
 
 :global(:root[data-theme='dark']) .suggestions li:hover,
 :global(:root[data-theme='dark']) .suggestions li[aria-selected='true'] {
-  background: rgba($color-primary, 0.24);
+  background: color-mix(in srgb, var(--color-action) 24%, transparent);
 }
 
 :global(:root[data-theme='dark']) .suggestions li:hover strong,
@@ -323,15 +323,6 @@ th {
 :global(:root[data-theme='dark']) .suggestions li:hover span,
 :global(:root[data-theme='dark']) .suggestions li[aria-selected='true'] span {
   color: #c7d8f3;
-}
-
-:global(:root[data-theme='dark']) .candleDialog {
-  background: #171b24;
-}
-
-:global(:root[data-theme='dark']) .candleDialog .scroll {
-  background: #252b37;
-  color: #f2f4f6;
 }
 
 :global(:root[data-theme='dark']) .closeButton {

@@ -4,6 +4,8 @@
   @include card;
   margin-bottom: $spacing-xl;
   container-type: inline-size;
+  display: flex;
+  flex-direction: column;
 }
 .header {
   display: flex;
@@ -16,14 +18,14 @@
     margin-bottom: $spacing-xs;
   }
   p {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.85rem;
   }
 }
 .latestSavedAt {
   display: block;
   margin-top: 4px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.75rem;
 }
 .rangeButtons {
@@ -32,7 +34,7 @@
   align-items: center;
   gap: 4px;
   padding: 6px;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: 100px;
 
   button {
@@ -40,7 +42,7 @@
     min-height: 32px;
     padding: 0 14px;
     border-radius: 999px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.78rem;
     font-weight: 600;
     white-space: nowrap;
@@ -52,16 +54,16 @@
       transform 0.18s;
 
     &:focus-visible {
-      outline: 2px solid $color-primary;
+      outline: 2px solid var(--color-action);
       outline-offset: 2px;
     }
   }
 }
 .active {
   border-color: transparent !important;
-  background: $color-primary !important;
+  background: var(--color-action) !important;
   color: #fff !important;
-  box-shadow: 0 2px 5px rgba($color-primary, 0.34);
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--color-action) 34%, transparent);
 }
 .summary {
   display: grid;
@@ -69,7 +71,7 @@
   gap: $spacing-md;
   margin-bottom: $spacing-lg;
   div {
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     padding: $spacing-sm;
     display: flex;
@@ -77,7 +79,7 @@
     gap: $spacing-xs;
   }
   span {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.78rem;
   }
   strong {
@@ -86,16 +88,19 @@
 }
 .chart {
   min-width: 0;
+  min-height: 220px;
+  height: 290px;
+  flex: 1 1 290px;
 }
 .empty {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   padding: $spacing-lg 0;
 }
 .positive {
-  color: $color-success;
+  color: var(--color-positive);
 }
 .negative {
-  color: $color-danger;
+  color: var(--color-negative);
 }
 @container (max-width: 560px) {
   .header {

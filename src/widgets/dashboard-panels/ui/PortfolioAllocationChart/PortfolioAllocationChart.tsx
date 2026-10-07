@@ -66,30 +66,32 @@ export function PortfolioAllocationChart({
       {withWeight.length > 0 && (
         <div className={styles.content}>
           <div className={styles.chart}>
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={withWeight}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={62}
-                  outerRadius={100}
-                  paddingAngle={2}
-                >
-                  {withWeight.map((stock) => (
-                    <Cell key={stock.ticker} fill={stock.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) =>
-                    `${Number(value).toLocaleString('ko-KR', { maximumFractionDigits: 0 })}원`
-                  }
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className={styles.pieArea}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={withWeight}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={62}
+                    outerRadius={100}
+                    paddingAngle={2}
+                  >
+                    {withWeight.map((stock) => (
+                      <Cell key={stock.ticker} fill={stock.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) =>
+                      `${Number(value).toLocaleString('ko-KR', { maximumFractionDigits: 0 })}원`
+                    }
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
             <p className={styles.total}>
               총 평가금액{' '}
               <strong>{total.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}원</strong>

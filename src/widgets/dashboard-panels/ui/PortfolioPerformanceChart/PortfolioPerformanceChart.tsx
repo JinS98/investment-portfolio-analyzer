@@ -241,7 +241,7 @@ export function PortfolioPerformanceChart({
             </div>
           </div>
           <div className={styles.chart}>
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart data={result.chart} margin={{ top: 10, right: 12, bottom: 0, left: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.22)" />
                 <XAxis

@@ -4,6 +4,8 @@
   @include card;
   margin-bottom: $spacing-xl;
   container-type: inline-size;
+  display: flex;
+  flex-direction: column;
 }
 .header {
   display: flex;
@@ -20,7 +22,7 @@
 }
 .header p {
   margin-top: $spacing-xs;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 }
 .header > strong {
@@ -33,7 +35,7 @@
   margin-top: $spacing-lg;
   padding: 3px;
   border-radius: 11px;
-  background: #f2f4f6;
+  background: var(--color-control-surface);
 }
 .rangeTabs button {
   min-height: 34px;
@@ -41,24 +43,24 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
 }
 .rangeTabs button.active {
-  background: $color-surface;
-  color: $color-text;
+  background: var(--color-surface);
+  color: var(--color-text);
   box-shadow: 0 1px 4px rgba(25, 31, 40, 0.1);
 }
 .status {
   margin: 0;
   padding: $spacing-xl 0;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
 }
 .warning {
   margin: $spacing-sm 0 0;
-  color: $color-warning;
+  color: var(--color-warning);
   font-size: 0.78rem;
 }
 .metrics {
@@ -70,12 +72,12 @@
 .metrics > div {
   padding: 12px;
   border-radius: 12px;
-  background: #f7f8fa;
+  background: var(--color-surface-muted);
 }
 .metrics span {
   display: block;
   margin-bottom: 5px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.72rem;
 }
 .metrics strong {
@@ -83,13 +85,16 @@
 }
 .chart {
   min-width: 0;
+  min-height: 240px;
+  height: 320px;
+  flex: 1 1 320px;
   margin-top: $spacing-md;
 }
 .positive {
-  color: $color-bull !important;
+  color: var(--color-positive) !important;
 }
 .negative {
-  color: $color-bear !important;
+  color: var(--color-negative) !important;
 }
 
 :global(:root[data-theme='dark']) {

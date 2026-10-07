@@ -15,7 +15,7 @@
 
   > p {
     margin: 0;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.88rem;
     font-weight: 700;
   }
@@ -29,7 +29,7 @@
   > span {
     display: block;
     margin-top: 2px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
   }
 }
 
@@ -51,7 +51,7 @@
   }
 
   span {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.82rem;
   }
 }
@@ -64,7 +64,7 @@
   button {
     min-height: 86px;
     padding: 14px;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     background: transparent;
     text-align: left;
@@ -85,13 +85,13 @@
     }
 
     span {
-      color: $color-text-muted;
+      color: var(--color-text-muted);
       font-size: 0.82rem;
     }
 
     strong {
       margin-top: 8px;
-      color: $color-text;
+      color: var(--color-text);
       font-size: 1.12rem;
       letter-spacing: -0.03em;
     }
@@ -99,11 +99,11 @@
 }
 
 .selectedIndicator {
-  border-color: $color-text !important;
+  border-color: var(--color-text) !important;
 }
 
 .indicatorName {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.82rem;
 }
 
@@ -129,11 +129,11 @@
 }
 
 .positiveSparkline {
-  color: #d9575f;
+  color: var(--color-positive);
 }
 
 .negativeSparkline {
-  color: #3182f6;
+  color: var(--color-negative);
 }
 
 .positiveSparkline polyline,
@@ -146,7 +146,7 @@
 }
 
 .previousCloseLine {
-  stroke: $color-text-muted;
+  stroke: var(--color-text-muted);
   stroke-width: 1;
   stroke-dasharray: 3 4;
   opacity: 0.55;
@@ -169,29 +169,29 @@
   }
 
   line {
-    stroke: $color-border;
+    stroke: var(--color-border);
     stroke-dasharray: 4 6;
   }
 
   circle {
-    fill: $color-surface;
+    fill: var(--color-surface);
     stroke: currentColor;
     stroke-width: 2;
   }
 
   text {
-    fill: $color-text-muted;
+    fill: var(--color-text-muted);
     font-size: 11px;
   }
 }
 
 .chartWrap {
   &.positiveChart {
-    color: #159a5b;
+    color: var(--color-positive);
   }
 
   &.negativeChart {
-    color: #d9575f;
+    color: var(--color-negative);
   }
 }
 
@@ -200,12 +200,12 @@
   align-items: center;
   gap: 16px;
   margin-top: 8px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.82rem;
 
   b {
     margin-left: 4px;
-    color: $color-text;
+    color: var(--color-text);
   }
 
   strong {
@@ -217,7 +217,7 @@
   width: min(680px, 100%);
   padding: 24px;
   border-radius: 20px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 16px 44px rgba(25, 31, 40, 0.24);
 }
 
@@ -234,7 +234,7 @@
 
   p {
     margin-top: 4px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.86rem;
   }
 
@@ -248,8 +248,8 @@
     justify-content: center;
     padding: 0;
     border-radius: 50%;
-    background: #f2f4f6;
-    color: $color-text;
+    background: var(--color-control-surface);
+    color: var(--color-text);
     font-size: 1.5rem;
   }
 }
@@ -258,7 +258,7 @@
   display: grid;
   height: 250px;
   place-items: center;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
 }
 
 .searchSection,
@@ -270,7 +270,7 @@
   label {
     display: block;
     margin-bottom: 10px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.86rem;
     font-weight: 700;
   }
@@ -282,23 +282,23 @@
   gap: 10px;
   min-height: 52px;
   padding: 0 16px;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: #f9fafb;
-  color: $color-text-muted;
+  background: var(--color-input-surface);
+  color: var(--color-text-muted);
 
   input {
     width: 100%;
     border: 0;
     outline: 0;
     background: transparent;
-    color: $color-text;
+    color: var(--color-text);
     font: inherit;
   }
 
   span {
     flex: 0 0 auto;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.78rem;
   }
 }
@@ -325,7 +325,7 @@
 
   p {
     margin-top: 4px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.86rem;
   }
 }
@@ -340,10 +340,10 @@
     height: 32px;
     min-height: 32px;
     padding: 0 9px;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     background: transparent;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font: inherit;
     font-size: 0.78rem;
     font-weight: 700;
@@ -352,9 +352,9 @@
 }
 
 .activeFilter {
-  border-color: $color-text !important;
+  border-color: var(--color-text) !important;
   background: transparent !important;
-  color: $color-text !important;
+  color: var(--color-text) !important;
 }
 
 .stockList {
@@ -367,7 +367,7 @@
   list-style: none;
 
   li + li {
-    border-top: 1px solid $color-border;
+    border-top: 1px solid var(--color-border);
   }
 
   button {
@@ -381,7 +381,7 @@
     text-align: left;
 
     &:hover .stockName strong {
-      color: $color-text-muted;
+      color: var(--color-text-muted);
     }
   }
 }
@@ -389,7 +389,7 @@
 .stockRank {
   width: 22px;
   flex: 0 0 22px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -403,8 +403,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #f2f4f6;
-  color: $color-text-muted;
+  background: var(--color-control-surface);
+  color: var(--color-text-muted);
   font-size: 0.92rem;
   font-weight: 800;
 
@@ -432,20 +432,20 @@
 
   small {
     margin-top: 2px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
   }
 }
 
 .stockPrice {
   margin-left: auto;
-  color: $color-text;
+  color: var(--color-text);
   font-weight: 700;
   white-space: nowrap;
 }
 
 .stockMeta {
   min-width: 108px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.82rem;
   text-align: right;
   white-space: nowrap;
@@ -460,11 +460,11 @@
 }
 
 .positive {
-  color: $color-success;
+  color: var(--color-positive);
 }
 
 .negative {
-  color: $color-danger;
+  color: var(--color-negative);
 }
 
 .skeletonList {
@@ -486,18 +486,18 @@
   gap: 6px;
   padding: 28px;
   border-radius: 14px;
-  background: #f7f8fa;
+  background: var(--color-surface-muted);
   text-align: center;
 
   span {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.9rem;
   }
 }
 
 .error {
-  background: #fff1f1;
-  color: $color-danger;
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
 
   button {
     justify-self: center;
@@ -518,7 +518,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 24px 24px 20px;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .drawerActions {
@@ -535,7 +535,7 @@
   min-height: 40px;
   padding: 0 14px;
   border-radius: 10px;
-  background: $color-primary;
+  background: var(--color-action);
   color: #fff;
   font-size: 0.86rem;
   font-weight: 700;
@@ -551,8 +551,8 @@
   padding: 0;
   place-items: center;
   border-radius: 50%;
-  background: #f2f4f6;
-  color: $color-text;
+  background: var(--color-control-surface);
+  color: var(--color-text);
   line-height: 0;
 
   svg {
@@ -579,7 +579,7 @@
 
   p {
     margin-top: 3px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.84rem;
   }
 }
@@ -593,8 +593,8 @@
 .portfolioActionNotice {
   margin: 0;
   padding: 10px 24px;
-  border-bottom: 1px solid $color-border;
-  color: $color-text-muted;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
   font-size: 0.84rem;
 }
 
@@ -604,7 +604,7 @@
 .newsSection {
   padding: 20px;
   border-radius: 16px;
-  background: #f7f8fa;
+  background: var(--color-surface-muted);
 }
 
 .currentQuote {
@@ -616,13 +616,13 @@
 
   span,
   small {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.84rem;
   }
 
   strong {
     margin: 8px 0;
-    color: $color-text;
+    color: var(--color-text);
     font-size: clamp(1.65rem, 5vw, 2.1rem);
     letter-spacing: -0.05em;
   }
@@ -636,7 +636,7 @@
 
   > div > p {
     margin-top: 4px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.84rem;
   }
 
@@ -654,7 +654,7 @@
 
   > div > p {
     margin-top: 4px;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.84rem;
   }
 }
@@ -668,24 +668,24 @@
   div {
     padding: 12px;
     border-radius: 12px;
-    background: $color-surface;
+    background: var(--color-surface);
   }
 
   dt {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.78rem;
   }
 
   dd {
     margin: 5px 0 0;
-    color: $color-text;
+    color: var(--color-text);
     font-weight: 800;
   }
 }
 
 .insightUnavailable {
   margin: 16px 0 0;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.88rem;
   line-height: 1.5;
 }
@@ -698,14 +698,14 @@
   list-style: none;
 
   li + li {
-    border-top: 1px solid $color-border;
+    border-top: 1px solid var(--color-border);
   }
 
   a {
     display: grid;
     gap: 5px;
     padding: 13px 0;
-    color: $color-text;
+    color: var(--color-text);
     text-decoration: none;
 
     &:hover strong {
@@ -720,7 +720,7 @@
   }
 
   span {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.78rem;
   }
 }
@@ -756,11 +756,11 @@
   margin: 24px;
   padding: 24px;
   border-radius: 16px;
-  background: #fff1f1;
-  color: $color-danger;
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
 
   span {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.9rem;
   }
 
@@ -782,7 +782,7 @@
   height: 220px;
   margin-top: 12px;
   place-items: center;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 
@@ -822,19 +822,6 @@
 
 :global(:root[data-theme='dark']) .miniChart polyline {
   stroke: currentColor;
-}
-
-:global(:root[data-theme='dark']) .chartWrap,
-:global(:root[data-theme='dark']) .miniChart {
-  color: inherit;
-}
-
-:global(:root[data-theme='dark']) .positiveChart {
-  color: #4ade80;
-}
-
-:global(:root[data-theme='dark']) .negativeChart {
-  color: #fb7185;
 }
 
 :global(:root[data-theme='dark']) .miniChart line {

@@ -24,7 +24,7 @@
   }
 
   p {
-    color: $color-primary;
+    color: var(--color-action);
     font-size: 0.85rem;
     font-weight: 700;
   }
@@ -37,7 +37,7 @@
 
   span {
     display: block;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.9rem;
   }
 }
@@ -47,11 +47,11 @@
   padding: $spacing-lg;
   border: 0;
   border-radius: 16px;
-  background: $color-surface;
-  color: $color-text-muted;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
 }
 
 .error {
-  border-color: $color-danger;
-  color: $color-danger;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }

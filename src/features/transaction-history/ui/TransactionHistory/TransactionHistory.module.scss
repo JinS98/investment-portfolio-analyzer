@@ -5,7 +5,7 @@
   padding: 28px;
   border: 0;
   border-radius: 20px;
-  background: $color-surface;
+  background: var(--color-surface);
   box-shadow: 0 1px 3px rgba(25, 31, 40, 0.04);
 }
 
@@ -26,7 +26,7 @@
 
   p,
   > span {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.85rem;
   }
 
@@ -47,10 +47,10 @@
     height: 42px;
     box-sizing: border-box;
     padding: 8px 10px;
-    border: 1px solid #e5e8eb;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
-    background: #f9fafb;
-    color: $color-text;
+    background: var(--color-input-surface);
+    color: var(--color-text);
     font: inherit;
     font-size: 0.82rem;
   }
@@ -69,16 +69,16 @@
     padding: 8px 12px;
     border: 0;
     border-radius: 10px;
-    background: #f2f4f6;
-    color: $color-text-muted;
+    background: var(--color-control-surface);
+    color: var(--color-text-muted);
     font: inherit;
     font-size: 0.82rem;
     white-space: nowrap;
   }
 
   button.active {
-    background: #edf5ff;
-    color: $color-primary;
+    background: var(--color-primary-soft);
+    color: var(--color-action);
   }
 }
 
@@ -87,7 +87,7 @@
   gap: 2px;
   padding: 3px;
   border-radius: 10px;
-  background: #f2f4f6;
+  background: var(--color-control-surface);
 
   button {
     min-height: 34px;
@@ -95,7 +95,7 @@
     border: 0;
     border-radius: 7px;
     background: transparent;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font: inherit;
     font-size: 0.76rem;
     font-weight: 700;
@@ -103,14 +103,14 @@
   }
 
   button.active {
-    background: $color-surface;
-    color: $color-text;
+    background: var(--color-selected-control);
+    color: var(--color-text);
     box-shadow: 0 1px 3px rgba(25, 31, 40, 0.08);
   }
 }
 
 .dateSeparator {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
 }
 .dateLabel {
   @extend .srOnly;
@@ -124,8 +124,8 @@
   margin-top: $spacing-md;
   padding: 8px 10px;
   border-radius: 10px;
-  background: #f2f4f6;
-  color: $color-text-muted;
+  background: var(--color-control-surface);
+  color: var(--color-text-muted);
   font-size: 0.78rem;
 
   button {
@@ -133,8 +133,8 @@
     padding: 4px 7px;
     border: 0;
     border-radius: 7px;
-    background: $color-surface;
-    color: $color-text;
+    background: var(--color-selected-control);
+    color: var(--color-text);
     font: inherit;
     font-size: 0.75rem;
     font-weight: 700;
@@ -224,13 +224,13 @@ table {
 th,
 td {
   padding: 14px 8px;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid var(--color-border);
   text-align: right;
   white-space: nowrap;
 }
 
 th {
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -249,7 +249,7 @@ td strong {
 td small {
   display: block;
   margin-top: 3px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
 }
 
 .buyBadge,
@@ -262,13 +262,13 @@ td small {
 }
 
 .buyBadge {
-  background: rgba($color-success, 0.16);
-  color: $color-success;
+  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+  color: var(--color-success);
 }
 
 .sellBadge {
-  background: rgba($color-danger, 0.16);
-  color: $color-danger;
+  background: color-mix(in srgb, var(--color-danger) 16%, transparent);
+  color: var(--color-danger);
 }
 
 .recurringSource,
@@ -276,17 +276,17 @@ td small {
   display: inline-flex;
   flex-direction: column;
   gap: 3px;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   font-size: 0.72rem;
   white-space: nowrap;
 
   strong {
-    color: $color-text;
+    color: var(--color-text);
     font-size: 0.76rem;
   }
 
   small {
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.7rem;
   }
 }
@@ -294,24 +294,24 @@ td small {
 .manualSource {
   padding: 4px 7px;
   border-radius: 999px;
-  background: #f2f4f6;
+  background: var(--color-control-surface);
   font-weight: 700;
 }
 
 .positive {
-  color: $color-success;
+  color: var(--color-positive);
 }
 
 .negative {
-  color: $color-danger;
+  color: var(--color-negative);
 }
 
 .deleteButton {
   padding: 6px 9px;
-  border: 1px solid rgba($color-danger, 0.6);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 60%, transparent);
   border-radius: 5px;
   background: transparent;
-  color: $color-danger;
+  color: var(--color-danger);
   font: inherit;
   font-size: 0.78rem;
 }
@@ -328,25 +328,25 @@ td small {
 }
 
 .confirmButton {
-  border: 1px solid rgba($color-warning, 0.5);
-  background: rgba($color-warning, 0.1);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 50%, transparent);
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
   color: #b45309;
 }
 .confirmed {
-  background: rgba($color-success, 0.12);
-  color: $color-success;
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--color-success);
 }
 
 .empty {
   margin: $spacing-lg 0 0;
   padding: $spacing-lg 0;
-  color: $color-text-muted;
+  color: var(--color-text-muted);
   text-align: center;
 }
 
 .error {
   margin: $spacing-md 0 0;
-  color: $color-danger;
+  color: var(--color-danger);
   font-size: 0.85rem;
 }
 
@@ -357,30 +357,6 @@ td small {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
-}
-
-:global(:root[data-theme='dark']) .sourceFilters,
-:global(:root[data-theme='dark']) .manualSource {
-  background: #252b37;
-}
-
-:global(:root[data-theme='dark']) .ruleFilterNotice {
-  background: #252b37;
-  color: #aeb8c7;
-
-  button {
-    background: #3a4658;
-    color: #f2f4f6;
-  }
-}
-
-:global(:root[data-theme='dark']) .sourceFilters button.active {
-  background: #3a4658;
-  color: #f2f4f6;
-}
-
-:global(:root[data-theme='dark']) .recurringSource strong {
-  color: #f2f4f6;
 }
 
 @include mobile {
@@ -472,7 +448,7 @@ td small {
     overflow: visible;
     clip: auto;
     white-space: normal;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
     font-size: 0.75rem;
   }
 

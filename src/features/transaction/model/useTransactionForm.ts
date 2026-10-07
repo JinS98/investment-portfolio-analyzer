@@ -44,7 +44,8 @@ export function useTransactionForm({
       ),
     [draft.market, draft.ticker, holdings],
   );
-  const { grossAmount, expectedPnL } = calculateDraftValues(draft, type, selectedHolding);
+  const { grossAmount, expectedSettlement, expectedAveragePrice, expectedPnL } =
+    calculateDraftValues(draft, type, selectedHolding);
 
   const setTradeNumeric = (field: 'price' | 'quantity', value: string) => {
     setDraft((current) => {
@@ -117,6 +118,8 @@ export function useTransactionForm({
     setError,
     selectedHolding,
     grossAmount,
+    expectedSettlement,
+    expectedAveragePrice,
     expectedPnL,
     setTradeNumeric,
     setCost,

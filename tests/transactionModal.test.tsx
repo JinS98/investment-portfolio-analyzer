@@ -42,6 +42,10 @@ describe('transaction dialog', () => {
     );
     await user.type(screen.getByRole('textbox', { name: '거래 단가' }), '100000');
     await user.type(screen.getByRole('textbox', { name: '수량' }), '2');
+    const preview = screen.getByText('예상 거래금액').parentElement;
+    expect(preview).toHaveTextContent('200,000원');
+    expect(preview).toHaveTextContent('200,030원');
+    expect(preview).toHaveTextContent('85,000원');
     const fee = screen.getByRole('textbox', { name: '수수료' });
     expect(fee).toHaveValue('30');
     await user.clear(fee);
@@ -49,6 +53,9 @@ describe('transaction dialog', () => {
     await user.clear(screen.getByRole('textbox', { name: '거래 단가' }));
     await user.type(screen.getByRole('textbox', { name: '거래 단가' }), '200000');
     expect(fee).toHaveValue('50');
+    expect(preview).toHaveTextContent('400,000원');
+    expect(preview).toHaveTextContent('400,050원');
+    expect(preview).toHaveTextContent('135,000원');
     await user.click(screen.getByRole('button', { name: '매수 기록 저장' }));
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ ticker: '005930', price: 200_000, quantity: 2, fee: 50 }),

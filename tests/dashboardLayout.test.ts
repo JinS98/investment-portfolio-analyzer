@@ -5,6 +5,11 @@ import {
   dropPosition,
   splitFromPointer,
 } from '../src/features/dashboard-layout/model/dashboardLayout.ts';
+import {
+  isValidWidgetLayout,
+  layoutFromRows,
+  positionWidget,
+} from '../src/features/dashboard-layout/model/freeWidgetLayout.ts';
 
 const {
   DEFAULT_PANEL_ORDER,
@@ -134,4 +139,41 @@ test('a newly registered panel joins the default layout and its destination view
   assert.deepEqual(layout.visiblePanelRows(layout.DEFAULT_PANEL_ROWS, 'analysis'), [
     { ids: ['news'] },
   ]);
+});
+
+test('free layout migrates paired rows and moves or resizes without overlaps', () => {
+  const sizes = {
+    market: { minW: 4, minH: 5, defaultH: 8 },
+    manager: { minW: 6, minH: 8, defaultH: 12 },
+    allocation: { minW: 4, minH: 5, defaultH: 8 },
+  };
+  const rows = [{ ids: ['market', 'manager'], split: 50 }, { ids: ['allocation'] }] as const;
+  const initial = layoutFromRows(
+    rows.map((row) => ({ ids: [...row.ids], ...('split' in row ? { split: row.split } : {}) })),
+    sizes,
+  );
+  assert.equal(isValidWidgetLayout(initial, ['market', 'manager', 'allocation'], sizes), true);
+  assert.deepEqual(
+    initial.map(({ i, x, y, w }) => ({ i, x, y, w })),
+    [
+      { i: 'market', x: 0, y: 0, w: 6 },
+      { i: 'manager', x: 6, y: 0, w: 6 },
+      { i: 'allocation', x: 0, y: 12, w: 12 },
+    ],
+  );
+  const resized = positionWidget(initial, 'market', { w: 9, h: 10 });
+  assert.equal(resized.find((item) => item.i === 'market')?.w, 9);
+  assert.equal(resized.find((item) => item.i === 'manager')?.y, 10);
+  assert.equal(isValidWidgetLayout(resized, ['market', 'manager', 'allocation'], sizes), true);
+  const moved = positionWidget(resized, 'allocation', { x: 0, y: 0, w: 4 });
+  assert.equal(isValidWidgetLayout(moved, ['market', 'manager', 'allocation'], sizes), true);
+  assert.equal(positionWidget(initial, 'manager', { w: 1 })[1].w, 6);
+  assert.equal(
+    isValidWidgetLayout(
+      [{ ...initial[0], x: 11 }, ...initial.slice(1)],
+      ['market', 'manager', 'allocation'],
+      sizes,
+    ),
+    false,
+  );
 });

@@ -6,9 +6,14 @@ import styles from './PortfolioManager.module.scss';
 interface PortfolioSummaryProps {
   viewModel: ReturnType<typeof createPortfolioManagerViewModel>;
   displayCurrency: DisplayCurrency;
+  showCards?: boolean;
 }
 
-export function PortfolioSummary({ viewModel, displayCurrency }: PortfolioSummaryProps) {
+export function PortfolioSummary({
+  viewModel,
+  displayCurrency,
+  showCards = true,
+}: PortfolioSummaryProps) {
   const { combinedSummary, fxPerformance, isSummaryCurrencyAvailable, summaryUnavailableMessage } =
     viewModel;
   const summaryCurrency = displayCurrency;
@@ -17,46 +22,51 @@ export function PortfolioSummary({ viewModel, displayCurrency }: PortfolioSummar
 
   return (
     <>
-      <div className={styles.combinedSummary} aria-label="포트폴리오 요약">
-        <span>
-          현재 계좌 금액 ({summaryCurrency === 'USD' ? '$' : '원'})
-          <strong className={styles.accountValue}>
-            {!isSummaryCurrencyAvailable
-              ? summaryUnavailableMessage
-              : summaryMoney(combinedSummary!.currentValue)}
-          </strong>
-        </span>
-        <span>
-          통합 평가손익 ({summaryCurrency === 'USD' ? '$' : '원'})
-          <strong
-            className={
-              combinedSummary === null || combinedSummary.profitAmount >= 0
-                ? styles.positive
-                : styles.negative
-            }
-          >
-            {!isSummaryCurrencyAvailable
-              ? summaryUnavailableMessage
-              : summaryMoney(combinedSummary!.profitAmount)}
-          </strong>
-        </span>
-        <span>
-          통합 평가 수익률
-          <strong
-            className={
-              combinedSummary === null || combinedSummary.profitRate >= 0
-                ? styles.positive
-                : styles.negative
-            }
-          >
-            {combinedSummary === null
-              ? summaryUnavailableMessage
-              : formatRate(combinedSummary.profitRate)}
-          </strong>
-        </span>
-      </div>
+      {showCards ? (
+        <div className={styles.combinedSummary} aria-label="포트폴리오 요약">
+          <span>
+            현재 계좌 금액 ({summaryCurrency === 'USD' ? '$' : '원'})
+            <strong className={styles.accountValue}>
+              {!isSummaryCurrencyAvailable
+                ? summaryUnavailableMessage
+                : summaryMoney(combinedSummary!.currentValue)}
+            </strong>
+          </span>
+          <span>
+            통합 평가손익 ({summaryCurrency === 'USD' ? '$' : '원'})
+            <strong
+              className={
+                combinedSummary === null || combinedSummary.profitAmount >= 0
+                  ? styles.positive
+                  : styles.negative
+              }
+            >
+              {!isSummaryCurrencyAvailable
+                ? summaryUnavailableMessage
+                : summaryMoney(combinedSummary!.profitAmount)}
+            </strong>
+          </span>
+          <span>
+            통합 평가 수익률
+            <strong
+              className={
+                combinedSummary === null || combinedSummary.profitRate >= 0
+                  ? styles.positive
+                  : styles.negative
+              }
+            >
+              {combinedSummary === null
+                ? summaryUnavailableMessage
+                : formatRate(combinedSummary.profitRate)}
+            </strong>
+          </span>
+        </div>
+      ) : null}
 
-      <div className={styles.performanceGuide} role="status">
+      <div
+        className={`${styles.performanceGuide} ${showCards ? '' : styles.guideOnly}`}
+        role="status"
+      >
         {summaryCurrency === 'KRW' && fxPerformance.krw ? (
           <>
             <span>
