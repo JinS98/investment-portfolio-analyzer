@@ -81,3 +81,13 @@
     display: none;
   }
 }
+
+@include mobile {
+  .header h2 {
+    font-size: $mobile-panel-title;
+  }
+
+  .header > strong {
+    font-size: $mobile-metric;
+  }
+}

@@ -70,6 +70,20 @@ describe('transaction history filters', () => {
       />,
     );
     const user = userEvent.setup();
+    expect(screen.getByText('체결 확인 필요')).toBeInTheDocument();
+    expect(screen.getByText('거래금액')).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: /거래 상세 보기/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(document.getElementById(toggle.getAttribute('aria-controls') ?? '')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+
+    await user.click(toggle);
+    expect(screen.getByRole('button', { name: /거래 상세 접기/ })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     await user.click(screen.getByRole('button', { name: '체결 확인' }));
     await user.click(screen.getByRole('button', { name: '삭제' }));
     expect(onConfirm).toHaveBeenCalledWith(recurring);

@@ -58,7 +58,7 @@ export function TransactionHistory({
       <div className={styles.header}>
         <div>
           <h3 id="transaction-history-title">거래 이력</h3>
-          <p>등록한 매수·매도 기록과 매도 실현손익을 확인합니다.</p>
+          <p>매수·매도 기록과 실현손익</p>
         </div>
         <span>{histories.length}건</span>
       </div>

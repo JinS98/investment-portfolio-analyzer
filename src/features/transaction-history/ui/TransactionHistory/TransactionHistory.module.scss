@@ -15,6 +15,16 @@
   justify-content: space-between;
   gap: $spacing-md;
 
+  > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  > span {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
   h3,
   p {
     margin: 0;
@@ -156,16 +166,26 @@
 
 .mobileCard {
   list-style: none;
-  padding: $spacing-md;
   border: 1px solid var(--color-border);
   border-radius: 14px;
   background: var(--color-surface);
   color: var(--color-text);
+  overflow: hidden;
+}
 
-  > small {
-    display: block;
-    margin-top: $spacing-sm;
-    color: var(--color-text-muted);
+.mobileCardToggle {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: -2px;
   }
 }
 
@@ -184,15 +204,84 @@
   font-size: 0.82rem;
 }
 
+.mobileCardHeader strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileCardHeader > span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .mobileCardMeta {
   justify-content: flex-start;
+  flex-wrap: wrap;
   margin-top: $spacing-sm;
+}
+
+.mobilePending {
+  color: var(--color-warning);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.mobileCardPreview {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-sm;
+  margin-top: 10px;
+
+  > span:first-child {
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+  }
+
+  strong {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+}
+
+.mobileCardMore {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-action);
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  &::after {
+    width: 6px;
+    height: 6px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    content: '';
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 220ms ease;
+  }
+}
+
+.mobileCardToggle[aria-expanded='true'] .mobileCardMore::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.mobileCardBody {
+  padding: 0 12px 12px;
+
+  > small {
+    display: block;
+    color: var(--color-text-muted);
+  }
 }
 
 .mobileCardValues {
   display: grid;
   gap: $spacing-sm;
-  margin: $spacing-md 0 0;
+  margin: 0;
 
   > div {
     display: flex;
@@ -210,9 +299,26 @@
   }
 }
 
+.mobileCardBody > small + .mobileCardValues {
+  margin-top: $spacing-sm;
+}
+
 .mobileCardActions {
   justify-content: flex-end;
   margin-top: $spacing-md;
+
+  > button {
+    display: inline-flex;
+    width: 80px;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
 }
 
 table {
@@ -366,6 +472,13 @@ td small {
 
   .header {
     align-items: center;
+    gap: $spacing-sm;
+
+    p {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   .filters {
@@ -389,25 +502,32 @@ td small {
   }
 
   .typeFilters {
-    width: 100%;
+    width: max-content;
+    max-width: 100%;
 
     button {
-      flex: 1;
-      min-width: 0;
-      min-height: 44px;
+      flex: 0 0 auto;
+      min-height: 36px;
+      padding: 6px 12px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-muted);
+    }
+
+    button.active {
+      background: var(--color-selected-control);
+      color: var(--color-text);
     }
   }
 
   .sourceFilters {
-    width: 100%;
+    width: max-content;
+    max-width: 100%;
 
     button {
-      flex: 1;
-      min-width: 0;
-      min-height: 40px;
-      padding-right: 6px;
-      padding-left: 6px;
-      font-size: 0.72rem;
+      flex: 0 0 auto;
+      min-height: 32px;
+      padding: 5px 9px;
+      font-size: 0.75rem;
     }
   }
 

@@ -884,6 +884,41 @@
 }
 
 @include mobile {
+  .dialogHeader button {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    flex-basis: 36px;
+    font-size: 1.25rem;
+  }
+
+  .drawerCloseButton {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .header h1 {
+    font-size: $mobile-page-title;
+    line-height: 1.25;
+  }
+
+  .listHeader h2,
+  .drawerTitle h2,
+  .dialogHeader h2 {
+    font-size: $mobile-section-title;
+  }
+
+  .currentQuote strong {
+    font-size: 1.5rem;
+  }
+
   .page {
     width: min(100% - 40px, 1180px);
     padding-top: 28px;
@@ -976,15 +1011,17 @@
 
   .indicatorCards button {
     min-width: 0;
-    padding: 12px;
+    min-height: 64px;
+    padding: 10px;
   }
 
   .indicatorValue {
     grid-template-columns: minmax(0, 1fr);
+    margin-top: 4px;
 
     strong {
       overflow: hidden;
-      font-size: clamp(0.88rem, 4vw, 1.12rem);
+      font-size: clamp(0.88rem, 4vw, 1.05rem);
       text-overflow: ellipsis;
     }
   }
@@ -993,8 +1030,7 @@
   .negativeSparkline,
   .neutralSparkline,
   .sparklinePlaceholder {
-    width: 100%;
-    height: 32px;
+    display: none;
   }
 
   .searchField {
@@ -1003,11 +1039,5 @@
     input {
       min-width: 0;
     }
-  }
-}
-
-@media (max-width: 360px) {
-  .indicatorCards {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

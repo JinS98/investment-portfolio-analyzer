@@ -1,4 +1,4 @@
-import type { PanelRow } from './dashboardLayout';
+import type { DropPosition, PanelRow } from './dashboardLayout';
 
 export const WIDGET_COLUMNS = 12;
 
@@ -120,4 +120,120 @@ export function positionWidget<Id extends string>(
     placed.push(next);
   }
   return layout.map((item) => placed.find((placedItem) => placedItem.i === item.i)!);
+}
+
+/** Place a moved widget below occupied space while keeping its neighbors in place. */
+export function positionWidgetInGap<Id extends string>(
+  layout: WidgetLayoutItem<Id>[],
+  id: Id,
+  x: number,
+  y: number,
+): WidgetLayoutItem<Id>[] {
+  const current = layout.find((item) => item.i === id);
+  if (!current) return layout;
+  const others = layout.filter((item) => item.i !== id);
+  let next = {
+    ...current,
+    x: clamp(x, 0, WIDGET_COLUMNS - current.w),
+    y: clamp(y, 0, 1000),
+  };
+  let collision = others.find((item) => overlaps(next, item));
+  while (collision) {
+    next = { ...next, y: collision.y + collision.h };
+    collision = others.find((item) => overlaps(next, item));
+  }
+  return layout.map((item) => (item.i === id ? next : item));
+}
+
+/** Pull remaining widgets upward after a widget is removed or becomes shorter. */
+export function compactWidgetLayout<Id extends string>(
+  layout: WidgetLayoutItem<Id>[],
+): WidgetLayoutItem<Id>[] {
+  const placed: WidgetLayoutItem<Id>[] = [];
+  for (const item of [...layout].sort((a, b) => a.y - b.y || a.x - b.x)) {
+    let next = { ...item, y: 0 };
+    let collision = placed.find((other) => overlaps(next, other));
+    while (collision) {
+      next = { ...next, y: collision.y + collision.h };
+      collision = placed.find((other) => overlaps(next, other));
+    }
+    placed.push(next);
+  }
+  return layout.map((item) => placed.find((candidate) => candidate.i === item.i)!);
+}
+
+/** Keep each row together and remove empty space above and between rows. */
+export function packWidgetRows<Id extends string>(
+  layout: WidgetLayoutItem<Id>[],
+): WidgetLayoutItem<Id>[] {
+  const rows = new Map<number, WidgetLayoutItem<Id>[]>();
+  for (const item of [...layout].sort((a, b) => a.y - b.y || a.x - b.x)) {
+    const row = rows.get(item.y) ?? [];
+    row.push(item);
+    rows.set(item.y, row);
+  }
+  let y = 0;
+  const packed = new Map<Id, WidgetLayoutItem<Id>>();
+  for (const row of rows.values()) {
+    for (const item of row) packed.set(item.i, { ...item, y });
+    y += Math.max(...row.map((item) => item.h));
+  }
+  return layout.map((item) => packed.get(item.i)!);
+}
+
+/** Move a widget relative to a target row, or share the row with up to three equal widths. */
+export function dropWidgetOnRow<Id extends string>(
+  layout: WidgetLayoutItem<Id>[],
+  sourceId: Id,
+  targetId: Id,
+  position: DropPosition,
+): WidgetLayoutItem<Id>[] {
+  if (sourceId === targetId) return layout;
+  const byId = new Map(layout.map((item) => [item.i, item]));
+  if (!byId.has(sourceId) || !byId.has(targetId)) return layout;
+
+  const rows: Id[][] = [];
+  for (const item of [...layout].sort((a, b) => a.y - b.y || a.x - b.x)) {
+    const matching = rows.find((row) => byId.get(row[0]!)!.y === item.y);
+    if (matching) matching.push(item.i);
+    else rows.push([item.i]);
+  }
+  const sourceRow = rows.find((row) => row.includes(sourceId))!;
+  const affectedIds = new Set(sourceRow);
+  sourceRow.splice(sourceRow.indexOf(sourceId), 1);
+  if (sourceRow.length === 0) rows.splice(rows.indexOf(sourceRow), 1);
+  const targetIndex = rows.findIndex((row) => row.includes(targetId));
+  const targetRow = rows[targetIndex];
+
+  if (position === 'before' || position === 'after') {
+    rows.splice(targetIndex + (position === 'after' ? 1 : 0), 0, [sourceId]);
+  } else {
+    for (const id of targetRow) affectedIds.add(id);
+    const insertIndex = targetRow.indexOf(targetId) + (position === 'right' ? 1 : 0);
+    targetRow.splice(insertIndex, 0, sourceId);
+    const displaced: Id[] = [];
+    while (targetRow.length > 3) {
+      if (insertIndex < 2) displaced.unshift(targetRow.pop()!);
+      else displaced.push(targetRow.shift()!);
+    }
+    rows.splice(targetIndex + 1, 0, ...displaced.map((id) => [id]));
+  }
+
+  let y = 0;
+  const placed = new Map<Id, WidgetLayoutItem<Id>>();
+  for (const row of rows) {
+    const changed = row.some((id) => affectedIds.has(id));
+    for (const [index, id] of row.entries()) {
+      const item = byId.get(id)!;
+      const width = WIDGET_COLUMNS / row.length;
+      placed.set(id, {
+        ...item,
+        x: changed ? index * width : item.x,
+        y,
+        w: changed ? width : item.w,
+      });
+    }
+    y += Math.max(...row.map((id) => byId.get(id)!.h));
+  }
+  return layout.map((item) => placed.get(item.i)!);
 }

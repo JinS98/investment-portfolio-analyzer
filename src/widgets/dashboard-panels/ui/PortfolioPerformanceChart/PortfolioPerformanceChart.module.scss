@@ -29,17 +29,32 @@
   font-size: 1.35rem;
   white-space: nowrap;
 }
+
+@include mobile {
+  .header h2 {
+    font-size: $mobile-panel-title;
+  }
+
+  .header > strong {
+    font-size: $mobile-metric;
+  }
+}
 .rangeTabs {
   display: inline-flex;
-  gap: 3px;
+  align-self: flex-start;
+  width: max-content;
+  max-width: 100%;
+  gap: 4px;
   margin-top: $spacing-lg;
-  padding: 3px;
-  border-radius: 11px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
   background: var(--color-control-surface);
 }
 .rangeTabs button {
   min-height: 34px;
-  padding: 6px 12px;
+  min-width: 54px;
+  padding: 6px 10px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -47,11 +62,15 @@
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 1px;
+  }
 }
 .rangeTabs button.active {
-  background: var(--color-surface);
-  color: var(--color-text);
-  box-shadow: 0 1px 4px rgba(25, 31, 40, 0.1);
+  background: var(--color-action);
+  color: #fff;
 }
 .status {
   margin: 0;
@@ -101,11 +120,6 @@
   .rangeTabs {
     background: #202632;
   }
-  .rangeTabs button.active {
-    background: #354052;
-    color: #eef2f7;
-    box-shadow: none;
-  }
   .metrics > div {
     background: #202632;
   }
@@ -116,13 +130,12 @@
     flex-wrap: wrap;
   }
   .rangeTabs {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    width: 100%;
+    margin-top: $spacing-md;
   }
   .rangeTabs button {
-    min-height: 40px;
-    padding-inline: 7px;
+    min-height: 32px;
+    min-width: 50px;
+    padding: 5px 8px;
   }
   .metrics {
     grid-template-columns: 1fr;

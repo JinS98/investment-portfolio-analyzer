@@ -66,7 +66,7 @@ export const PANEL_REGISTRY = {
   manager: {
     view: 'dashboard',
     title: '내 포트폴리오',
-    size: { minW: 6, minH: 12, defaultH: 22 },
+    size: { minW: 4, minH: 12, defaultH: 22 },
     render: (_context: DashboardPanelContext) => <PortfolioManager portfolioType="REAL" />,
   },
   allocation: {
@@ -96,7 +96,7 @@ export const PANEL_REGISTRY = {
   performance: {
     view: 'analysis',
     title: '투자 성과',
-    size: { minW: 6, minH: 10, defaultH: 15 },
+    size: { minW: 4, minH: 10, defaultH: 15 },
     render: (context: DashboardPanelContext) => (
       <PortfolioPerformanceChart
         portfolio={context.portfolio}
@@ -127,7 +127,7 @@ export const PANEL_REGISTRY = {
   guide: {
     view: 'analysis',
     title: '리스크 진단',
-    size: { minW: 6, minH: 10, defaultH: 16 },
+    size: { minW: 4, minH: 10, defaultH: 16 },
     render: (context: DashboardPanelContext) => (
       <PortfolioRiskDiagnostic
         portfolioId={context.realPortfolioId}
@@ -181,8 +181,4 @@ export const {
 } = createDashboardLayout(PANEL_REGISTRY);
 
 export const freeWidgetRows = (rows: ReturnType<typeof visiblePanelRows>, view: DashboardView) =>
-  visiblePanelRows(rows, view).flatMap((row) =>
-    view === 'dashboard' && row.ids.includes('manager')
-      ? [{ ids: ['accountValue', 'profitAmount'], split: 50 }, { ids: ['profitRate'] }, row]
-      : [row],
-  ) as { ids: WidgetId[]; split?: number }[];
+  visiblePanelRows(rows, view);

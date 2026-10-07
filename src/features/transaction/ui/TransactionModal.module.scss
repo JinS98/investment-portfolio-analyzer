@@ -356,11 +356,29 @@
 
 .costDetails {
   margin-top: $spacing-lg;
+}
 
-  summary {
-    cursor: pointer;
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
+.costToggle {
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-align: left;
+
+  &::after {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin: 0 0 2px 8px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    content: '';
+    transform: rotate(45deg);
+    transition: transform 220ms ease;
+  }
+
+  &[aria-expanded='true']::after {
+    transform: rotate(225deg);
   }
 }
 
@@ -426,6 +444,15 @@
 }
 
 @include mobile {
+  .closeButton {
+    font-size: 1.25rem;
+  }
+
+  .header h2 {
+    font-size: $mobile-section-title;
+    line-height: 1.3;
+  }
+
   .backdrop {
     align-items: flex-end;
     padding: $spacing-sm;

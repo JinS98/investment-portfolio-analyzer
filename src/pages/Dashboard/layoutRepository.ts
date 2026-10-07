@@ -1,6 +1,7 @@
 import {
   isValidWidgetLayout,
   layoutFromRows,
+  packWidgetRows,
   type DashboardView,
   type PanelRow,
   type WidgetLayoutItem,
@@ -70,13 +71,25 @@ export function createLocalDashboardLayoutRepository(
     saveBasic: (view, userId, rows) => write(storageKey(view, userId, 'basic'), rows),
     readFree: (view, userId, rows) => {
       const visibleRows = freeWidgetRows(rows, view);
-      const ids = [
-        ...Object.keys(PANEL_REGISTRY).filter((id) => PANEL_REGISTRY[id as PanelId].view === view),
-        ...(view === 'dashboard' ? Object.keys(SUMMARY_WIDGETS) : []),
-      ] as WidgetId[];
+      const requiredIds = Object.keys(PANEL_REGISTRY).filter(
+        (id) => PANEL_REGISTRY[id as PanelId].view === view,
+      ) as WidgetId[];
       const saved = read(storageKey(view, userId, 'free'));
-      return isValidWidgetLayout(saved, ids, WIDGET_SIZES)
-        ? saved.map((item) => ({ ...item, ...WIDGET_SIZES[item.i] }))
+      const savedIds: WidgetId[] =
+        Array.isArray(saved) &&
+        saved.every(
+          (item) => item !== null && typeof item === 'object' && typeof item.i === 'string',
+        )
+          ? saved.map((item) => item.i as WidgetId)
+          : [];
+      const hasRequiredPanels = requiredIds.every((id) => savedIds.includes(id));
+      const onlyAllowedWidgets = savedIds.every(
+        (id) => requiredIds.includes(id) || (view === 'dashboard' && id in SUMMARY_WIDGETS),
+      );
+      return hasRequiredPanels &&
+        onlyAllowedWidgets &&
+        isValidWidgetLayout(saved, savedIds, WIDGET_SIZES)
+        ? packWidgetRows(saved.map((item) => ({ ...item, ...WIDGET_SIZES[item.i] })))
         : layoutFromRows(visibleRows, WIDGET_SIZES);
     },
     saveFree: (view, userId, items) => write(storageKey(view, userId, 'free'), items),

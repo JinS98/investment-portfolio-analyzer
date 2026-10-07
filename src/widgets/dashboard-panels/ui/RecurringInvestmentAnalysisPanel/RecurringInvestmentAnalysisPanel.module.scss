@@ -32,3 +32,9 @@
 }
 
 :global(:root[data-theme='dark']) .empty a { background: #252d3a; color: #eef2f7; }
+
+@include mobile {
+  .empty h2 {
+    font-size: $mobile-panel-title;
+  }
+}

@@ -184,6 +184,10 @@
 }
 
 @include mobile {
+  .standalone .header h4 {
+    font-size: $mobile-panel-title;
+  }
+
   .header { align-items: stretch; flex-direction: column; }
   .rulePicker { width: 100%; }
   .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }

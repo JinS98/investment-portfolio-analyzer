@@ -1,12 +1,19 @@
 @use '../../../../styles/variables' as *;
 
 .section { @include card; margin-bottom: $spacing-xl; }
-.header { display: flex; align-items: flex-start; justify-content: space-between; gap: $spacing-md; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: $spacing-md; }
 .header h2, .header p { margin: 0; }
 .header h2 { font-size: 1.05rem; }
-.header p { margin-top: 3px; color: var(--color-text-muted); font-size: 0.76rem; }
-.header > span { color: var(--color-text-muted); font-size: 0.72rem; }
-.statuses { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: $spacing-sm; margin-top: $spacing-md; }
+.summary { min-width: 0; }
+.summaryItems { display: flex; flex-wrap: wrap; gap: 4px $spacing-md; margin-top: 5px; color: var(--color-text-muted); font-size: 0.76rem; }
+.attention { color: var(--color-warning); font-weight: 700; }
+.noAttention { color: var(--color-text-muted); }
+.detailsToggle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto; min-height: 36px; padding: 5px 10px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-control-surface); color: var(--color-text); font: inherit; font-size: 0.76rem; font-weight: 700; cursor: pointer; }
+.detailsToggle strong { padding: 2px 6px; border-radius: 999px; background: var(--color-primary-soft); color: var(--color-action); font-size: 0.7rem; }
+.detailsToggle:focus-visible { outline: 2px solid var(--color-action); outline-offset: 2px; }
+.detailsContent { padding-top: $spacing-md; }
+.updatedAt { margin: 0 0 $spacing-sm; color: var(--color-text-muted); font-size: 0.72rem; text-align: right; }
+.statuses { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: $spacing-sm; }
 .statuses > div { padding: 10px 12px; border-radius: 11px; background: var(--color-surface-muted); }
 .statuses small { display: block; margin-bottom: 4px; color: var(--color-text-muted); font-size: 0.68rem; }
 .statuses strong { font-size: 0.9rem; }
@@ -39,6 +46,8 @@
 }
 
 @include mobile {
+  .header { align-items: stretch; flex-direction: column; }
+  .detailsToggle { align-self: flex-start; min-height: 40px; }
   .statuses { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .statuses > div { min-height: 72px; }
   .section li, .section li > div { align-items: flex-start; flex-direction: column; }

@@ -6,8 +6,10 @@ import {
   splitFromPointer,
 } from '../src/features/dashboard-layout/model/dashboardLayout.ts';
 import {
+  dropWidgetOnRow,
   isValidWidgetLayout,
   layoutFromRows,
+  packWidgetRows,
   positionWidget,
 } from '../src/features/dashboard-layout/model/freeWidgetLayout.ts';
 
@@ -29,6 +31,96 @@ const {
   history: { view: 'analysis' },
   monthly: { view: 'analysis' },
   guide: { view: 'analysis' },
+});
+
+test('free drops reorder complete rows without a blank first row', () => {
+  const sizes = {
+    first: { minW: 4, minH: 2, defaultH: 8 },
+    second: { minW: 4, minH: 2, defaultH: 12 },
+    third: { minW: 4, minH: 2, defaultH: 6 },
+  };
+  const initial = layoutFromRows(
+    [{ ids: ['first'] }, { ids: ['second'] }, { ids: ['third'] }],
+    sizes,
+  );
+  const before = dropWidgetOnRow(initial, 'second', 'first', 'before');
+  assert.deepEqual(
+    [...before].sort((a, b) => a.y - b.y).map(({ i, y }) => ({ i, y })),
+    [
+      { i: 'second', y: 0 },
+      { i: 'first', y: 12 },
+      { i: 'third', y: 20 },
+    ],
+  );
+  assert.equal(isValidWidgetLayout(before, Object.keys(sizes), sizes), true);
+
+  const after = dropWidgetOnRow(initial, 'first', 'second', 'after');
+  assert.deepEqual(
+    [...after].sort((a, b) => a.y - b.y).map(({ i, y }) => ({ i, y })),
+    [
+      { i: 'second', y: 0 },
+      { i: 'first', y: 12 },
+      { i: 'third', y: 20 },
+    ],
+  );
+
+  const paired = dropWidgetOnRow(initial, 'second', 'first', 'right');
+  assert.deepEqual(
+    paired.map(({ i, x, y, w }) => ({ i, x, y, w })),
+    [
+      { i: 'first', x: 0, y: 0, w: 6 },
+      { i: 'second', x: 6, y: 0, w: 6 },
+      { i: 'third', x: 0, y: 12, w: 12 },
+    ],
+  );
+  assert.equal(isValidWidgetLayout(paired, Object.keys(sizes), sizes), true);
+
+  const trio = dropWidgetOnRow(paired, 'third', 'first', 'right');
+  assert.deepEqual(
+    [...trio].sort((a, b) => a.x - b.x).map(({ i, x, y, w }) => ({ i, x, y, w })),
+    [
+      { i: 'first', x: 0, y: 0, w: 4 },
+      { i: 'third', x: 4, y: 0, w: 4 },
+      { i: 'second', x: 8, y: 0, w: 4 },
+    ],
+  );
+  assert.equal(isValidWidgetLayout(trio, Object.keys(sizes), sizes), true);
+
+  const fourth = { i: 'fourth', x: 0, y: 12, w: 12, h: 5, minW: 4, minH: 2, defaultH: 5 };
+  const fullRowDrop = dropWidgetOnRow([...trio, fourth], 'fourth', 'second', 'right');
+  assert.deepEqual(
+    [...fullRowDrop]
+      .filter((item) => item.y === 0)
+      .sort((a, b) => a.x - b.x)
+      .map(({ i, w }) => ({ i, w })),
+    [
+      { i: 'third', w: 4 },
+      { i: 'second', w: 4 },
+      { i: 'fourth', w: 4 },
+    ],
+  );
+  assert.equal(fullRowDrop.find((item) => item.i === 'first')?.y, 12);
+  assert.equal(
+    isValidWidgetLayout(fullRowDrop, [...Object.keys(sizes), 'fourth'], { ...sizes, fourth }),
+    true,
+  );
+
+  const taller = packWidgetRows(
+    paired.map((item) => (item.i === 'first' ? { ...item, h: 18 } : item)),
+  );
+  assert.equal(taller.find((item) => item.i === 'third')?.y, 18);
+
+  const unevenPair = initial.map((item) =>
+    item.i === 'first'
+      ? { ...item, x: 0, w: 8 }
+      : item.i === 'second'
+        ? { ...item, x: 8, y: 0, w: 4 }
+        : { ...item, y: 12 },
+  );
+  const keepPair = dropWidgetOnRow(unevenPair, 'third', 'first', 'before');
+  assert.equal(keepPair.find((item) => item.i === 'first')?.w, 8);
+  assert.equal(keepPair.find((item) => item.i === 'second')?.x, 8);
+  assert.equal(isValidWidgetLayout(keepPair, Object.keys(sizes), sizes), true);
 });
 
 const createStorage = (initial: Record<string, string> = {}) => {

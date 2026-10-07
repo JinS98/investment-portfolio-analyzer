@@ -28,6 +28,12 @@
   color: var(--color-text-muted);
   font-size: 0.75rem;
 }
+
+@include mobile {
+  .header h2 {
+    font-size: $mobile-panel-title;
+  }
+}
 .rangeButtons {
   position: relative;
   display: inline-flex;
@@ -111,5 +117,28 @@
   }
   .summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@include mobile {
+  .rangeButtons {
+    gap: 2px;
+    padding: 3px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--color-control-surface);
+  }
+
+  .rangeButtons button {
+    min-width: 0;
+    min-height: 32px;
+    padding: 5px 10px;
+    border-radius: 8px;
+  }
+
+  .rangeButtons .active {
+    background: var(--color-selected-control) !important;
+    color: var(--color-text) !important;
+    box-shadow: none;
   }
 }

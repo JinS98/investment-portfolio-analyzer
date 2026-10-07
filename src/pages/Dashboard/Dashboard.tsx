@@ -81,6 +81,11 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
   const lastRiskRefresh = useRef<string | null>(null);
   const recurringAnalysisPanelRef = useRef<HTMLDivElement>(null);
   const [isRiskLoading, setIsRiskLoading] = useState(false);
+  const [layoutEditor, setLayoutEditor] = useState<{ view: DashboardView; editing: boolean }>({
+    view,
+    editing: false,
+  });
+  const isLayoutEditing = layoutEditor.view === view && layoutEditor.editing;
   const autoRefreshKey = realHoldings
     .map((holding) => `${holding.market}:${holding.ticker}:${holding.lastTransactionAt ?? ''}`)
     .join('|');
@@ -162,8 +167,20 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
         </h1>
         <div className={styles.meta}>
           {lastUpdated && (
-            <span className={styles.updated}>
-              업데이트: {new Date(lastUpdated).toLocaleTimeString('ko-KR')}
+            <span
+              className={styles.updated}
+              title={`업데이트: ${new Date(lastUpdated).toLocaleTimeString('ko-KR')}`}
+            >
+              업데이트:{' '}
+              <span className={styles.updatedTimeFull}>
+                {new Date(lastUpdated).toLocaleTimeString('ko-KR')}
+              </span>
+              <span className={styles.updatedTimeCompact}>
+                {new Date(lastUpdated).toLocaleTimeString('ko-KR', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              </span>
             </span>
           )}
           {exchangeRate && (
@@ -193,6 +210,15 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
             />
             {isLoading ? '로딩 중...' : '새로고침'}
           </button>
+          <button
+            type="button"
+            className={`${styles.layoutEditButton} ${isLayoutEditing ? styles.layoutEditButtonActive : ''}`}
+            onClick={() => setLayoutEditor({ view, editing: !isLayoutEditing })}
+            disabled={view === 'analysis' && !userId}
+            aria-pressed={isLayoutEditing}
+          >
+            {isLayoutEditing ? '편집 완료' : '레이아웃 편집'}
+          </button>
         </div>
       </header>
       {view === 'dashboard' && userId && realPortfolio ? (
@@ -215,6 +241,7 @@ const Dashboard = ({ view, onLogin }: DashboardProps) => {
         context={panelContext}
         recurringPanelRef={recurringAnalysisPanelRef}
         locked={view === 'analysis' && !userId}
+        editing={isLayoutEditing}
       />
       <div className={styles.dashboardStatus}>
         {isPortfolioLoading && (

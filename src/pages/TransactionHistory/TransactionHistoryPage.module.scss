@@ -150,3 +150,14 @@
   border-color: var(--color-danger);
   color: var(--color-danger);
 }
+
+@include mobile {
+  .header h1 {
+    font-size: $mobile-page-title;
+    line-height: 1.25;
+  }
+
+  .realizedSummary strong {
+    font-size: $mobile-metric;
+  }
+}

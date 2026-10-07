@@ -184,16 +184,25 @@
 .card dl {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: 1fr auto;
-  gap: 6px 12px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   margin: 0;
   font-size: 13px;
+}
+.card dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
 }
 .card dt {
   color: var(--color-text-muted);
 }
 .card dd {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
   text-align: right;
 }
 @media (max-width: 768px) {
@@ -209,16 +218,21 @@
   }
   .summary {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 
   .settingsTrigger,
   .record {
-    flex-basis: 40px;
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-    min-height: 40px;
+    flex-basis: 36px;
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .record svg {
+    width: 16px;
+    height: 16px;
   }
 }
 

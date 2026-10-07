@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Collapse } from '@shared/ui';
 import type { Holding, MarketType } from '../../../types';
 import { StockSearchField } from '@features/market-search';
 import type { useTransactionForm } from '../model/useTransactionForm';
@@ -30,6 +31,7 @@ export function TransactionForm({
   form,
 }: TransactionFormProps) {
   const [isHoldingPickerOpen, setIsHoldingPickerOpen] = useState(false);
+  const [isCostExpanded, setIsCostExpanded] = useState(false);
   const {
     draft,
     setDraft,
@@ -150,31 +152,41 @@ export function TransactionForm({
         </label>
       </div>
 
-      <details className={styles.costDetails}>
-        <summary>수수료·세금 입력 (기본 추정값 적용)</summary>
-        <div className={styles.numericFields}>
-          <label>
-            수수료
-            <input
-              inputMode="decimal"
-              value={draft.fee}
-              onChange={(event) => setCost('fee', event.target.value)}
-              placeholder="0"
-              disabled={isSaving}
-            />
-          </label>
-          <label>
-            세금
-            <input
-              inputMode="decimal"
-              value={draft.tax}
-              onChange={(event) => setCost('tax', event.target.value)}
-              placeholder="0"
-              disabled={isSaving}
-            />
-          </label>
-        </div>
-      </details>
+      <div className={styles.costDetails}>
+        <button
+          type="button"
+          className={styles.costToggle}
+          aria-expanded={isCostExpanded}
+          aria-controls="transaction-cost-fields"
+          onClick={() => setIsCostExpanded((current) => !current)}
+        >
+          수수료·세금 입력 (기본 추정값 적용)
+        </button>
+        <Collapse open={isCostExpanded} id="transaction-cost-fields">
+          <div className={styles.numericFields}>
+            <label>
+              수수료
+              <input
+                inputMode="decimal"
+                value={draft.fee}
+                onChange={(event) => setCost('fee', event.target.value)}
+                placeholder="0"
+                disabled={isSaving}
+              />
+            </label>
+            <label>
+              세금
+              <input
+                inputMode="decimal"
+                value={draft.tax}
+                onChange={(event) => setCost('tax', event.target.value)}
+                placeholder="0"
+                disabled={isSaving}
+              />
+            </label>
+          </div>
+        </Collapse>
+      </div>
 
       <p className={styles.costGuide}>
         기본값: 수수료는 거래금액의 0.015%, 국내 매도 세금은 0.2%로 추정합니다. 실제 비용에 맞게

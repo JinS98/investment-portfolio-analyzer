@@ -244,6 +244,21 @@ button {
   gap: $spacing-sm;
 }
 
+:global(:root[data-theme='dark']) .actionButtons button {
+  box-shadow: inset 0 0 0 1px var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+
+  &:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 1px var(--color-action);
+    color: var(--color-action);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
 .recurringRules {
   margin-top: $spacing-lg;
   padding: $spacing-md;
@@ -871,6 +886,15 @@ td small {
 }
 
 @include mobile {
+  .section h2 {
+    font-size: $mobile-section-title;
+    line-height: 1.3;
+  }
+
+  .summaryMetricWidget strong {
+    font-size: $mobile-metric;
+  }
+
   .summaryControls {
     grid-column: 2;
     grid-row: 1;
@@ -909,10 +933,12 @@ td small {
     flex-direction: column;
   }
   .actions {
-    align-items: stretch;
+    align-items: flex-start;
     flex-direction: column;
     gap: $spacing-sm;
     margin-bottom: $spacing-md;
+    padding: 12px;
+    background: var(--color-surface-muted);
 
     span {
       flex: 0 1 auto;
@@ -922,16 +948,25 @@ td small {
   }
 
   .actionButtons {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 
     button {
-      width: 100%;
-      min-width: 0;
-      min-height: 48px;
-      padding-inline: 8px;
+      width: auto;
+      min-height: 36px;
+      padding: 7px 10px;
+      border: 1px solid var(--color-border);
+      border-radius: 9px;
+      background: var(--color-surface-raised);
+      color: var(--color-text);
+      font-size: 0.76rem;
       white-space: nowrap;
+
+      &:hover {
+        border-color: var(--color-action);
+        color: var(--color-action);
+      }
     }
   }
 
@@ -974,8 +1009,8 @@ td small {
 
     .ruleStatusTrigger,
     .ruleEditButton {
-      min-height: 40px;
-      height: 40px;
+      min-height: 36px;
+      height: 36px;
     }
 
     .ruleStatusTrigger {
@@ -1016,9 +1051,10 @@ td small {
   }
 
   .settingsButton {
-    width: 40px;
-    min-height: 40px;
-    height: 40px;
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    height: 36px;
   }
 
   .columnMenu {
@@ -1032,22 +1068,8 @@ td small {
 }
 
 @media (max-width: 520px) {
-  .actionButtons {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-
-    button:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
-    }
-  }
-
   .combinedSummary strong {
     font-size: clamp(1.05rem, 5vw, 1.25rem);
     overflow-wrap: anywhere;
-  }
-}
-
-@media (max-width: 360px) {
-  .actionButtons {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

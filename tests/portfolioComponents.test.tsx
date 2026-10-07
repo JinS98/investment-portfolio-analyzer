@@ -135,8 +135,21 @@ describe('portfolio management presentation', () => {
     await user.click(screen.getByRole('checkbox', { name: '평단가' }));
 
     const [domesticTable, usTable] = screen.getAllByRole('table');
+    const [domesticCard, usCard] = screen.getAllByRole('article');
     expect(within(domesticTable).queryByRole('columnheader', { name: '평단가' })).toBeNull();
     expect(within(usTable).getByRole('columnheader', { name: '평단가' })).toBeInTheDocument();
+    expect(within(domesticCard).queryByText('평단가')).toBeNull();
+    expect(within(usCard).getByText('평단가')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: '평가금액' }));
+    const domesticSection = screen
+      .getByRole('heading', { name: '국내 주식 (KRW)' })
+      .closest('section');
+    const domesticSummary = domesticSection?.querySelector('header')?.nextElementSibling;
+    expect(domesticSummary).not.toBeNull();
+    expect(within(domesticSummary as HTMLElement).queryByText(/평가금액/)).toBeNull();
+    expect(within(domesticCard).queryByText('평가금액')).toBeNull();
+    expect(within(usCard).getByText('평가금액')).toBeInTheDocument();
   });
 
   it('keeps the column menu open for its controls and closes it on outside click or Escape', async () => {

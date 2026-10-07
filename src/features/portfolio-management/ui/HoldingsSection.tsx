@@ -197,13 +197,31 @@ export function HoldingsTable({
 export function HoldingsCardList({
   holdings,
   prices,
+  visibleColumns,
   money,
   onBuy,
-}: Omit<HoldingsViewProps, 'visibleColumns'>) {
+}: HoldingsViewProps) {
+  const columns = HOLDING_COLUMN_OPTIONS.filter((column) => visibleColumns.includes(column.id));
   return (
     <div className={styles.cards}>
       {holdings.map((holding) => {
         const value = metrics(holding, prices);
+        const cells: Record<HoldingColumnId, string> = {
+          averagePrice: money(holding.averagePrice, holding.market),
+          currentPrice:
+            value.currentPrice === undefined
+              ? '시세 미조회'
+              : money(value.currentPrice, holding.market),
+          quantity: holding.quantity.toLocaleString('ko-KR'),
+          investment: money(holding.investedAmount, holding.market),
+          evaluatedValue:
+            value.evaluatedValue === null
+              ? '시세 미조회'
+              : money(value.evaluatedValue, holding.market),
+          profitAmount:
+            value.profitAmount === null ? '—' : money(value.profitAmount, holding.market),
+          profitRate: value.profitRate === null ? '—' : formatRate(value.profitRate),
+        };
         return (
           <article className={styles.card} key={`${holding.market}-${holding.ticker}`}>
             <span className={styles.cardHeader}>
@@ -218,24 +236,34 @@ export function HoldingsCardList({
             >
               <FiPlus />
             </button>
-            <dl>
-              <dt>평가금액</dt>
-              <dd>
-                {value.evaluatedValue === null
-                  ? '시세 미조회'
-                  : money(value.evaluatedValue, holding.market)}
-              </dd>
-              <dt>평가손익</dt>
-              <dd
-                className={
-                  value.profitAmount === null || value.profitAmount >= 0
-                    ? styles.positive
-                    : styles.negative
-                }
-              >
-                {value.profitAmount === null ? '—' : money(value.profitAmount, holding.market)}
-              </dd>
-            </dl>
+            {columns.length > 0 && (
+              <dl>
+                {columns.map((column) => {
+                  const metric =
+                    column.id === 'profitAmount'
+                      ? value.profitAmount
+                      : column.id === 'profitRate'
+                        ? value.profitRate
+                        : null;
+                  return (
+                    <div key={column.id}>
+                      <dt>{column.label}</dt>
+                      <dd
+                        className={
+                          metric === null
+                            ? undefined
+                            : metric < 0
+                              ? styles.negative
+                              : styles.positive
+                        }
+                      >
+                        {cells[column.id]}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            )}
           </article>
         );
       })}
@@ -273,6 +301,9 @@ export function HoldingsSection({
           ? holdings.reduce((sum, holding) => sum + prices[holding.ticker] * holding.quantity, 0)
           : null;
         const profit = totalValue === null ? null : totalValue - totalInvestment;
+        const showSummary = visibleColumns.some((column) =>
+          ['investment', 'evaluatedValue', 'profitAmount', 'profitRate'].includes(column),
+        );
         return (
           <section
             className={
@@ -292,33 +323,45 @@ export function HoldingsSection({
                 onReset={() => onResetColumns(market)}
               />
             </header>
-            <div className={styles.summary}>
-              <span>
-                투자원금 <strong>{money(totalInvestment, market)}</strong>
-              </span>
-              <span>
-                평가금액{' '}
-                <strong>{totalValue === null ? '시세 미조회' : money(totalValue, market)}</strong>
-              </span>
-              <span>
-                평가손익{' '}
-                <strong
-                  className={profit === null || profit >= 0 ? styles.positive : styles.negative}
-                >
-                  {profit === null ? '시세 미조회' : money(profit, market)}
-                </strong>
-              </span>
-              <span>
-                수익률{' '}
-                <strong
-                  className={profit === null || profit >= 0 ? styles.positive : styles.negative}
-                >
-                  {profit === null
-                    ? '시세 미조회'
-                    : formatRate(totalInvestment ? (profit / totalInvestment) * 100 : 0)}
-                </strong>
-              </span>
-            </div>
+            {showSummary && (
+              <div className={styles.summary}>
+                {visibleColumns.includes('investment') && (
+                  <span>
+                    투자원금 <strong>{money(totalInvestment, market)}</strong>
+                  </span>
+                )}
+                {visibleColumns.includes('evaluatedValue') && (
+                  <span>
+                    평가금액{' '}
+                    <strong>
+                      {totalValue === null ? '시세 미조회' : money(totalValue, market)}
+                    </strong>
+                  </span>
+                )}
+                {visibleColumns.includes('profitAmount') && (
+                  <span>
+                    평가손익{' '}
+                    <strong
+                      className={profit === null || profit >= 0 ? styles.positive : styles.negative}
+                    >
+                      {profit === null ? '시세 미조회' : money(profit, market)}
+                    </strong>
+                  </span>
+                )}
+                {visibleColumns.includes('profitRate') && (
+                  <span>
+                    수익률{' '}
+                    <strong
+                      className={profit === null || profit >= 0 ? styles.positive : styles.negative}
+                    >
+                      {profit === null
+                        ? '시세 미조회'
+                        : formatRate(totalInvestment ? (profit / totalInvestment) * 100 : 0)}
+                    </strong>
+                  </span>
+                )}
+              </div>
+            )}
             <HoldingsTable
               holdings={holdings}
               prices={prices}
@@ -326,7 +369,13 @@ export function HoldingsSection({
               money={money}
               onBuy={onBuy}
             />
-            <HoldingsCardList holdings={holdings} prices={prices} money={money} onBuy={onBuy} />
+            <HoldingsCardList
+              holdings={holdings}
+              prices={prices}
+              visibleColumns={visibleColumns}
+              money={money}
+              onBuy={onBuy}
+            />
           </section>
         );
       })}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Collapse } from '@shared/ui';
 import { loadRecurringInvestmentRules } from '../../../../services/portfolioLedgerService';
 import type {
   ExchangeRate,
@@ -23,9 +24,13 @@ interface PortfolioAlertSummaryProps {
   portfolioId: string;
 }
 
-const koreaToday = () => new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
-}).format(new Date());
+const koreaToday = () =>
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
 
 export function PortfolioAlertSummary({
   holdings,
@@ -39,6 +44,7 @@ export function PortfolioAlertSummary({
   portfolioId,
 }: PortfolioAlertSummaryProps) {
   const [recurringRules, setRecurringRules] = useState<RecurringInvestmentRule[]>([]);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -62,53 +68,187 @@ export function PortfolioAlertSummary({
         .sort((left, right) => left.date.localeCompare(right.date))[0],
     [recurringRules],
   );
-  const pending = histories.filter((history) => history.source === 'RECURRING' && history.portfolioType === 'REAL' && history.recurringExecutionStatus !== 'CONFIRMED');
-  const todayRecurring = histories.filter((history) => history.source === 'RECURRING' && history.date === koreaToday());
-  const sortedHistory = [...portfolioHistory].sort((left, right) => left.date.localeCompare(right.date));
+  const pending = histories.filter(
+    (history) =>
+      history.source === 'RECURRING' &&
+      history.portfolioType === 'REAL' &&
+      history.recurringExecutionStatus !== 'CONFIRMED',
+  );
+  const todayRecurring = histories.filter(
+    (history) => history.source === 'RECURRING' && history.date === koreaToday(),
+  );
+  const sortedHistory = [...portfolioHistory].sort((left, right) =>
+    left.date.localeCompare(right.date),
+  );
   const latest = sortedHistory.at(-1);
   const previous = sortedHistory.at(-2);
   const rateChange = latest && previous ? latest.totalProfitRate - previous.totalProfitRate : null;
   const positionValues = holdings.map((holding) => ({
     holding,
-    value: (prices[holding.ticker] ?? 0) * holding.quantity * (holding.market === 'US' ? (exchangeRate?.rate ?? 0) : 1),
+    value:
+      (prices[holding.ticker] ?? 0) *
+      holding.quantity *
+      (holding.market === 'US' ? (exchangeRate?.rate ?? 0) : 1),
   }));
   const totalValue = positionValues.reduce((sum, item) => sum + item.value, 0);
   const concentrated = positionValues
     .map((item) => ({ ...item, weight: totalValue > 0 ? (item.value / totalValue) * 100 : 0 }))
     .filter((item) => item.weight >= 40)
     .sort((left, right) => right.weight - left.weight);
+  const concentratedAlerts = concentrated.slice(0, 2);
+  const hasRateChange = rateChange !== null && Math.abs(rateChange) >= 5;
+  const attentionCount =
+    pending.length + failedTickers.length + concentratedAlerts.length + (hasRateChange ? 1 : 0);
+  const primaryCount =
+    pending.length || failedTickers.length || concentratedAlerts.length || (hasRateChange ? 1 : 0);
+  const primarySummary = pending.length
+    ? `체결 확인 ${pending.length}건`
+    : failedTickers.length
+      ? `현재가 갱신 실패 ${failedTickers.length}종목`
+      : concentratedAlerts.length
+        ? `종목 비중 초과 ${concentratedAlerts.length}종목`
+        : hasRateChange
+          ? '수익률 급변'
+          : '확인할 알림 없음';
   const alerts = [
-    ...(pending.length ? [{ tone: 'warning', title: `체결 확인 ${pending.length}건`, description: '실제 포트폴리오의 자동매수 가격·수량을 확인해 주세요.', action: '거래 내역 보기' }] : []),
-    ...(nextRecurringPurchase
-      ? [{
-          tone: 'schedule',
-          title: '다음 자동매수',
-          description: `${nextRecurringPurchase.rule.name ?? nextRecurringPurchase.rule.ticker} ${nextRecurringPurchase.date} · ${nextRecurringPurchase.rule.quantity.toLocaleString('ko-KR')}주 예정`,
-          action: '규칙 보기',
-        }]
+    ...(pending.length
+      ? [
+          {
+            tone: 'warning',
+            title: `체결 확인 ${pending.length}건`,
+            description: '실제 포트폴리오의 자동매수 가격·수량을 확인해 주세요.',
+            action: '거래 내역 보기',
+          },
+        ]
       : []),
-    ...(rateChange !== null && Math.abs(rateChange) >= 5 ? [{ tone: 'notice', title: '수익률 급변', description: `직전 기록보다 ${rateChange > 0 ? '+' : ''}${rateChange.toFixed(2)}%p 변했습니다.` }] : []),
-    ...concentrated.slice(0, 2).map((item) => ({ tone: 'warning', title: '종목 비중 초과', description: `${item.holding.name ?? item.holding.ticker} 비중이 ${item.weight.toFixed(1)}%입니다.` })),
-    ...(failedTickers.length ? [{ tone: 'error', title: '현재가 갱신 실패', description: `${failedTickers.join(', ')} 시세를 가져오지 못했습니다.` }] : []),
+    ...(nextRecurringPurchase
+      ? [
+          {
+            tone: 'schedule',
+            title: '다음 자동매수',
+            description: `${nextRecurringPurchase.rule.name ?? nextRecurringPurchase.rule.ticker} ${nextRecurringPurchase.date} · ${nextRecurringPurchase.rule.quantity.toLocaleString('ko-KR')}주 예정`,
+            action: '규칙 보기',
+          },
+        ]
+      : []),
+    ...(rateChange !== null && hasRateChange
+      ? [
+          {
+            tone: 'notice',
+            title: '수익률 급변',
+            description: `직전 기록보다 ${rateChange > 0 ? '+' : ''}${rateChange.toFixed(2)}%p 변했습니다.`,
+          },
+        ]
+      : []),
+    ...concentratedAlerts.map((item) => ({
+      tone: 'warning',
+      title: '종목 비중 초과',
+      description: `${item.holding.name ?? item.holding.ticker} 비중이 ${item.weight.toFixed(1)}%입니다.`,
+    })),
+    ...(failedTickers.length
+      ? [
+          {
+            tone: 'error',
+            title: '현재가 갱신 실패',
+            description: `${failedTickers.join(', ')} 시세를 가져오지 못했습니다.`,
+          },
+        ]
+      : []),
   ];
 
   return (
     <section className={styles.section} aria-labelledby="portfolio-alert-title">
       <div className={styles.header}>
-        <div><h2 id="portfolio-alert-title">포트폴리오 알림</h2><p>가격 갱신과 자동매수 상태를 요약합니다.</p></div>
-        <span>{lastUpdated ? `갱신 ${new Date(lastUpdated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}` : '갱신 전'}</span>
-      </div>
-      <div className={styles.statuses}>
-        <div><small>오늘 자동 반영</small><strong>{todayRecurring.length}건</strong></div>
-        <div><small>체결 확인 필요</small><strong className={pending.length ? styles.caution : undefined}>{pending.length}건</strong></div>
-        <div>
-          <small>다음 예정 매수</small>
-          <strong>{nextRecurringPurchase ? nextRecurringPurchase.date : '-'}</strong>
-          {nextRecurringPurchase ? <span>{nextRecurringPurchase.rule.name ?? nextRecurringPurchase.rule.ticker}</span> : null}
+        <div className={styles.summary}>
+          <h2 id="portfolio-alert-title">포트폴리오 알림</h2>
+          <div className={styles.summaryItems}>
+            <span className={attentionCount ? styles.attention : styles.noAttention}>
+              {primarySummary}
+            </span>
+            {attentionCount > primaryCount ? (
+              <span>추가 확인 {attentionCount - primaryCount}건</span>
+            ) : null}
+            {nextRecurringPurchase ? <span>다음 자동매수 {nextRecurringPurchase.date}</span> : null}
+          </div>
         </div>
-        <div><small>현재가 갱신 실패</small><strong className={failedTickers.length ? styles.caution : undefined}>{failedTickers.length}종목</strong></div>
+        <button
+          type="button"
+          className={styles.detailsToggle}
+          aria-expanded={isExpanded}
+          aria-controls="portfolio-alert-details"
+          onClick={() => setIsExpanded((current) => !current)}
+        >
+          {isExpanded ? '접기' : '상세 보기'}
+          {attentionCount > 0 ? (
+            <>
+              {' '}
+              <strong>{attentionCount}건</strong>
+            </>
+          ) : null}
+        </button>
       </div>
-      {alerts.length ? <ul>{alerts.map((alert, index) => <li className={styles[alert.tone]} key={`${alert.title}-${index}`}><div><b>{alert.title}</b><span>{alert.description}</span></div>{alert.action ? <button type="button" onClick={() => { if (alert.title === '다음 자동매수') document.getElementById('recurring-rules-title')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); else window.location.hash = '#transactions'; }}>{alert.action}</button> : null}</li>)}</ul> : <p className={styles.clear}>지금 확인이 필요한 알림이 없습니다.</p>}
+      <Collapse open={isExpanded} id="portfolio-alert-details" className={styles.details}>
+        <div className={styles.detailsContent}>
+          <p className={styles.updatedAt}>
+            {lastUpdated
+              ? `갱신 ${new Date(lastUpdated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}`
+              : '갱신 전'}
+          </p>
+          <div className={styles.statuses}>
+            <div>
+              <small>오늘 자동 반영</small>
+              <strong>{todayRecurring.length}건</strong>
+            </div>
+            <div>
+              <small>체결 확인 필요</small>
+              <strong className={pending.length ? styles.caution : undefined}>
+                {pending.length}건
+              </strong>
+            </div>
+            <div>
+              <small>다음 예정 매수</small>
+              <strong>{nextRecurringPurchase ? nextRecurringPurchase.date : '-'}</strong>
+              {nextRecurringPurchase ? (
+                <span>{nextRecurringPurchase.rule.name ?? nextRecurringPurchase.rule.ticker}</span>
+              ) : null}
+            </div>
+            <div>
+              <small>현재가 갱신 실패</small>
+              <strong className={failedTickers.length ? styles.caution : undefined}>
+                {failedTickers.length}종목
+              </strong>
+            </div>
+          </div>
+          {alerts.length ? (
+            <ul>
+              {alerts.map((alert, index) => (
+                <li className={styles[alert.tone]} key={`${alert.title}-${index}`}>
+                  <div>
+                    <b>{alert.title}</b>
+                    <span>{alert.description}</span>
+                  </div>
+                  {alert.action ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (alert.title === '다음 자동매수')
+                          document
+                            .getElementById('recurring-rules-title')
+                            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        else window.location.hash = '#transactions';
+                      }}
+                    >
+                      {alert.action}
+                    </button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.clear}>지금 확인이 필요한 알림이 없습니다.</p>
+          )}
+        </div>
+      </Collapse>
     </section>
   );
 }

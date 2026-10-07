@@ -46,6 +46,12 @@ describe('transaction dialog', () => {
     expect(preview).toHaveTextContent('200,000원');
     expect(preview).toHaveTextContent('200,030원');
     expect(preview).toHaveTextContent('85,000원');
+    const costToggle = screen.getByRole('button', {
+      name: '수수료·세금 입력 (기본 추정값 적용)',
+    });
+    expect(costToggle).toHaveAttribute('aria-expanded', 'false');
+    await user.click(costToggle);
+    expect(costToggle).toHaveAttribute('aria-expanded', 'true');
     const fee = screen.getByRole('textbox', { name: '수수료' });
     expect(fee).toHaveValue('30');
     await user.clear(fee);

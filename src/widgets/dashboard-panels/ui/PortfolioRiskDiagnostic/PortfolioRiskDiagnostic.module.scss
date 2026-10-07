@@ -111,3 +111,9 @@
   .riskTableWrap table { min-width: 520px; }
   .riskMetricCard .metricTooltip { right: auto; left: 0; width: min(300px, calc(100cqw - 24px)); }
 }
+
+@include mobile {
+  .header h2 {
+    font-size: $mobile-panel-title;
+  }
+}

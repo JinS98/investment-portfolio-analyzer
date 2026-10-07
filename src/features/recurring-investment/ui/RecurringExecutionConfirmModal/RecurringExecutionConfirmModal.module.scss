@@ -98,6 +98,11 @@
 }
 
 @include mobile {
+  .dialog h2 {
+    font-size: $mobile-section-title;
+    line-height: 1.3;
+  }
+
   .dialog {
     width: 100%;
     max-height: calc(100dvh - #{$spacing-md});

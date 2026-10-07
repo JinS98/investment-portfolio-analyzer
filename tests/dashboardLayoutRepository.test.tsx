@@ -38,14 +38,7 @@ describe('dashboard layout repository', () => {
     const repository = createLocalDashboardLayoutRepository(createStorage());
     const dashboard = repository.readFree('dashboard', 'a', DEFAULT_PANEL_ROWS);
     const analysis = repository.readFree('analysis', 'a', DEFAULT_PANEL_ROWS);
-    expect(dashboard.map((item) => item.i)).toEqual([
-      'market',
-      'accountValue',
-      'profitAmount',
-      'profitRate',
-      'manager',
-      'allocation',
-    ]);
+    expect(dashboard.map((item) => item.i)).toEqual(['market', 'manager', 'allocation']);
     expect(analysis.map((item) => item.i)).toEqual([
       'recurring',
       'performance',
@@ -62,5 +55,42 @@ describe('dashboard layout repository', () => {
     expect(repository.readFree('analysis', 'a', DEFAULT_PANEL_ROWS)).toEqual(analysis);
     expect(repository.readMode('dashboard', 'a')).toBe('free');
     expect(repository.readMode('analysis', 'a')).toBe('basic');
+  });
+
+  it('restores an older free layout with all three summary cards', () => {
+    const storage = createStorage();
+    const repository = createLocalDashboardLayoutRepository(storage);
+    const panels = repository.readFree('dashboard', 'a', DEFAULT_PANEL_ROWS);
+    const afterPanels = panels.at(-1)!.y + panels.at(-1)!.h;
+    const summaryCards = (['accountValue', 'profitAmount', 'profitRate'] as const).map(
+      (id, index) => ({
+        ...panels[0],
+        i: id,
+        x: index * 4,
+        y: afterPanels,
+        w: 4,
+        h: 3,
+        minW: 3,
+        minH: 2,
+        defaultH: 3,
+      }),
+    );
+    repository.saveFree('dashboard', 'a', [...panels, ...summaryCards]);
+    expect(repository.readFree('dashboard', 'a', DEFAULT_PANEL_ROWS).map((item) => item.i)).toEqual(
+      ['market', 'manager', 'allocation', 'accountValue', 'profitAmount', 'profitRate'],
+    );
+  });
+
+  it('removes saved empty rows when reopening a free layout', () => {
+    const repository = createLocalDashboardLayoutRepository(createStorage());
+    const panels = repository.readFree('dashboard', 'a', DEFAULT_PANEL_ROWS);
+    repository.saveFree(
+      'dashboard',
+      'a',
+      panels.map((item) => ({ ...item, y: item.y + 25 })),
+    );
+    expect(repository.readFree('dashboard', 'a', DEFAULT_PANEL_ROWS).map((item) => item.y)).toEqual(
+      panels.map((item) => item.y),
+    );
   });
 });
