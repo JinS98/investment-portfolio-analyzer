@@ -68,7 +68,8 @@
 - **D27-01:** `usePortfolio`를 기존 호출부용 facade로 유지하고 가격 갱신·과거 시세/위험·종목 CRUD를 전용 hook으로 분리했다. `tests/portfolioFacade.test.tsx`에서 시세 일부 실패, 이력 저장 실패, 일봉 일부 실패를 검증했다.
 - **D29-01 (2026-10-06 완료):** `src/components`의 인증, 포트폴리오, 거래 내역, 적립식 투자, 대시보드 패널을 `app`·`features`·`widgets`로 이동했다. 호출부는 feature/widget의 `index.ts`를 사용하고, 내부 구현은 같은 feature의 상대 경로를 사용한다. 기존 `TransactionModal` re-export와 `SidePanel` 호환 wrapper를 제거했다. `npm run lint:architecture`에서 126개 모듈의 계층·공개 API·런타임 순환 의존을 확인했다. typecheck, lint, 단위 테스트 88개, 컴포넌트 테스트 40개, production build가 통과했다.
 - **D30-01 (2026-10-06 코드 반영, 화면 검증 대기):** `global.scss`의 부분 일치 클래스 선택자와 다크 테마의 광범위한 태그 덮어쓰기를 제거했다. 카드·입력·버튼·금액 방향 색상을 라이트/다크 semantic token과 해당 SCSS 모듈로 옮겼다. `npm run lint:styles`에서 33개 스타일시트의 부분 일치 선택자 0개, 미정의 토큰 0개를 확인했다. typecheck, lint, 단위 테스트 88개, 컴포넌트 테스트 40개, production build가 통과했다. 요청에 따라 브라우저 화면 검증은 실행하지 않았으므로 완료 체크는 보류한다.
-- 현재 자동 검사: 단위 테스트 88개, 컴포넌트 테스트 40개, lint, production build 통과. 이 결과는 화면 검증을 대신하지 않는다.
+- **D31-01 (2026-10-07 자동 검증·문서 반영, 화면 검증 대기):** typecheck, lint, 단위 테스트 91개, 컴포넌트 테스트 56개, production build가 통과했다. README에 컴포넌트 위치·import 계층·기능 추가 절차를 기록했다. 연결 가능한 브라우저가 없어 S01~S08과 고정 viewport·테마 화면은 미실행이며 완료 체크를 보류한다. 상세 증거와 현재 자유 배치의 검증 절차는 [31일차 회귀 검증 기록](./day31-regression-verification.md)을 참조한다.
+- 현재 자동 검사: 단위 테스트 91개, 컴포넌트 테스트 56개, typecheck, lint, production build 통과. 이 결과는 화면 검증을 대신하지 않는다.
 
 ## 다음 단계
 

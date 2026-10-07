@@ -14,7 +14,10 @@ export interface MarketExploreStock {
   tradingAmount: number | null;
 }
 
-const cachedOverviews = new Map<RankingMarketCountry, { expiresAt: number; stocks: MarketExploreStock[] }>();
+const cachedOverviews = new Map<
+  RankingMarketCountry,
+  { expiresAt: number; stocks: MarketExploreStock[] }
+>();
 const pendingOverviews = new Map<RankingMarketCountry, Promise<MarketExploreStock[]>>();
 
 /** Loads the market page's initial quick-explore data only when the page is opened. */
@@ -33,18 +36,23 @@ export async function fetchMarketExploreOverview(
       const result = rankings.flatMap((ranking: StockRankingItem) => {
         const stock = stocksBySymbol.get(ranking.symbol);
         if (!stock) return [];
-        return [{
-          rank: ranking.rank,
-          symbol: ranking.symbol,
-          name: stock.name,
-          market: stock.market,
-          currency: ranking.currency,
-          price: ranking.price,
-          changeRate: ranking.changeRate,
-          tradingAmount: ranking.tradingAmount,
-        }];
+        return [
+          {
+            rank: ranking.rank,
+            symbol: ranking.symbol,
+            name: stock.name,
+            market: stock.market,
+            currency: ranking.currency,
+            price: ranking.price,
+            changeRate: ranking.changeRate,
+            tradingAmount: ranking.tradingAmount,
+          },
+        ];
       });
-      cachedOverviews.set(marketCountry, { expiresAt: Date.now() + MARKET_OVERVIEW_TTL, stocks: result });
+      cachedOverviews.set(marketCountry, {
+        expiresAt: Date.now() + MARKET_OVERVIEW_TTL,
+        stocks: result,
+      });
       return result;
     })
     .finally(() => {

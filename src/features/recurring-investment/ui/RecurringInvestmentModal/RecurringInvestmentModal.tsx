@@ -7,7 +7,11 @@ import {
   updateRecurringInvestmentRule,
 } from '../../../../services/portfolioLedgerService';
 import { searchStocks } from '../../../../services/tossApi';
-import type { Portfolio, RecurringInvestmentFrequency, RecurringInvestmentRule } from '../../../../types';
+import type {
+  Portfolio,
+  RecurringInvestmentFrequency,
+  RecurringInvestmentRule,
+} from '../../../../types';
 import type { StockSearchItem } from '../../../../types/market';
 import { Dialog } from '@shared/ui';
 import styles from './RecurringInvestmentModal.module.scss';

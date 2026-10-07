@@ -62,9 +62,7 @@ describe('useRecurringRules', () => {
     rerender();
     expect(service.execute).toHaveBeenCalledTimes(1);
     expect(service.execute).toHaveBeenCalledWith('user-1', rule.id, portfolio.id);
-    expect(onNotice).toHaveBeenCalledWith(
-      '적립식 투자 1건을 거래일 종가로 반영했습니다.',
-    );
+    expect(onNotice).toHaveBeenCalledWith('적립식 투자 1건을 거래일 종가로 반영했습니다.');
   });
 
   it('loads the active portfolio, changes a rule status, and retries an execution', async () => {

@@ -40,7 +40,7 @@ export function calculateProjectedAllocation(
 ): ProjectedAllocation {
   const unavailable = new Set<string>();
   const positions = new Map<string, Omit<ProjectedPosition, 'currentWeight' | 'projectedWeight'>>();
-  const multiplier = (market: 'KR' | 'US') => market === 'US' ? (exchangeRate?.rate ?? 0) : 1;
+  const multiplier = (market: 'KR' | 'US') => (market === 'US' ? (exchangeRate?.rate ?? 0) : 1);
 
   holdings.forEach((holding) => {
     const price = prices[holding.ticker];
@@ -60,26 +60,28 @@ export function calculateProjectedAllocation(
     });
   });
 
-  rules.filter((rule) => rule.status === 'ACTIVE').forEach((rule) => {
-    const price = prices[rule.ticker];
-    const fx = multiplier(rule.market);
-    if (!price || !fx) {
-      unavailable.add(rule.name ?? rule.ticker);
-      return;
-    }
-    const key = keyOf(rule.market, rule.ticker);
-    const current = positions.get(key) ?? {
-      key,
-      ticker: rule.ticker,
-      name: rule.name ?? rule.ticker,
-      market: rule.market,
-      currentValue: 0,
-      scheduledValue: 0,
-    };
-    const quantity = quantityOverrides[rule.id] ?? rule.quantity;
-    current.scheduledValue += price * Math.max(0, quantity) * fx;
-    positions.set(key, current);
-  });
+  rules
+    .filter((rule) => rule.status === 'ACTIVE')
+    .forEach((rule) => {
+      const price = prices[rule.ticker];
+      const fx = multiplier(rule.market);
+      if (!price || !fx) {
+        unavailable.add(rule.name ?? rule.ticker);
+        return;
+      }
+      const key = keyOf(rule.market, rule.ticker);
+      const current = positions.get(key) ?? {
+        key,
+        ticker: rule.ticker,
+        name: rule.name ?? rule.ticker,
+        market: rule.market,
+        currentValue: 0,
+        scheduledValue: 0,
+      };
+      const quantity = quantityOverrides[rule.id] ?? rule.quantity;
+      current.scheduledValue += price * Math.max(0, quantity) * fx;
+      positions.set(key, current);
+    });
 
   if (hypotheticalPurchase && hypotheticalPurchase.quantity > 0) {
     const price = prices[hypotheticalPurchase.ticker];
@@ -101,30 +103,69 @@ export function calculateProjectedAllocation(
     }
   }
 
-  const currentTotal = [...positions.values()].reduce((sum, position) => sum + position.currentValue, 0);
-  const projectedTotal = [...positions.values()].reduce((sum, position) => sum + position.currentValue + position.scheduledValue, 0);
-  const resultPositions = [...positions.values()].map((position) => ({
-    ...position,
-    currentWeight: currentTotal > 0 ? (position.currentValue / currentTotal) * 100 : 0,
-    projectedWeight: projectedTotal > 0 ? ((position.currentValue + position.scheduledValue) / projectedTotal) * 100 : 0,
-  })).sort((left, right) => right.projectedWeight - left.projectedWeight);
+  const currentTotal = [...positions.values()].reduce(
+    (sum, position) => sum + position.currentValue,
+    0,
+  );
+  const projectedTotal = [...positions.values()].reduce(
+    (sum, position) => sum + position.currentValue + position.scheduledValue,
+    0,
+  );
+  const resultPositions = [...positions.values()]
+    .map((position) => ({
+      ...position,
+      currentWeight: currentTotal > 0 ? (position.currentValue / currentTotal) * 100 : 0,
+      projectedWeight:
+        projectedTotal > 0
+          ? ((position.currentValue + position.scheduledValue) / projectedTotal) * 100
+          : 0,
+    }))
+    .sort((left, right) => right.projectedWeight - left.projectedWeight);
 
   const countryWeights = { KR: 0, US: 0 };
-  resultPositions.forEach((position) => { countryWeights[position.market] += position.projectedWeight; });
+  resultPositions.forEach((position) => {
+    countryWeights[position.market] += position.projectedWeight;
+  });
   const currencyWeights = { KRW: countryWeights.KR, USD: countryWeights.US };
   const warnings: AllocationWarning[] = [];
-  resultPositions.filter((position) => position.projectedWeight >= 40).forEach((position) => warnings.push({
-    type: 'STOCK', label: position.name, weight: position.projectedWeight,
-    message: `${position.name} 예상 비중이 40%를 넘습니다. 다음 매수 전 분산 여부를 확인하세요.`,
-  }));
-  (Object.entries(countryWeights) as Array<['KR' | 'US', number]>).filter(([, weight]) => weight >= 80).forEach(([country, weight]) => warnings.push({
-    type: 'COUNTRY', label: country === 'KR' ? '한국' : '미국', weight,
-    message: `${country === 'KR' ? '한국' : '미국'} 자산 예상 비중이 80%를 넘습니다.`,
-  }));
-  (Object.entries(currencyWeights) as Array<['KRW' | 'USD', number]>).filter(([, weight]) => weight >= 80).forEach(([currency, weight]) => warnings.push({
-    type: 'CURRENCY', label: currency, weight,
-    message: `${currency} 노출 예상 비중이 80%를 넘습니다. 환율 변동 영향을 확인하세요.`,
-  }));
+  resultPositions
+    .filter((position) => position.projectedWeight >= 40)
+    .forEach((position) =>
+      warnings.push({
+        type: 'STOCK',
+        label: position.name,
+        weight: position.projectedWeight,
+        message: `${position.name} 예상 비중이 40%를 넘습니다. 다음 매수 전 분산 여부를 확인하세요.`,
+      }),
+    );
+  (Object.entries(countryWeights) as Array<['KR' | 'US', number]>)
+    .filter(([, weight]) => weight >= 80)
+    .forEach(([country, weight]) =>
+      warnings.push({
+        type: 'COUNTRY',
+        label: country === 'KR' ? '한국' : '미국',
+        weight,
+        message: `${country === 'KR' ? '한국' : '미국'} 자산 예상 비중이 80%를 넘습니다.`,
+      }),
+    );
+  (Object.entries(currencyWeights) as Array<['KRW' | 'USD', number]>)
+    .filter(([, weight]) => weight >= 80)
+    .forEach(([currency, weight]) =>
+      warnings.push({
+        type: 'CURRENCY',
+        label: currency,
+        weight,
+        message: `${currency} 노출 예상 비중이 80%를 넘습니다. 환율 변동 영향을 확인하세요.`,
+      }),
+    );
 
-  return { positions: resultPositions, currentTotal, projectedTotal, countryWeights, currencyWeights, warnings, unavailableTickers: [...unavailable] };
+  return {
+    positions: resultPositions,
+    currentTotal,
+    projectedTotal,
+    countryWeights,
+    currencyWeights,
+    warnings,
+    unavailableTickers: [...unavailable],
+  };
 }

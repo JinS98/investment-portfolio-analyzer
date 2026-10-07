@@ -60,7 +60,13 @@ async function usIndexData(
   );
   if (!response.ok) throw new Error(`미국 지수 조회에 실패했습니다. (${response.status})`);
   const payload = (await response.json()) as {
-    chart?: { result?: Array<{ meta?: { regularMarketPrice?: unknown; chartPreviousClose?: unknown }; timestamp?: unknown; indicators?: { quote?: Array<{ close?: unknown }> } }> };
+    chart?: {
+      result?: Array<{
+        meta?: { regularMarketPrice?: unknown; chartPreviousClose?: unknown };
+        timestamp?: unknown;
+        indicators?: { quote?: Array<{ close?: unknown }> };
+      }>;
+    };
   };
   const result = payload.chart?.result?.[0];
   const timestamps = Array.isArray(result?.timestamp) ? result.timestamp : [];
@@ -74,11 +80,13 @@ async function usIndexData(
   });
   const price = Number(result?.meta?.regularMarketPrice ?? candles.at(-1)?.closePrice);
   const basePrice = Number(result?.meta?.chartPreviousClose);
-  if (!Number.isFinite(price) || !candles.length) throw new Error('미국 지수 응답이 올바르지 않습니다.');
+  if (!Number.isFinite(price) || !candles.length)
+    throw new Error('미국 지수 응답이 올바르지 않습니다.');
   return {
     symbol,
     price,
-    changeRate: Number.isFinite(basePrice) && basePrice > 0 ? (price - basePrice) / basePrice : null,
+    changeRate:
+      Number.isFinite(basePrice) && basePrice > 0 ? (price - basePrice) / basePrice : null,
     candles,
   };
 }
@@ -90,7 +98,12 @@ const asFinite = (value: unknown) => {
   return Number.isFinite(number) ? number : null;
 };
 
-const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '').replaceAll('&quot;', '"').replaceAll('&amp;', '&').trim();
+const stripHtml = (value: string) =>
+  value
+    .replace(/<[^>]*>/g, '')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&amp;', '&')
+    .trim();
 
 async function stockInsights(
   env: Record<string, string | undefined>,
@@ -108,7 +121,10 @@ async function stockInsights(
   const marketauxToken = env.MARKETAUX_API_TOKEN;
   const [fundamentals, news] = await Promise.all([
     eodToken
-      ? fetch(`https://eodhd.com/api/fundamentals/${encodeURIComponent(externalSymbol)}?${new URLSearchParams({ api_token: eodToken, fmt: 'json' })}`, { signal: AbortSignal.timeout(15_000) })
+      ? fetch(
+          `https://eodhd.com/api/fundamentals/${encodeURIComponent(externalSymbol)}?${new URLSearchParams({ api_token: eodToken, fmt: 'json' })}`,
+          { signal: AbortSignal.timeout(15_000) },
+        )
           .then(async (response) => {
             if (!response.ok) return { data: null, message: '재무 지표 API를 사용할 수 없습니다.' };
             const data = (await response.json()) as { Highlights?: Record<string, unknown> };
@@ -126,42 +142,88 @@ async function stockInsights(
             };
           })
           .catch(() => ({ data: null, message: '재무 지표를 불러오지 못했습니다.' }))
-      : Promise.resolve({ data: null, message: 'EODHD_API_TOKEN을 설정하면 재무 지표를 볼 수 있습니다.' }),
+      : Promise.resolve({
+          data: null,
+          message: 'EODHD_API_TOKEN을 설정하면 재무 지표를 볼 수 있습니다.',
+        }),
     market === 'KR'
       ? naverId && naverSecret
-        ? fetch(`https://openapi.naver.com/v1/search/news.json?${new URLSearchParams({ query: name, display: '3', sort: 'date' })}`, {
-            headers: { 'X-Naver-Client-Id': naverId, 'X-Naver-Client-Secret': naverSecret },
-            signal: AbortSignal.timeout(15_000),
-          }).then(async (response) => {
-            if (!response.ok) return { items: [], message: '국내 뉴스 API를 사용할 수 없습니다.' };
-            const data = (await response.json()) as { items?: Array<Record<string, unknown>> };
-            return {
-              items: (data.items ?? []).flatMap((item) =>
-                typeof item.title === 'string' && typeof item.link === 'string'
-                  ? [{ title: stripHtml(item.title), url: typeof item.originallink === 'string' ? item.originallink : item.link, publishedAt: typeof item.pubDate === 'string' ? item.pubDate : null, source: '네이버 뉴스', summary: typeof item.description === 'string' ? stripHtml(item.description) : null }]
-                  : [],
-              ),
-              message: null,
-            };
-          }).catch(() => ({ items: [], message: '국내 뉴스를 불러오지 못했습니다.' }))
-        : Promise.resolve({ items: [], message: 'NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET을 설정하면 국내 뉴스를 볼 수 있습니다.' })
-      : marketauxToken
-        ? fetch(`https://api.marketaux.com/v1/news/all?${new URLSearchParams({ symbols: symbol, filter_entities: 'true', limit: '3', api_token: marketauxToken })}`, { signal: AbortSignal.timeout(15_000) })
+        ? fetch(
+            `https://openapi.naver.com/v1/search/news.json?${new URLSearchParams({ query: name, display: '3', sort: 'date' })}`,
+            {
+              headers: { 'X-Naver-Client-Id': naverId, 'X-Naver-Client-Secret': naverSecret },
+              signal: AbortSignal.timeout(15_000),
+            },
+          )
             .then(async (response) => {
-              if (!response.ok) return { items: [], message: '해외 뉴스 API를 사용할 수 없습니다.' };
-              const data = (await response.json()) as { data?: Array<Record<string, unknown>> };
+              if (!response.ok)
+                return { items: [], message: '국내 뉴스 API를 사용할 수 없습니다.' };
+              const data = (await response.json()) as { items?: Array<Record<string, unknown>> };
               return {
-                items: (data.data ?? []).flatMap((item) =>
-                  typeof item.title === 'string' && typeof item.url === 'string'
-                    ? [{ title: item.title, url: item.url, publishedAt: typeof item.published_at === 'string' ? item.published_at : null, source: typeof item.source === 'string' ? item.source : 'Marketaux', summary: typeof item.description === 'string' ? item.description : null }]
+                items: (data.items ?? []).flatMap((item) =>
+                  typeof item.title === 'string' && typeof item.link === 'string'
+                    ? [
+                        {
+                          title: stripHtml(item.title),
+                          url:
+                            typeof item.originallink === 'string' ? item.originallink : item.link,
+                          publishedAt: typeof item.pubDate === 'string' ? item.pubDate : null,
+                          source: '네이버 뉴스',
+                          summary:
+                            typeof item.description === 'string'
+                              ? stripHtml(item.description)
+                              : null,
+                        },
+                      ]
                     : [],
                 ),
                 message: null,
               };
-            }).catch(() => ({ items: [], message: '해외 뉴스를 불러오지 못했습니다.' }))
-        : Promise.resolve({ items: [], message: 'MARKETAUX_API_TOKEN을 설정하면 해외 뉴스를 볼 수 있습니다.' }),
+            })
+            .catch(() => ({ items: [], message: '국내 뉴스를 불러오지 못했습니다.' }))
+        : Promise.resolve({
+            items: [],
+            message: 'NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET을 설정하면 국내 뉴스를 볼 수 있습니다.',
+          })
+      : marketauxToken
+        ? fetch(
+            `https://api.marketaux.com/v1/news/all?${new URLSearchParams({ symbols: symbol, filter_entities: 'true', limit: '3', api_token: marketauxToken })}`,
+            { signal: AbortSignal.timeout(15_000) },
+          )
+            .then(async (response) => {
+              if (!response.ok)
+                return { items: [], message: '해외 뉴스 API를 사용할 수 없습니다.' };
+              const data = (await response.json()) as { data?: Array<Record<string, unknown>> };
+              return {
+                items: (data.data ?? []).flatMap((item) =>
+                  typeof item.title === 'string' && typeof item.url === 'string'
+                    ? [
+                        {
+                          title: item.title,
+                          url: item.url,
+                          publishedAt:
+                            typeof item.published_at === 'string' ? item.published_at : null,
+                          source: typeof item.source === 'string' ? item.source : 'Marketaux',
+                          summary: typeof item.description === 'string' ? item.description : null,
+                        },
+                      ]
+                    : [],
+                ),
+                message: null,
+              };
+            })
+            .catch(() => ({ items: [], message: '해외 뉴스를 불러오지 못했습니다.' }))
+        : Promise.resolve({
+            items: [],
+            message: 'MARKETAUX_API_TOKEN을 설정하면 해외 뉴스를 볼 수 있습니다.',
+          }),
   ]);
-  const value = { fundamentals: fundamentals.data, fundamentalsMessage: fundamentals.message, news: news.items, newsMessage: news.message };
+  const value = {
+    fundamentals: fundamentals.data,
+    fundamentalsMessage: fundamentals.message,
+    news: news.items,
+    newsMessage: news.message,
+  };
   insightCache.set(cacheKey, { expiresAt: Date.now() + 15 * 60 * 1000, value });
   return value;
 }
@@ -235,7 +297,11 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
   });
   const middleware = async (req: Request, res: Response): Promise<void> => {
     const url = new URL(req.url ?? '/', 'http://localhost');
-    if (!url.pathname.startsWith('/api/toss/')) { res.statusCode = 404; res.end('{}'); return; }
+    if (!url.pathname.startsWith('/api/toss/')) {
+      res.statusCode = 404;
+      res.end('{}');
+      return;
+    }
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     const endpoint = url.pathname.slice('/api/toss/'.length);
     if (
@@ -259,7 +325,9 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
       res.end('{}');
       return;
     }
-    const cacheSeconds = ['historical-exchange-rate', 'us-indices', 'stock-insights'].includes(endpoint)
+    const cacheSeconds = ['historical-exchange-rate', 'us-indices', 'stock-insights'].includes(
+      endpoint,
+    )
       ? 60 * 60
       : ['candles', 'indicator-candles', 'stocks'].includes(endpoint)
         ? 60
@@ -322,16 +390,25 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
           res.end(JSON.stringify({ message: '종목 정보를 확인해 주세요.' }));
           return;
         }
-        res.end(JSON.stringify({ result: await stockInsights(env, symbol, name, market as 'KR' | 'US') }));
+        res.end(
+          JSON.stringify({ result: await stockInsights(env, symbol, name, market as 'KR' | 'US') }),
+        );
         return;
       }
       if (endpoint === 'us-indices') {
         const requestedRange = url.searchParams.get('range');
         const range = ['1d', '1mo', '3mo', '6mo', 'max'].includes(requestedRange ?? '')
-          ? requestedRange as '1d' | '1mo' | '3mo' | '6mo' | 'max'
+          ? (requestedRange as '1d' | '1mo' | '3mo' | '6mo' | 'max')
           : '1mo';
         const interval = range === '1d' ? '5m' : range === 'max' ? '1mo' : '1d';
-        res.end(JSON.stringify({ result: await Promise.all([usIndexData('NASDAQ', range, interval), usIndexData('SP500', range, interval)]) }));
+        res.end(
+          JSON.stringify({
+            result: await Promise.all([
+              usIndexData('NASDAQ', range, interval),
+              usIndexData('SP500', range, interval),
+            ]),
+          }),
+        );
         return;
       }
       const params = new URLSearchParams();
@@ -362,7 +439,12 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
       } else if (endpoint === 'rankings') {
         const marketCountry = url.searchParams.get('marketCountry');
         const count = Number(url.searchParams.get('count') ?? 20);
-        if (!['KR', 'US'].includes(marketCountry ?? '') || !Number.isInteger(count) || count < 1 || count > 100) {
+        if (
+          !['KR', 'US'].includes(marketCountry ?? '') ||
+          !Number.isInteger(count) ||
+          count < 1 ||
+          count > 100
+        ) {
           throw new Error('랭킹 시장과 조회 개수를 확인해 주세요.');
         }
         params.set('type', 'MARKET_TRADING_AMOUNT');
@@ -380,7 +462,12 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
         const symbol = url.searchParams.get('symbol') ?? '';
         const count = Number(url.searchParams.get('count') ?? 30);
         const interval = url.searchParams.get('interval') === '1m' ? '1m' : '1d';
-        if (!['KOSPI', 'KOSDAQ'].includes(symbol) || !Number.isInteger(count) || count < 2 || count > 200) {
+        if (
+          !['KOSPI', 'KOSDAQ'].includes(symbol) ||
+          !Number.isInteger(count) ||
+          count < 2 ||
+          count > 200
+        ) {
           throw new Error('지원하는 지수와 조회 개수를 확인해 주세요.');
         }
         params.set('interval', interval);

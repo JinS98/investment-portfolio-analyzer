@@ -4,18 +4,49 @@ import type { Holding, RecurringInvestmentRule } from '../src/types/portfolio.ts
 import { calculateProjectedAllocation } from '../src/utils/allocationRisk.ts';
 
 const holdings: Holding[] = [
-  { portfolioId: 'p', ticker: 'A', name: 'A', market: 'KR', quantity: 8, averagePrice: 100, investedAmount: 800 },
-  { portfolioId: 'p', ticker: 'B', name: 'B', market: 'KR', quantity: 2, averagePrice: 100, investedAmount: 200 },
+  {
+    portfolioId: 'p',
+    ticker: 'A',
+    name: 'A',
+    market: 'KR',
+    quantity: 8,
+    averagePrice: 100,
+    investedAmount: 800,
+  },
+  {
+    portfolioId: 'p',
+    ticker: 'B',
+    name: 'B',
+    market: 'KR',
+    quantity: 2,
+    averagePrice: 100,
+    investedAmount: 200,
+  },
 ];
 const rule: RecurringInvestmentRule = {
-  id: 'r', portfolioId: 'p', portfolioType: 'REAL', ticker: 'B', name: 'B', market: 'KR', quantity: 2,
-  frequency: 'WEEKLY', weeklyDay: 1, startDate: '2026-09-01', status: 'ACTIVE', createdAt: 1, updatedAt: 1,
+  id: 'r',
+  portfolioId: 'p',
+  portfolioType: 'REAL',
+  ticker: 'B',
+  name: 'B',
+  market: 'KR',
+  quantity: 2,
+  frequency: 'WEEKLY',
+  weeklyDay: 1,
+  startDate: '2026-09-01',
+  status: 'ACTIVE',
+  createdAt: 1,
+  updatedAt: 1,
 };
 
 test('adds the next recurring purchase to projected weights', () => {
   const result = calculateProjectedAllocation(holdings, [rule], { A: 100, B: 100 }, null);
   assert.equal(result.positions.find((item) => item.ticker === 'B')?.currentWeight, 20);
-  assert.ok(Math.abs((result.positions.find((item) => item.ticker === 'B')?.projectedWeight ?? 0) - 100 / 3) < 0.000001);
+  assert.ok(
+    Math.abs(
+      (result.positions.find((item) => item.ticker === 'B')?.projectedWeight ?? 0) - 100 / 3,
+    ) < 0.000001,
+  );
 });
 
 test('quantity override previews a changed recurring rule without saving it', () => {
@@ -31,8 +62,18 @@ test('reports stock, country and currency concentration warnings', () => {
 });
 
 test('previews a recurring purchase for a holding without a saved rule', () => {
-  const result = calculateProjectedAllocation(holdings, [], { A: 100, B: 100 }, null, {}, {
-    ticker: 'A', name: 'A', market: 'KR', quantity: 2,
-  });
+  const result = calculateProjectedAllocation(
+    holdings,
+    [],
+    { A: 100, B: 100 },
+    null,
+    {},
+    {
+      ticker: 'A',
+      name: 'A',
+      market: 'KR',
+      quantity: 2,
+    },
+  );
   assert.equal(result.positions.find((item) => item.ticker === 'A')?.scheduledValue, 200);
 });

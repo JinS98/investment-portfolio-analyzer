@@ -167,7 +167,10 @@ export async function fetchMarketIndicatorPrices(
   if (!symbols.length || symbols.some((symbol) => symbol !== 'KOSPI' && symbol !== 'KOSDAQ')) {
     throw new Error('지원하는 지수 심볼을 입력해 주세요.');
   }
-  const result = await request('indicator-prices', new URLSearchParams({ symbols: symbols.join(',') }));
+  const result = await request(
+    'indicator-prices',
+    new URLSearchParams({ symbols: symbols.join(',') }),
+  );
   if (!Array.isArray(result)) throw new Error('지수 시세 응답 형식이 올바르지 않습니다.');
   return result.map((value): MarketIndicatorQuote => {
     const item = object(value);
@@ -175,7 +178,11 @@ export async function fetchMarketIndicatorPrices(
     if ((item.symbol !== 'KOSPI' && item.symbol !== 'KOSDAQ') || !Number.isFinite(price)) {
       throw new Error('지수 시세 응답에 올바르지 않은 값이 있습니다.');
     }
-    return { symbol: item.symbol, timestamp: typeof item.timestamp === 'string' ? item.timestamp : null, price };
+    return {
+      symbol: item.symbol,
+      timestamp: typeof item.timestamp === 'string' ? item.timestamp : null,
+      price,
+    };
   });
 }
 
@@ -193,17 +200,23 @@ export async function fetchMarketIndicatorCandles(
     INDICATOR_CANDLE_CACHE_TTL,
     async () => {
       const result = object(
-        await request('indicator-candles', new URLSearchParams({ symbol, count: String(count), interval })),
+        await request(
+          'indicator-candles',
+          new URLSearchParams({ symbol, count: String(count), interval }),
+        ),
       );
-      if (!Array.isArray(result.candles)) throw new Error('지수 차트 응답 형식이 올바르지 않습니다.');
-      return result.candles.map((value): MarketIndicatorCandle => {
-        const item = object(value);
-        const closePrice = Number(item.closePrice);
-        if (typeof item.timestamp !== 'string' || !Number.isFinite(closePrice)) {
-          throw new Error('지수 차트 응답에 올바르지 않은 값이 있습니다.');
-        }
-        return { timestamp: item.timestamp, closePrice };
-      }).sort((left, right) => left.timestamp.localeCompare(right.timestamp));
+      if (!Array.isArray(result.candles))
+        throw new Error('지수 차트 응답 형식이 올바르지 않습니다.');
+      return result.candles
+        .map((value): MarketIndicatorCandle => {
+          const item = object(value);
+          const closePrice = Number(item.closePrice);
+          if (typeof item.timestamp !== 'string' || !Number.isFinite(closePrice)) {
+            throw new Error('지수 차트 응답에 올바르지 않은 값이 있습니다.');
+          }
+          return { timestamp: item.timestamp, closePrice };
+        })
+        .sort((left, right) => left.timestamp.localeCompare(right.timestamp));
     },
   );
   return candles.map((candle) => ({ ...candle }));
@@ -211,7 +224,9 @@ export async function fetchMarketIndicatorCandles(
 
 export type UsIndexRange = '1d' | '1mo' | '3mo' | '6mo' | 'max';
 
-export async function fetchUsMarketIndices(range: UsIndexRange = '1mo'): Promise<MarketIndexData[]> {
+export async function fetchUsMarketIndices(
+  range: UsIndexRange = '1mo',
+): Promise<MarketIndexData[]> {
   const result = await request('us-indices', new URLSearchParams({ range }));
   if (!Array.isArray(result)) throw new Error('미국 지수 응답 형식이 올바르지 않습니다.');
   return result.map((value): MarketIndexData => {

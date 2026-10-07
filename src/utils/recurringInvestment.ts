@@ -28,7 +28,9 @@ export function getNextRecurringInvestmentDate(
   rule: Pick<RecurringInvestmentRule, 'frequency' | 'weeklyDay' | 'monthlyDay' | 'startDate'>,
   referenceDate = new Date(),
 ): string {
-  const reference = parseDate(referenceDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }));
+  const reference = parseDate(
+    referenceDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
+  );
   const start = parseDate(rule.startDate);
   const minimum = start > reference ? start : reference;
 
@@ -53,15 +55,23 @@ export function getNextRecurringInvestmentDate(
 
 /** 마지막 반영일 다음부터 계산한, 아직 거래 이력에 반영되지 않은 예정 매수일이다. */
 export function getNextPendingRecurringInvestmentDate(
-  rule: Pick<RecurringInvestmentRule, 'frequency' | 'weeklyDay' | 'monthlyDay' | 'startDate' | 'lastExecutedDate'>,
+  rule: Pick<
+    RecurringInvestmentRule,
+    'frequency' | 'weeklyDay' | 'monthlyDay' | 'startDate' | 'lastExecutedDate'
+  >,
 ): string {
-  const reference = rule.lastExecutedDate ? addDays(parseDate(rule.lastExecutedDate), 1) : parseDate(rule.startDate);
+  const reference = rule.lastExecutedDate
+    ? addDays(parseDate(rule.lastExecutedDate), 1)
+    : parseDate(rule.startDate);
   return getNextRecurringInvestmentDate(rule, reference);
 }
 
 /** 시작일 또는 마지막 반영일 다음부터 종료일까지의 모든 예정 매수일을 계산한다. */
 export function getPendingRecurringInvestmentDatesUntil(
-  rule: Pick<RecurringInvestmentRule, 'frequency' | 'weeklyDay' | 'monthlyDay' | 'startDate' | 'lastExecutedDate'>,
+  rule: Pick<
+    RecurringInvestmentRule,
+    'frequency' | 'weeklyDay' | 'monthlyDay' | 'startDate' | 'lastExecutedDate'
+  >,
   untilDate: string,
 ): string[] {
   const until = parseDate(untilDate);
@@ -75,4 +85,5 @@ export function getPendingRecurringInvestmentDatesUntil(
   return dates;
 }
 
-export const koreaToday = (): string => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+export const koreaToday = (): string =>
+  new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });

@@ -1,4 +1,8 @@
-export interface StockSearchItem { symbol: string; name: string; market: string; }
+export interface StockSearchItem {
+  symbol: string;
+  name: string;
+  market: string;
+}
 
 const normalize = (value: string) => value.normalize('NFKC').toLowerCase().replace(/\s+/g, '');
 export function createStockSearch(load: () => Promise<StockSearchItem[]>, now = Date.now) {

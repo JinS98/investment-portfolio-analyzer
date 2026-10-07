@@ -146,8 +146,12 @@
     overflow-wrap: anywhere;
   }
 
-  strong.positive { color: var(--color-positive); }
-  strong.negative { color: var(--color-negative); }
+  strong.positive {
+    color: var(--color-positive);
+  }
+  strong.negative {
+    color: var(--color-negative);
+  }
 }
 .performanceGuide {
   display: flex;

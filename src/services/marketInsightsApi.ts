@@ -35,7 +35,9 @@ export async function fetchStockInsights(
   );
   const body = (await response.json()) as { result?: StockInsights; message?: unknown };
   if (!response.ok || !body.result) {
-    throw new Error(typeof body.message === 'string' ? body.message : '상세 정보를 불러오지 못했습니다.');
+    throw new Error(
+      typeof body.message === 'string' ? body.message : '상세 정보를 불러오지 못했습니다.',
+    );
   }
   return body.result;
 }

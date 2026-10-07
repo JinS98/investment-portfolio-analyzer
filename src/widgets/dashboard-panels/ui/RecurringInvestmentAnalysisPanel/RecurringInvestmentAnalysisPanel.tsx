@@ -36,7 +36,8 @@ export function RecurringInvestmentAnalysisPanel({
           setRuleData({
             portfolioId,
             rules: [],
-            error: cause instanceof Error ? cause.message : '적립식 투자 규칙을 불러오지 못했습니다.',
+            error:
+              cause instanceof Error ? cause.message : '적립식 투자 규칙을 불러오지 못했습니다.',
           });
         }
       });
@@ -53,7 +54,11 @@ export function RecurringInvestmentAnalysisPanel({
   return (
     <section className={styles.panel} aria-labelledby="recurring-analysis-title">
       {isLoading ? <p className={styles.status}>적립식 투자 성과를 불러오는 중입니다.</p> : null}
-      {error ? <p className={styles.error} role="alert">{error}</p> : null}
+      {error ? (
+        <p className={styles.error} role="alert">
+          {error}
+        </p>
+      ) : null}
       {!isLoading && !error && !rules.length ? (
         <div className={styles.empty}>
           <h2 id="recurring-analysis-title">적립식 투자 성과</h2>

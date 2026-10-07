@@ -28,15 +28,16 @@
 `node --experimental-strip-types --test tests/market.test.ts tests/stockSearch.test.ts`
 
 현재 API는 Vite 개발 서버 전용입니다. 배포할 때는 별도 서버에서 캐시를 운영해야 합니다.
+
 # 시장 탐색 외부 정보 연동
 
 종목 상세 Drawer는 토스 시세와 일봉을 기본으로 사용합니다. 선택 환경 변수를 설정하면 아래 정보를 추가로 표시합니다.
 
-| 환경 변수 | 대상 | 표시 정보 | 캐시 |
-| --- | --- | --- | --- |
-| `EODHD_API_TOKEN` | 국내·미국 | PER, PBR, ROE, 배당수익률 | 15분 |
-| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 국내 | 최근 뉴스 3건 | 15분 |
-| `MARKETAUX_API_TOKEN` | 미국 | 최근 금융 뉴스 3건 | 15분 |
+| 환경 변수                                | 대상      | 표시 정보                 | 캐시 |
+| ---------------------------------------- | --------- | ------------------------- | ---- |
+| `EODHD_API_TOKEN`                        | 국내·미국 | PER, PBR, ROE, 배당수익률 | 15분 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 국내      | 최근 뉴스 3건             | 15분 |
+| `MARKETAUX_API_TOKEN`                    | 미국      | 최근 금융 뉴스 3건        | 15분 |
 
 - 국내 EODHD 심볼은 `{종목코드}.KO`, 미국 심볼은 `{티커}.US`로 변환한다.
 - 키가 없거나 해당 데이터가 제공되지 않는 종목은 Drawer에 설정 안내 또는 데이터 없음 상태를 표시한다.

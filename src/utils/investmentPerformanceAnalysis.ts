@@ -1,12 +1,27 @@
 export type PerformanceRange = '1M' | '3M' | '6M' | 'ALL';
-export interface ValuePoint { date: string; value: number; }
-export interface ReturnPoint extends ValuePoint { returnRate: number; }
-export interface PerformanceMetrics { highestValue: number; lowestValue: number; maxDrawdown: number; }
-export interface CashFlowPoint { date: string; amount: number; }
+export interface ValuePoint {
+  date: string;
+  value: number;
+}
+export interface ReturnPoint extends ValuePoint {
+  returnRate: number;
+}
+export interface PerformanceMetrics {
+  highestValue: number;
+  lowestValue: number;
+  maxDrawdown: number;
+}
+export interface CashFlowPoint {
+  date: string;
+  amount: number;
+}
 
 const rangeMonths: Record<Exclude<PerformanceRange, 'ALL'>, number> = { '1M': 1, '3M': 3, '6M': 6 };
 
-export function selectPerformanceRange(points: ValuePoint[], range: PerformanceRange): ValuePoint[] {
+export function selectPerformanceRange(
+  points: ValuePoint[],
+  range: PerformanceRange,
+): ValuePoint[] {
   const sorted = [...points].sort((left, right) => left.date.localeCompare(right.date));
   if (range === 'ALL' || !sorted.length) return sorted;
   const latest = new Date(`${sorted.at(-1)!.date}T00:00:00Z`);
@@ -18,7 +33,10 @@ export function selectPerformanceRange(points: ValuePoint[], range: PerformanceR
 export function normalizePerformance(points: ValuePoint[]): ReturnPoint[] {
   const sorted = [...points].sort((left, right) => left.date.localeCompare(right.date));
   const baseValue = sorted[0]?.value ?? 0;
-  return sorted.map((point) => ({ ...point, returnRate: baseValue > 0 ? ((point.value - baseValue) / baseValue) * 100 : 0 }));
+  return sorted.map((point) => ({
+    ...point,
+    returnRate: baseValue > 0 ? ((point.value - baseValue) / baseValue) * 100 : 0,
+  }));
 }
 
 export function calculateTimeWeightedPerformance(
@@ -37,7 +55,8 @@ export function calculateTimeWeightedPerformance(
       const previous = sorted[index - 1];
       let flow = 0;
       while (sortedCashFlows[cashFlowIndex]?.date <= point.date) {
-        if (sortedCashFlows[cashFlowIndex].date > previous.date) flow += sortedCashFlows[cashFlowIndex].amount;
+        if (sortedCashFlows[cashFlowIndex].date > previous.date)
+          flow += sortedCashFlows[cashFlowIndex].amount;
         cashFlowIndex += 1;
       }
       if (previous.value > 0) growth *= 1 + (point.value - flow - previous.value) / previous.value;

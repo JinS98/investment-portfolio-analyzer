@@ -623,18 +623,26 @@
     > .widgetContent {
       height: auto;
 
-      > * { height: auto; }
+      > * {
+        height: auto;
+      }
     }
   }
 
-  .freeGrid .widgetContent { overflow: visible; }
+  .freeGrid .widgetContent {
+    overflow: visible;
+  }
 
   .pairedFirst,
-  .pairedSecond { padding: 0; }
+  .pairedSecond {
+    padding: 0;
+  }
 
   .dragHandle,
   .resizeHandle,
-  .cornerResizeHandle { display: none; }
+  .cornerResizeHandle {
+    display: none;
+  }
 }
 
 @include mobile {
@@ -657,7 +665,6 @@
     width: 100%;
     justify-content: flex-start;
   }
-
 }
 
 @media (max-width: 520px) {

@@ -323,7 +323,7 @@ MarketExplorePage
 - [ ] D21-19 전역 스타일 부채 제거
 - [ ] D21-20 최종 회귀 검증과 문서 정리
 
-D21-01~03은 완료로 확정했다. D21-04~16은 아래 완료 조건 중 시각 회귀와 guest smoke 검증이 남아 있어 체크를 보류한다.
+D21-01~~03은 완료로 확정했다. D21-04~~16은 아래 완료 조건 중 시각 회귀와 guest smoke 검증이 남아 있어 체크를 보류한다.
 
 2026-10-02에는 D21-04~16의 일부 구현을 반영했다. 디자인 token, 기본 UI, 공통 Dialog/Drawer, 종목 표현·검색, 거래 폼 모델·UI, 포트폴리오 selector·보유 종목·자동매수 영역을 추가했다. 거래 UI는 `features/transaction/ui`로 옮기고 기존 import 경로는 호환 wrapper로 유지한다. `PortfolioManager`의 비활성화된 중복 JSX를 제거하고 제목·요약·보유 종목 표시를 분리했다. 시장별 컬럼 설정 저장과 현재가 갱신을 hook으로 옮기고 `useRecurringRules`를 실제 화면에 연결했다. 자동매수 설정·체결 확인 모달도 공통 Dialog를 사용한다.
 
@@ -336,6 +336,8 @@ D21-01~03은 완료로 확정했다. D21-04~16은 아래 완료 조건 중 시�
 같은 날 D21-18의 컴포넌트 폴더 이동과 feature/widget 공개 API 전환을 마쳤다. 사용하지 않는 `TransactionModal` re-export와 `SidePanel` 호환 wrapper를 제거하고, `npm run lint:architecture`로 계층 역참조·feature/widget 내부 직접 import·런타임 순환 의존을 검사한다. typecheck, lint, 단위 테스트 88개, 컴포넌트 테스트 40개, production build가 통과했다. D21-19~20은 남아 있다.
 
 D21-19의 전역 부분 일치 선택자 제거와 테마 토큰 전환은 코드와 자동 검사를 마쳤다. 라이트·다크 및 모바일·데스크톱 화면 검증은 요청에 따라 보류했으므로 완료 상태는 갱신하지 않았다.
+
+2026-10-07에는 31일차 자동 회귀 검사와 컴포넌트 구조 문서화를 마쳤다. typecheck, lint, 단위 테스트 91개, 컴포넌트 테스트 56개, production build가 통과했다. 연결 가능한 브라우저가 없어 S01~~S08과 테마·viewport 화면 검증은 미실행이며 D21-04~~16, D21-19~20의 완료 체크를 유지했다. 실행 증거와 남은 항목은 [31일차 회귀 검증 기록](./day31-regression-verification.md)에 있다.
 
 ### 묶음 A: 회귀 방지 기반
 

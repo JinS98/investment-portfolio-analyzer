@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { fetchStocks, fetchQuotes, fetchCandlePage, searchStocks } from '../../../../services/tossApi';
+import {
+  fetchStocks,
+  fetchQuotes,
+  fetchCandlePage,
+  searchStocks,
+} from '../../../../services/tossApi';
 import type { StockInfo, Quote, CandlePage, StockSearchItem } from '../../../../types/market';
 import type { Holding, MarketType } from '../../../../types';
-import { loadRecentStockSearches, saveRecentStockSearch } from '../../../../utils/recentStockSearches';
+import {
+  loadRecentStockSearches,
+  saveRecentStockSearch,
+} from '../../../../utils/recentStockSearches';
 import styles from './MarketDataPanel.module.scss';
 
 const KOREAN_MARKETS = new Set(['KOSPI', 'KOSDAQ', 'KR_ETC']);

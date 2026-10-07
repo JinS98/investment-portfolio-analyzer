@@ -33,8 +33,10 @@ export function calculateInvestmentPerformance(
   const holdingQuantity = Math.max(0, purchasedQuantity - soldQuantity);
   const hasCurrentPrice = typeof currentPrice === 'number' && currentPrice > 0;
   const evaluatedAmount = hasCurrentPrice ? holdingQuantity * currentPrice : null;
-  const profitAmount = evaluatedAmount === null ? null : evaluatedAmount + soldAmount - investedAmount;
-  const profitRate = profitAmount === null || investedAmount <= 0 ? null : (profitAmount / investedAmount) * 100;
+  const profitAmount =
+    evaluatedAmount === null ? null : evaluatedAmount + soldAmount - investedAmount;
+  const profitRate =
+    profitAmount === null || investedAmount <= 0 ? null : (profitAmount / investedAmount) * 100;
 
   return {
     buyCount: buys.length,

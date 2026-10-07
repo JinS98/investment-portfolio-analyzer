@@ -93,42 +93,65 @@ Browser (React)
 
 거래 이력(`holdingHistories`)이 원본 데이터이며, 보유 상태(`holdings`)와 요약(`summary/current`)은 이력을 기준으로 다시 계산한 결과입니다. Firestore 규칙은 `users/{userId}/portfolios/**` 경로에서 본인 데이터만 읽고 쓰도록 배포해야 합니다.
 
+## 프런트엔드 컴포넌트 구조
+
+| 위치           | 역할과 예시                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app`      | 앱 내비게이션과 헤더 등 화면 공통 진입점                                                                                        |
+| `src/pages`    | 대시보드·시장 탐색 등 페이지 조합. 대시보드 패널의 ID·화면·크기·렌더링은 `src/pages/Dashboard/panelRegistry.tsx`에 등록         |
+| `src/widgets`  | 여러 기능을 조합한 대시보드 패널. 구현은 `src/widgets/dashboard-panels/ui`, 외부 공개는 `src/widgets/dashboard-panels/index.ts` |
+| `src/features` | 거래, 포트폴리오 관리, 자동매수, 거래 내역처럼 사용자 동작 단위의 `model`·`ui`와 공개 `index.ts`                                |
+| `src/entities` | 종목·포트폴리오의 공통 모델과 표현                                                                                              |
+| `src/shared`   | `Button`, `Dialog`, `Drawer`, `Collapse` 같은 공통 UI와 범용 함수·스타일                                                        |
+
+새 기능은 해당 `features/<기능>`의 `model`·`ui`에 구현하고 `index.ts`에서 필요한 항목만 공개합니다. 다른 기능이나 페이지에서는 `@features/<기능>`처럼 공개 API를 가져오고, 같은 기능 내부에서는 상대 경로를 사용합니다. 대시보드 패널을 추가할 때는 widget 공개 API에 내보낸 뒤 `PANEL_REGISTRY`에 화면, 제목, 크기와 렌더링을 등록합니다. `shared → entities → features → widgets → pages → app` 방향으로 상위 계층을 조합하며, 역방향 import·공개 API 우회·런타임 순환은 `npm run lint:architecture`로 검사합니다.
+
 ## 검증 명령
 
-```zsh
+프런트엔드는 Node.js 22, Functions 빌드는 Node.js 20을 사용합니다. [GitHub Actions CI](.github/workflows/ci.yml)는 `main` push와 pull request에서 아래 명령을 실행합니다.
+
+```sh
+npm ci
 npm run typecheck
 npm run lint
+npm test
 npm run build
-node --experimental-strip-types --test tests/*.test.ts
+npm run format:check
+
+# Node.js 20에서 Functions 빌드
+npm ci --prefix functions
+npm run build --prefix functions
 ```
+
+화면 조작이 필요한 guest 시나리오 S01~S08과 고정 viewport·테마 조합은 [21일차 기준선](docs/day21-refactoring-baseline.md)에 정리되어 있습니다. 자동 테스트 통과와 화면 검증 완료는 별도로 판정합니다.
 
 ## 일차별 개발 문서
 
-| 일차      | 주제                            | 문서                                                                                                    |
-| --------- | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| 1일차     | 프로젝트 기반 구성              | [문서](docs/day1-project-foundation.md)                                                                 |
-| 2일차     | 시장 데이터 조회 기반           | [문서](docs/day2-market-data-foundation.md)                                                             |
-| 3일차     | 토스 API와 종목 검색 연결       | [문서](docs/day3-toss-api-and-stock-search.md)                                                          |
-| 4일차     | Firebase 포트폴리오 연동        | [문서](docs/day4-firebase-integration.md)                                                               |
-| 5일차     | 포트폴리오 시각화와 리스크 분석 | [문서](docs/day5-risk-and-visualization.md)                                                             |
-| 6일차     | 이력 분석·인증·대시보드 고도화  | [문서](docs/day6-history-auth-dashboard.md)                                                             |
-| 7일차     | 거래 원장 계산 정책             | [문서](docs/day7-calculation-policy.md)                                                                 |
-| 8일차     | 거래 원장 저장·복원             | [문서](docs/day8-ledger-storage.md)                                                                     |
-| 9일차     | 거래 기록 UI와 가상 포트폴리오  | [문서](docs/day9-transaction-ui.md)                                                                     |
-| 10일차    | 포트폴리오 표시 설정과 시세 UX  | [문서](docs/day10-portfolio-display-and-quote-ux.md)                                                    |
-| 11일차    | 테마와 대시보드 UX 개선         | [문서](docs/day11-theme-and-dashboard-ux.md)                                                            |
-| 12일차    | 거래 원장과 대시보드 정교화     | [문서](docs/day12-ledger-and-dashboard-refinement.md)                                                   |
-| 13일차    | 거래일 환율 기반 손익           | [문서](docs/day13-transaction-date-exchange-rate.md)                                                    |
-| 14일차    | 시장 탐색과 외부 정보           | [문서](docs/day14-market-exploration.md), [API·검색 상세](docs/stock-search.md)                         |
-| 15일차    | 시장 차트와 포트폴리오 UX 개선  | [문서](docs/day15-market-charts-and-portfolio-ux.md)                                                    |
-| 16일차    | 적립식 투자 자동 반영           | [문서](docs/day16-recurring-investment-automation.md)                                                   |
-| 17일차    | 적립식 투자 운영과 거래 이력    | [문서](docs/day17-recurring-operations.md)                                                              |
-| 18일차    | 투자 분석과 운영 안정화         | [문서](docs/day18-analysis-and-stability.md)                                                            |
-| 19일차    | 자동 매수 관리와 알림           | [문서](docs/day19-automatic-purchase-management.md)                                                     |
-| 20일차    | 배포용 API 전환                 | [문서](docs/day20-deployment-api-transition.md)                                                         |
-| 21일차    | 프런트엔드 컴포넌트 리팩토링    | [계획](docs/day21-frontend-component-refactoring-plan.md), [기준선](docs/day21-refactoring-baseline.md) |
-| 22~31일차 | UI·기능 수정과 회귀 검증        | [작업 계획](docs/day22-31-ui-feature-roadmap.md)                                                        |
-| 32~41일차 | 배포 준비·설정·출시 검증        | [배포 계획](docs/day32-41-deployment-roadmap.md)                                                        |
+| 일차      | 주제                            | 문서                                                                                                        |
+| --------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 1일차     | 프로젝트 기반 구성              | [문서](docs/day1-project-foundation.md)                                                                     |
+| 2일차     | 시장 데이터 조회 기반           | [문서](docs/day2-market-data-foundation.md)                                                                 |
+| 3일차     | 토스 API와 종목 검색 연결       | [문서](docs/day3-toss-api-and-stock-search.md)                                                              |
+| 4일차     | Firebase 포트폴리오 연동        | [문서](docs/day4-firebase-integration.md)                                                                   |
+| 5일차     | 포트폴리오 시각화와 리스크 분석 | [문서](docs/day5-risk-and-visualization.md)                                                                 |
+| 6일차     | 이력 분석·인증·대시보드 고도화  | [문서](docs/day6-history-auth-dashboard.md)                                                                 |
+| 7일차     | 거래 원장 계산 정책             | [문서](docs/day7-calculation-policy.md)                                                                     |
+| 8일차     | 거래 원장 저장·복원             | [문서](docs/day8-ledger-storage.md)                                                                         |
+| 9일차     | 거래 기록 UI와 가상 포트폴리오  | [문서](docs/day9-transaction-ui.md)                                                                         |
+| 10일차    | 포트폴리오 표시 설정과 시세 UX  | [문서](docs/day10-portfolio-display-and-quote-ux.md)                                                        |
+| 11일차    | 테마와 대시보드 UX 개선         | [문서](docs/day11-theme-and-dashboard-ux.md)                                                                |
+| 12일차    | 거래 원장과 대시보드 정교화     | [문서](docs/day12-ledger-and-dashboard-refinement.md)                                                       |
+| 13일차    | 거래일 환율 기반 손익           | [문서](docs/day13-transaction-date-exchange-rate.md)                                                        |
+| 14일차    | 시장 탐색과 외부 정보           | [문서](docs/day14-market-exploration.md), [API·검색 상세](docs/stock-search.md)                             |
+| 15일차    | 시장 차트와 포트폴리오 UX 개선  | [문서](docs/day15-market-charts-and-portfolio-ux.md)                                                        |
+| 16일차    | 적립식 투자 자동 반영           | [문서](docs/day16-recurring-investment-automation.md)                                                       |
+| 17일차    | 적립식 투자 운영과 거래 이력    | [문서](docs/day17-recurring-operations.md)                                                                  |
+| 18일차    | 투자 분석과 운영 안정화         | [문서](docs/day18-analysis-and-stability.md)                                                                |
+| 19일차    | 자동 매수 관리와 알림           | [문서](docs/day19-automatic-purchase-management.md)                                                         |
+| 20일차    | 배포용 API 전환                 | [문서](docs/day20-deployment-api-transition.md)                                                             |
+| 21일차    | 프런트엔드 컴포넌트 리팩토링    | [계획](docs/day21-frontend-component-refactoring-plan.md), [기준선](docs/day21-refactoring-baseline.md)     |
+| 22~31일차 | UI·기능 수정과 회귀 검증        | [작업 계획](docs/day22-31-ui-feature-roadmap.md), [31일차 검증 기록](docs/day31-regression-verification.md) |
+| 32~41일차 | 배포 준비·설정·출시 검증        | [배포 계획](docs/day32-41-deployment-roadmap.md)                                                            |
 
 ## 배포 구성
 

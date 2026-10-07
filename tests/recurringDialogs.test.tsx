@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { RecurringExecutionConfirmModal, RecurringInvestmentModal } from '@features/recurring-investment';
+import {
+  RecurringExecutionConfirmModal,
+  RecurringInvestmentModal,
+} from '@features/recurring-investment';
 import type { HoldingHistory, Portfolio } from '../src/types';
 
 const portfolio: Portfolio = {
