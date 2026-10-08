@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { FiPlus } from 'react-icons/fi';
 import { StockAvatar } from '@entities/stock';
-import type { Holding, MarketType, PriceMap } from '../../../types';
+import type { Holding, HoldingHistory, MarketType, PriceMap } from '../../../types';
+import { formatWon } from '../../../shared/lib/currency';
 import { formatRate } from '../../../utils/calculator';
 import { HOLDING_COLUMN_OPTIONS, type HoldingColumnId } from '../model/holdingColumns';
+import { holdingKrwCost } from '../model/holdingKrwCost';
 import styles from './HoldingsSection.module.scss';
 
 interface HoldingMetrics {
@@ -101,6 +103,9 @@ export function ColumnVisibilityMenu({
 
 interface HoldingsViewProps {
   holdings: Holding[];
+  histories?: HoldingHistory[];
+  displayCurrency?: 'KRW' | 'USD';
+  exchangeRate?: number | null;
   prices: PriceMap;
   visibleColumns: HoldingColumnId[];
   money: (value: number, market: MarketType) => string;
@@ -109,6 +114,9 @@ interface HoldingsViewProps {
 
 export function HoldingsTable({
   holdings,
+  histories = [],
+  displayCurrency = 'USD',
+  exchangeRate,
   prices,
   visibleColumns,
   money,
@@ -130,19 +138,50 @@ export function HoldingsTable({
         <tbody>
           {holdings.map((holding) => {
             const value = metrics(holding, prices);
+            const krwCost =
+              holding.market === 'US' && displayCurrency === 'KRW'
+                ? holdingKrwCost(holding, histories)
+                : null;
+            const krwValue =
+              value.evaluatedValue !== null && exchangeRate
+                ? value.evaluatedValue * exchangeRate
+                : null;
+            const krwProfit = krwCost !== null && krwValue !== null ? krwValue - krwCost : null;
+            const profitAmount =
+              holding.market === 'US' && displayCurrency === 'KRW' ? krwProfit : value.profitAmount;
+            const profitRate =
+              holding.market === 'US' && displayCurrency === 'KRW'
+                ? krwProfit !== null && krwCost
+                  ? (krwProfit / krwCost) * 100
+                  : null
+                : value.profitRate;
             const cells: Record<HoldingColumnId, string> = {
-              averagePrice: money(holding.averagePrice, holding.market),
+              averagePrice:
+                krwCost !== null
+                  ? formatWon(krwCost / holding.quantity)
+                  : holding.market === 'US' && displayCurrency === 'KRW'
+                    ? '환율 없음'
+                    : money(holding.averagePrice, holding.market),
               currentPrice:
                 value.currentPrice === undefined
                   ? '시세 미조회'
                   : money(value.currentPrice, holding.market),
               quantity: holding.quantity.toLocaleString('ko-KR'),
-              investment: money(holding.investedAmount, holding.market),
+              investment:
+                krwCost !== null
+                  ? formatWon(krwCost)
+                  : holding.market === 'US' && displayCurrency === 'KRW'
+                    ? '환율 없음'
+                    : money(holding.investedAmount, holding.market),
               evaluatedValue:
                 value.evaluatedValue === null ? '—' : money(value.evaluatedValue, holding.market),
               profitAmount:
-                value.profitAmount === null ? '—' : money(value.profitAmount, holding.market),
-              profitRate: value.profitRate === null ? '—' : formatRate(value.profitRate),
+                profitAmount === null
+                  ? '—'
+                  : holding.market === 'US' && displayCurrency === 'KRW'
+                    ? formatWon(profitAmount)
+                    : money(profitAmount, holding.market),
+              profitRate: profitRate === null ? '—' : formatRate(profitRate),
             };
             return (
               <tr key={`${holding.market}-${holding.ticker}`}>
@@ -161,11 +200,11 @@ export function HoldingsTable({
                     key={column.id}
                     className={
                       (column.id === 'profitAmount'
-                        ? value.profitAmount
+                        ? profitAmount
                         : column.id === 'profitRate'
-                          ? value.profitRate
+                          ? profitRate
                           : null) !== null &&
-                      (column.id === 'profitAmount' ? value.profitAmount! : value.profitRate!) < 0
+                      (column.id === 'profitAmount' ? profitAmount! : profitRate!) < 0
                         ? styles.negative
                         : column.id === 'profitAmount' || column.id === 'profitRate'
                           ? styles.positive
@@ -196,6 +235,9 @@ export function HoldingsTable({
 
 export function HoldingsCardList({
   holdings,
+  histories = [],
+  displayCurrency = 'USD',
+  exchangeRate,
   prices,
   visibleColumns,
   money,
@@ -206,21 +248,52 @@ export function HoldingsCardList({
     <div className={styles.cards}>
       {holdings.map((holding) => {
         const value = metrics(holding, prices);
+        const krwCost =
+          holding.market === 'US' && displayCurrency === 'KRW'
+            ? holdingKrwCost(holding, histories)
+            : null;
+        const krwValue =
+          value.evaluatedValue !== null && exchangeRate
+            ? value.evaluatedValue * exchangeRate
+            : null;
+        const krwProfit = krwCost !== null && krwValue !== null ? krwValue - krwCost : null;
+        const profitAmount =
+          holding.market === 'US' && displayCurrency === 'KRW' ? krwProfit : value.profitAmount;
+        const profitRate =
+          holding.market === 'US' && displayCurrency === 'KRW'
+            ? krwProfit !== null && krwCost
+              ? (krwProfit / krwCost) * 100
+              : null
+            : value.profitRate;
         const cells: Record<HoldingColumnId, string> = {
-          averagePrice: money(holding.averagePrice, holding.market),
+          averagePrice:
+            krwCost !== null
+              ? formatWon(krwCost / holding.quantity)
+              : holding.market === 'US' && displayCurrency === 'KRW'
+                ? '환율 없음'
+                : money(holding.averagePrice, holding.market),
           currentPrice:
             value.currentPrice === undefined
               ? '시세 미조회'
               : money(value.currentPrice, holding.market),
           quantity: holding.quantity.toLocaleString('ko-KR'),
-          investment: money(holding.investedAmount, holding.market),
+          investment:
+            krwCost !== null
+              ? formatWon(krwCost)
+              : holding.market === 'US' && displayCurrency === 'KRW'
+                ? '환율 없음'
+                : money(holding.investedAmount, holding.market),
           evaluatedValue:
             value.evaluatedValue === null
               ? '시세 미조회'
               : money(value.evaluatedValue, holding.market),
           profitAmount:
-            value.profitAmount === null ? '—' : money(value.profitAmount, holding.market),
-          profitRate: value.profitRate === null ? '—' : formatRate(value.profitRate),
+            profitAmount === null
+              ? '—'
+              : holding.market === 'US' && displayCurrency === 'KRW'
+                ? formatWon(profitAmount)
+                : money(profitAmount, holding.market),
+          profitRate: profitRate === null ? '—' : formatRate(profitRate),
         };
         return (
           <article className={styles.card} key={`${holding.market}-${holding.ticker}`}>
@@ -241,9 +314,9 @@ export function HoldingsCardList({
                 {columns.map((column) => {
                   const metric =
                     column.id === 'profitAmount'
-                      ? value.profitAmount
+                      ? profitAmount
                       : column.id === 'profitRate'
-                        ? value.profitRate
+                        ? profitRate
                         : null;
                   return (
                     <div key={column.id}>
@@ -282,6 +355,9 @@ interface HoldingsSectionProps extends Omit<HoldingsViewProps, 'holdings' | 'vis
 
 export function HoldingsSection({
   groups,
+  histories = [],
+  displayCurrency = 'USD',
+  exchangeRate,
   prices,
   visibleColumnsByMarket,
   money,
@@ -295,12 +371,30 @@ export function HoldingsSection({
     <div className={styles.section}>
       {groups.map(({ market, holdings }) => {
         const visibleColumns = visibleColumnsByMarket[market];
-        const totalInvestment = holdings.reduce((sum, holding) => sum + holding.investedAmount, 0);
+        const missingKrwCost =
+          market === 'US' &&
+          displayCurrency === 'KRW' &&
+          holdings.some((holding) => holdingKrwCost(holding, histories) === null);
+        const totalInvestment = holdings.reduce(
+          (sum, holding) =>
+            sum +
+            (market === 'US' && displayCurrency === 'KRW'
+              ? (holdingKrwCost(holding, histories) ?? 0)
+              : holding.investedAmount),
+          0,
+        );
         const hasEveryPrice = holdings.every((holding) => prices[holding.ticker] !== undefined);
         const totalValue = hasEveryPrice
           ? holdings.reduce((sum, holding) => sum + prices[holding.ticker] * holding.quantity, 0)
           : null;
-        const profit = totalValue === null ? null : totalValue - totalInvestment;
+        const profit =
+          totalValue === null ||
+          missingKrwCost ||
+          (market === 'US' && displayCurrency === 'KRW' && !exchangeRate)
+            ? null
+            : (market === 'US' && displayCurrency === 'KRW'
+                ? totalValue * exchangeRate!
+                : totalValue) - totalInvestment;
         const showSummary = visibleColumns.some((column) =>
           ['investment', 'evaluatedValue', 'profitAmount', 'profitRate'].includes(column),
         );
@@ -327,7 +421,14 @@ export function HoldingsSection({
               <div className={styles.summary}>
                 {visibleColumns.includes('investment') && (
                   <span>
-                    투자원금 <strong>{money(totalInvestment, market)}</strong>
+                    투자원금{' '}
+                    <strong>
+                      {missingKrwCost
+                        ? '환율 없음'
+                        : market === 'US' && displayCurrency === 'KRW'
+                          ? formatWon(totalInvestment)
+                          : money(totalInvestment, market)}
+                    </strong>
                   </span>
                 )}
                 {visibleColumns.includes('evaluatedValue') && (
@@ -344,7 +445,11 @@ export function HoldingsSection({
                     <strong
                       className={profit === null || profit >= 0 ? styles.positive : styles.negative}
                     >
-                      {profit === null ? '시세 미조회' : money(profit, market)}
+                      {profit === null
+                        ? '시세 또는 환율 미조회'
+                        : market === 'US' && displayCurrency === 'KRW'
+                          ? formatWon(profit)
+                          : money(profit, market)}
                     </strong>
                   </span>
                 )}
@@ -364,6 +469,9 @@ export function HoldingsSection({
             )}
             <HoldingsTable
               holdings={holdings}
+              histories={histories}
+              displayCurrency={displayCurrency}
+              exchangeRate={exchangeRate}
               prices={prices}
               visibleColumns={visibleColumns}
               money={money}
@@ -371,6 +479,9 @@ export function HoldingsSection({
             />
             <HoldingsCardList
               holdings={holdings}
+              histories={histories}
+              displayCurrency={displayCurrency}
+              exchangeRate={exchangeRate}
               prices={prices}
               visibleColumns={visibleColumns}
               money={money}

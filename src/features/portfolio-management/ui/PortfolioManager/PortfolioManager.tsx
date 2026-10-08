@@ -165,6 +165,9 @@ export function PortfolioManager({
       <PortfolioHoldings
         loading={!activePortfolio && isLoading}
         holdings={holdings}
+        histories={histories}
+        displayCurrency={summaryCurrency}
+        exchangeRate={exchangeRate?.rate ?? null}
         groups={grouped}
         prices={prices}
         visibleColumnsByMarket={visibleColumnsByMarket}

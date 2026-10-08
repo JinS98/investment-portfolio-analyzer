@@ -1,12 +1,15 @@
 import { HoldingsSection } from '../HoldingsSection';
 import type { HoldingColumnId } from '../../model/holdingColumns';
 import type { createPortfolioManagerViewModel } from '../../model/portfolioViewModel';
-import type { Holding, MarketType, PriceMap } from '../../../../types';
+import type { Holding, HoldingHistory, MarketType, PriceMap } from '../../../../types';
 import styles from './PortfolioManager.module.scss';
 
 interface PortfolioHoldingsProps {
   loading: boolean;
   holdings: Holding[];
+  histories: HoldingHistory[];
+  displayCurrency: 'KRW' | 'USD';
+  exchangeRate: number | null;
   groups: ReturnType<typeof createPortfolioManagerViewModel>['groups'];
   prices: PriceMap;
   visibleColumnsByMarket: Record<MarketType, HoldingColumnId[]>;
@@ -25,6 +28,9 @@ interface PortfolioHoldingsProps {
 export function PortfolioHoldings({
   loading,
   holdings,
+  histories,
+  displayCurrency,
+  exchangeRate,
   groups,
   prices,
   visibleColumnsByMarket,
@@ -77,6 +83,9 @@ export function PortfolioHoldings({
       </div>
       <HoldingsSection
         groups={groups}
+        histories={histories}
+        displayCurrency={displayCurrency}
+        exchangeRate={exchangeRate}
         prices={prices}
         visibleColumnsByMarket={visibleColumnsByMarket}
         money={money}
