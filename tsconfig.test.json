@@ -25,5 +25,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["tests/setup.ts", "tests/**/*.test.tsx"]
+  "include": ["tests/setup.ts", "tests/**/*.test.tsx", "tests/**/*.integration.ts"]
 }

@@ -31,7 +31,7 @@ jobs:
       - run: npm run format:check
 
   functions:
-    name: Functions build
+    name: Functions build and API tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -44,3 +44,24 @@ jobs:
           cache-dependency-path: functions/package-lock.json
       - run: npm ci --prefix functions
       - run: npm run build --prefix functions
+      - run: npm test --prefix functions
+
+  firestore-rules:
+    name: Firestore security rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm run test:rules
+      - run: npm run test:day34

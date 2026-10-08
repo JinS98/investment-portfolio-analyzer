@@ -48,7 +48,7 @@
 
 ### 요구 사항
 
-- Node.js 22.12 이상 권장
+- 프런트엔드: Node.js 22.12 이상, 배포용 Functions: Node.js 20, Firestore 에뮬레이터 검사: Java 21
 - 토스증권 Open API Client ID/Secret
 - Firebase 프로젝트 (로그인·데이터 저장 기능 사용 시)
 
@@ -79,7 +79,7 @@ npm run dev
 
 토스증권 WTS의 **설정 → Open API → 허용 IP 관리**에서 현재 네트워크의 공인 IP를 등록해야 합니다. 등록되지 않은 IP에서는 토큰 발급이 403으로 차단됩니다.
 
-`VITE_` 접두사가 붙은 값은 브라우저 번들에 노출될 수 있습니다. 토스·외부 정보 API 키에는 절대 `VITE_` 접두사를 붙이지 마세요.
+`VITE_` 접두사가 붙은 값은 브라우저 번들에 노출될 수 있습니다. 토스·외부 정보 API 키에는 절대 `VITE_` 접두사를 붙이지 마세요. 배포 시 서버 키는 `functions/.env.example`을 기준으로 Functions 환경에 별도로 설정합니다. 로컬 `.env.local` 값만으로 배포된 Function의 키가 설정되지는 않습니다.
 
 ## 데이터 흐름
 
@@ -92,6 +92,10 @@ Browser (React)
 ```
 
 거래 이력(`holdingHistories`)이 원본 데이터이며, 보유 상태(`holdings`)와 요약(`summary/current`)은 이력을 기준으로 다시 계산한 결과입니다. Firestore 규칙은 `users/{userId}/portfolios/**` 경로에서 본인 데이터만 읽고 쓰도록 배포해야 합니다.
+
+### 기존 보유 데이터 이관 범위
+
+기존 직접 입력형 보유 종목은 실제 포트폴리오의 초기 매수 기록(`LEGACY_IMPORT`)으로 한 번 이관합니다. 이관 전의 개별 매수·매도 내역, 수수료·세금, 실현손익은 원본 보유 데이터만으로 복원할 수 없어 **이번 출시의 복원 범위에 포함하지 않습니다**. 이관 기록은 현재 보유 상태를 계산하기 위한 시작점이며 실제 과거 체결 내역의 증빙이 아닙니다. 과거 거래 전체를 다시 입력·복원하는 기능은 후속 작업입니다. 자세한 기준은 [35일차 배포 문서](docs/day35-release-documentation.md)를 참고하세요.
 
 ## 프런트엔드 컴포넌트 구조
 
@@ -118,12 +122,17 @@ npm test
 npm run build
 npm run format:check
 
-# Node.js 20에서 Functions 빌드
+# Node.js 20에서 Functions 빌드·API 테스트
 npm ci --prefix functions
 npm run build --prefix functions
+npm test --prefix functions
+
+# Java 21이 설치된 환경에서 Auth·Firestore 에뮬레이터 검증
+npm run test:rules
+npm run test:day34
 ```
 
-화면 조작이 필요한 guest 시나리오 S01~S08과 고정 viewport·테마 조합은 [21일차 기준선](docs/day21-refactoring-baseline.md)에 정리되어 있습니다. 자동 테스트 통과와 화면 검증 완료는 별도로 판정합니다.
+`test:rules`와 `test:day34`는 운영 프로젝트 대신 `demo-*` 에뮬레이터 프로젝트를 사용합니다. 화면 조작이 필요한 guest 시나리오 S01~S08과 고정 viewport·테마 조합은 [21일차 기준선](docs/day21-refactoring-baseline.md)에 정리되어 있습니다. 자동 테스트 통과와 화면 검증 완료는 별도로 판정합니다.
 
 ## 일차별 개발 문서
 
@@ -153,16 +162,18 @@ npm run build --prefix functions
 | 22~31일차 | UI·기능 수정과 회귀 검증        | [작업 계획](docs/day22-31-ui-feature-roadmap.md), [31일차 검증 기록](docs/day31-regression-verification.md) |
 | 32~41일차 | 배포 준비·설정·출시 검증        | [배포 계획](docs/day32-41-deployment-roadmap.md)                                                            |
 
+35·36일차의 배포 문서 정리와 출시 후보 판정은 각각 [35일차](docs/day35-release-documentation.md), [36일차](docs/day36-release-candidate.md)에 기록합니다.
+
 ## 배포 구성
 
 개발 환경에서는 Vite 미들웨어가 `/api/toss/*`를 처리합니다. 배포 환경에서는 Firebase Hosting이 같은 경로를 `tossApi` Cloud Function으로 전달하므로, 브라우저 코드는 개발과 배포에서 같은 API 경로를 사용합니다.
 
 외부 API 키는 [`functions/.env.example`](functions/.env.example)를 복사해 `functions/.env` 또는 배포 환경 변수로 설정합니다. `TOSS_CLIENT_SECRET`을 비롯한 키에는 `VITE_` 접두사를 사용하지 마세요. 이 값은 함수 런타임에서만 읽히며 브라우저 번들에 포함되지 않습니다.
 
-```zsh
+```sh
 npm run build
-cd functions && npm run build
-firebase deploy --only functions,hosting,firestore:rules
+npm run build --prefix functions
+npx firebase deploy --project YOUR_PROJECT_ID --only functions,hosting,firestore:rules
 ```
 
-`tossApi`는 엔드포인트별 공유 캐시 헤더와 인스턴스별 요청 제한을 적용합니다. 배포 전 Firebase 프로젝트 연결과 함수 환경 변수 설정을 완료해야 합니다.
+배포 대상 프로젝트와 함수 환경 변수를 확인한 뒤 명령을 실행합니다. 현재 저장소의 `.firebaserc` 기본 프로젝트를 확인 없이 운영 배포 대상으로 사용하지 마세요. 토스 허용 IP를 위한 VPC·Cloud NAT·Function 연결은 [20일차 배포 절차](docs/day20-deployment-api-transition.md)에, 검증·운영 환경 순서는 [배포 로드맵](docs/day32-41-deployment-roadmap.md)에 정리되어 있습니다. `tossApi`는 엔드포인트별 공유 캐시 헤더와 인스턴스별 요청 제한을 적용합니다.

@@ -1,11 +1,7 @@
 import type { HoldingHistory, StockItem } from '../types';
 
-const legacyCreatedAt = (addedAt: string): number => {
-  const parsed = Date.parse(addedAt);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
-const legacyDate = (addedAt: string): string => addedAt.slice(0, 10);
+const importedDate = (importedAt: number): string =>
+  new Date(importedAt + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
 /** 기존 직접 입력형 보유 데이터를 재실행 가능한 초기 매수 이력으로 변환한다. */
 export const createLegacyImportHistory = (
@@ -26,8 +22,8 @@ export const createLegacyImportHistory = (
   fee: 0,
   tax: 0,
   realizedPnL: 0,
-  date: legacyDate(stock.addedAt),
-  createdAt: legacyCreatedAt(stock.addedAt),
+  date: importedDate(importedAt),
+  createdAt: importedAt,
   source: 'LEGACY_IMPORT',
   legacyStockId: stock.id,
   importedAt,

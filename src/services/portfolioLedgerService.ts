@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  runTransaction,
   setDoc,
   writeBatch,
   type DocumentData,
@@ -445,20 +446,62 @@ export async function loadPortfolioLedger(
   portfolio: Portfolio,
 ): Promise<PortfolioLedger> {
   const reference = portfolioReference(userId, portfolio.id);
+  // Read the revision before the collections so a concurrent write cannot make
+  // an old collection snapshot look like the latest ledger during commit.
+  const portfolioSnapshot = await getDoc(reference);
+  if (!portfolioSnapshot.exists()) throw new Error('포트폴리오를 찾을 수 없습니다.');
+  const ledgerRevision = Number(portfolioSnapshot.data().ledgerRevision ?? 0);
   const [holdingSnapshot, historySnapshot] = await Promise.all([
     getDocs(collection(reference, 'holdings')),
     getDocs(collection(reference, 'holdingHistories')),
   ]);
   holdingSnapshot.docs.forEach((item) => readHolding(item.data(), portfolio.id));
   const histories = historySnapshot.docs.map((item) => readHistory(item.data(), item.id));
-  const recalculated = recalculatePortfolio(portfolio, histories);
+  const currentPortfolio = readPortfolio(portfolioSnapshot.data(), portfolio.id, userId);
+  const recalculated = recalculatePortfolio(currentPortfolio, histories);
   return {
-    portfolio,
+    portfolio: currentPortfolio,
     holdings: recalculated.holdings,
     histories: recalculated.histories,
     summary: recalculated.summary,
+    ledgerRevision,
   };
 }
+
+class LedgerRevisionChanged extends Error {}
+
+const sameHistory = (left: HoldingHistory, right: HoldingHistory): boolean =>
+  JSON.stringify(historyData(left)) === JSON.stringify(historyData(right));
+
+const rebaseHistories = (
+  previous: HoldingHistory[],
+  next: HoldingHistory[],
+  current: HoldingHistory[],
+): HoldingHistory[] => {
+  const previousById = new Map(previous.map((history) => [history.id, history]));
+  const nextById = new Map(next.map((history) => [history.id, history]));
+  const currentById = new Map(current.map((history) => [history.id, history]));
+
+  for (const history of next) {
+    const old = previousById.get(history.id);
+    if (old === history) continue;
+    const latest = currentById.get(history.id);
+    if (!old && latest) continue; // A concurrent retry already added this transaction.
+    if (old && (!latest || !sameHistory(old, latest))) {
+      throw new Error('거래 기록이 다른 작업에서 변경되었습니다. 새로고침 후 다시 시도해주세요.');
+    }
+    currentById.set(history.id, history);
+  }
+  for (const old of previous) {
+    if (nextById.has(old.id)) continue;
+    const latest = currentById.get(old.id);
+    if (latest && !sameHistory(old, latest)) {
+      throw new Error('거래 기록이 다른 작업에서 변경되었습니다. 새로고침 후 다시 시도해주세요.');
+    }
+    currentById.delete(old.id);
+  }
+  return [...currentById.values()];
+};
 
 const persistLedger = async (
   userId: string,
@@ -467,42 +510,64 @@ const persistLedger = async (
   nextHistories: HoldingHistory[],
   migrationData?: DocumentData,
 ): Promise<PortfolioLedger> => {
-  const recalculated = recalculatePortfolio(portfolio, nextHistories);
-  const updatedAt = Date.now();
-  const updatedPortfolio = { ...portfolio, updatedAt };
   const reference = portfolioReference(userId, portfolio.id);
-  const storedHoldings = await getDocs(collection(reference, 'holdings'));
-  const batch = writeBatch(getDatabase());
-  batch.set(reference, updatedPortfolio);
-
-  const nextHoldingsById = new Map(
-    recalculated.holdings.map((holding) => [holdingDocumentId(holding), holding]),
-  );
-  const previousHoldingIds = new Set(storedHoldings.docs.map((item) => item.id));
-  nextHoldingsById.forEach((holding, id) => {
-    batch.set(doc(reference, 'holdings', id), holdingData(holding));
-    previousHoldingIds.delete(id);
-  });
-  previousHoldingIds.forEach((id) => batch.delete(doc(reference, 'holdings', id)));
-
-  const nextHistoryIds = new Set(recalculated.histories.map((history) => history.id));
-  recalculated.histories.forEach((history) =>
-    batch.set(doc(reference, 'holdingHistories', history.id), historyData(history)),
-  );
-  previous.histories
-    .filter((history) => !nextHistoryIds.has(history.id))
-    .forEach((history) => batch.delete(doc(reference, 'holdingHistories', history.id)));
-
-  batch.set(doc(reference, 'summary', 'current'), summaryData(recalculated.summary, updatedAt));
-  if (migrationData) batch.set(doc(reference, 'migrations', LEGACY_MIGRATION_ID), migrationData);
-  await batch.commit();
-
-  return {
-    portfolio: updatedPortfolio,
-    holdings: recalculated.holdings,
-    histories: recalculated.histories,
-    summary: recalculated.summary,
-  };
+  let current = previous;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const histories = rebaseHistories(previous.histories, nextHistories, current.histories);
+    const recalculated = recalculatePortfolio(current.portfolio, histories);
+    const updatedAt = Date.now();
+    const updatedPortfolio = { ...current.portfolio, updatedAt };
+    const storedHoldings = await getDocs(collection(reference, 'holdings'));
+    const nextHoldingsById = new Map(
+      recalculated.holdings.map((holding) => [holdingDocumentId(holding), holding]),
+    );
+    const removedHoldingIds = storedHoldings.docs
+      .map((item) => item.id)
+      .filter((id) => !nextHoldingsById.has(id));
+    try {
+      await runTransaction(getDatabase(), async (transaction) => {
+        const snapshot = await transaction.get(reference);
+        if (
+          !snapshot.exists() ||
+          Number(snapshot.data().ledgerRevision ?? 0) !== current.ledgerRevision
+        ) {
+          throw new LedgerRevisionChanged();
+        }
+        transaction.set(reference, {
+          ...updatedPortfolio,
+          ledgerRevision: (current.ledgerRevision ?? 0) + 1,
+        });
+        nextHoldingsById.forEach((holding, id) => {
+          transaction.set(doc(reference, 'holdings', id), holdingData(holding));
+        });
+        removedHoldingIds.forEach((id) => transaction.delete(doc(reference, 'holdings', id)));
+        const nextHistoryIds = new Set(recalculated.histories.map((history) => history.id));
+        recalculated.histories.forEach((history) =>
+          transaction.set(doc(reference, 'holdingHistories', history.id), historyData(history)),
+        );
+        current.histories
+          .filter((history) => !nextHistoryIds.has(history.id))
+          .forEach((history) => transaction.delete(doc(reference, 'holdingHistories', history.id)));
+        transaction.set(
+          doc(reference, 'summary', 'current'),
+          summaryData(recalculated.summary, updatedAt),
+        );
+        if (migrationData)
+          transaction.set(doc(reference, 'migrations', LEGACY_MIGRATION_ID), migrationData);
+      });
+      return {
+        portfolio: updatedPortfolio,
+        holdings: recalculated.holdings,
+        histories: recalculated.histories,
+        summary: recalculated.summary,
+        ledgerRevision: (current.ledgerRevision ?? 0) + 1,
+      };
+    } catch (error) {
+      if (!(error instanceof LedgerRevisionChanged)) throw error;
+      current = await loadPortfolioLedger(userId, portfolio);
+    }
+  }
+  throw new Error('다른 거래가 동시에 저장되고 있습니다. 잠시 후 다시 시도해주세요.');
 };
 
 export async function migrateLegacyStocks(
@@ -797,23 +862,22 @@ export async function executeDueRecurringInvestmentRule(
       rule.status === 'ACTIVE' ? getPendingRecurringInvestmentDatesUntil(rule, koreaToday()) : [];
 
     const ledger = await loadPortfolioLedger(userId, portfolio);
-    const existingDates = new Set(
+    const existingScheduledDates = new Set(
       ledger.histories
         .filter((history) => history.recurringRuleId === rule.id)
-        .map((history) => history.date),
+        .map((history) => history.scheduledDate ?? history.date),
     );
     const histories = [] as HoldingHistory[];
     const executedDates: string[] = [];
     for (const date of dates) {
-      if (existingDates.has(date)) continue;
+      if (existingScheduledDates.has(date)) continue;
       const candle = await fetchClosePriceOnOrAfter(rule.ticker, date);
       if (!candle || candle.closePrice <= 0)
         throw new Error(`${rule.name ?? rule.ticker}의 ${date} 이후 종가를 찾지 못했습니다.`);
-      if (existingDates.has(candle.date)) continue;
       const costs = defaultTransactionCosts(candle.closePrice * rule.quantity, rule.market, 'BUY');
       histories.push(
         await createHistory(
-          doc(collection(portfolioReference(userId, portfolioId), 'holdingHistories')).id,
+          `recurring-${rule.id}-${date}`,
           {
             portfolioId,
             portfolioType: portfolio.type,

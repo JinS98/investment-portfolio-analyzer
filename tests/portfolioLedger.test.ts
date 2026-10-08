@@ -26,6 +26,8 @@ test('legacy stock data becomes an idempotent initial BUY history', () => {
   assert.equal(result.tax, 0);
   assert.equal(result.source, 'LEGACY_IMPORT');
   assert.equal(result.legacyStockId, 'old-aapl');
-  assert.equal(result.date, '2026-09-01');
+  assert.equal(result.date, '2026-09-11');
+  assert.equal(result.createdAt, 1_789_123_456_789);
   assert.equal(result.importedAt, 1_789_123_456_789);
+  assert.equal(result.legacyAddedAt, '2026-09-01T01:02:03.000Z');
 });

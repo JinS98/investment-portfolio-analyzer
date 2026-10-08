@@ -6,6 +6,7 @@ const BASE = 'https://openapi.tossinvest.com';
 const HISTORICAL_FX_BASE = 'https://api.frankfurter.dev/v2';
 const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
 const historicalFxCache = new Map<string, { resolvedDate: string; rate: number }>();
+const HISTORICAL_FX_CACHE_LIMIT = 1_024;
 
 function isCalendarDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -35,6 +36,9 @@ async function historicalUsdKrwRate(requestedDate: string) {
       const resolvedDate = typeof data.date === 'string' ? data.date : candidate;
       if (isCalendarDate(resolvedDate) && Number.isFinite(rate) && rate > 0) {
         const result = { resolvedDate, rate };
+        if (historicalFxCache.size >= HISTORICAL_FX_CACHE_LIMIT) {
+          historicalFxCache.delete(historicalFxCache.keys().next().value!);
+        }
         historicalFxCache.set(requestedDate, result);
         return result;
       }
@@ -92,6 +96,10 @@ async function usIndexData(
 }
 
 const insightCache = new Map<string, { expiresAt: number; value: unknown }>();
+const INSIGHT_CACHE_LIMIT = 500;
+
+class InvalidRequestError extends Error {}
+class TossConfigurationError extends Error {}
 
 const asFinite = (value: unknown) => {
   const number = Number(value);
@@ -224,6 +232,14 @@ async function stockInsights(
     news: news.items,
     newsMessage: news.message,
   };
+  insightCache.delete(cacheKey);
+  if (insightCache.size >= INSIGHT_CACHE_LIMIT) {
+    for (const [key, entry] of insightCache) {
+      if (entry.expiresAt <= Date.now()) insightCache.delete(key);
+    }
+    if (insightCache.size >= INSIGHT_CACHE_LIMIT)
+      insightCache.delete(insightCache.keys().next().value!);
+  }
   insightCache.set(cacheKey, { expiresAt: Date.now() + 15 * 60 * 1000, value });
   return value;
 }
@@ -238,7 +254,7 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
       const clientId = env.TOSS_CLIENT_ID;
       const clientSecret = env.TOSS_CLIENT_SECRET;
       if (!clientId || !clientSecret)
-        throw new Error('.env.local에 TOSS_CLIENT_ID와 TOSS_CLIENT_SECRET을 설정해주세요.');
+        throw new TossConfigurationError('시장 데이터 설정을 확인해 주세요.');
       const response = await fetch(`${BASE}/oauth2/token`, {
         method: 'POST',
         signal: AbortSignal.timeout(15_000),
@@ -297,12 +313,13 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
   });
   const middleware = async (req: Request, res: Response): Promise<void> => {
     const url = new URL(req.url ?? '/', 'http://localhost');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
     if (!url.pathname.startsWith('/api/toss/')) {
       res.statusCode = 404;
       res.end('{}');
       return;
     }
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     const endpoint = url.pathname.slice('/api/toss/'.length);
     if (
       req.method !== 'GET' ||
@@ -332,7 +349,10 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
       : ['candles', 'indicator-candles', 'stocks'].includes(endpoint)
         ? 60
         : 10;
-    res.setHeader('Cache-Control', `public, max-age=0, s-maxage=${cacheSeconds}`);
+    const respond = (body: unknown) => {
+      res.setHeader('Cache-Control', `public, max-age=0, s-maxage=${cacheSeconds}`);
+      res.end(JSON.stringify(body));
+    };
     try {
       if (req.headers.origin && new URL(req.headers.origin).host !== req.headers.host) {
         res.statusCode = 403;
@@ -356,7 +376,7 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
           res.end(JSON.stringify({ message: '검색어는 80자 이내로 입력해주세요.' }));
           return;
         }
-        res.end(JSON.stringify({ result: await searchStocks(query) }));
+        respond({ result: await searchStocks(query) });
         return;
       }
       if (endpoint === 'historical-exchange-rate') {
@@ -367,32 +387,33 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
           return;
         }
         const rate = await historicalUsdKrwRate(requestedDate);
-        res.end(
-          JSON.stringify({
-            result: {
-              baseCurrency: 'USD',
-              quoteCurrency: 'KRW',
-              requestedDate,
-              resolvedDate: rate.resolvedDate,
-              rate: rate.rate,
-              source: 'Frankfurter daily reference rate',
-            },
-          }),
-        );
+        respond({
+          result: {
+            baseCurrency: 'USD',
+            quoteCurrency: 'KRW',
+            requestedDate,
+            resolvedDate: rate.resolvedDate,
+            rate: rate.rate,
+            source: 'Frankfurter daily reference rate',
+          },
+        });
         return;
       }
       if (endpoint === 'stock-insights') {
         const symbol = url.searchParams.get('symbol') ?? '';
         const name = url.searchParams.get('name')?.trim() ?? '';
         const market = url.searchParams.get('market');
-        if (!/^[A-Za-z0-9.-]+$/.test(symbol) || !name || !['KR', 'US'].includes(market ?? '')) {
+        if (
+          !/^[A-Za-z0-9.-]+$/.test(symbol) ||
+          !name ||
+          name.length > 80 ||
+          !['KR', 'US'].includes(market ?? '')
+        ) {
           res.statusCode = 400;
           res.end(JSON.stringify({ message: '종목 정보를 확인해 주세요.' }));
           return;
         }
-        res.end(
-          JSON.stringify({ result: await stockInsights(env, symbol, name, market as 'KR' | 'US') }),
-        );
+        respond({ result: await stockInsights(env, symbol, name, market as 'KR' | 'US') });
         return;
       }
       if (endpoint === 'us-indices') {
@@ -401,14 +422,12 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
           ? (requestedRange as '1d' | '1mo' | '3mo' | '6mo' | 'max')
           : '1mo';
         const interval = range === '1d' ? '5m' : range === 'max' ? '1mo' : '1d';
-        res.end(
-          JSON.stringify({
-            result: await Promise.all([
-              usIndexData('NASDAQ', range, interval),
-              usIndexData('SP500', range, interval),
-            ]),
-          }),
-        );
+        respond({
+          result: await Promise.all([
+            usIndexData('NASDAQ', range, interval),
+            usIndexData('SP500', range, interval),
+          ]),
+        });
         return;
       }
       const params = new URLSearchParams();
@@ -425,7 +444,7 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
           count < 1 ||
           count > 200
         )
-          throw new Error('종목 또는 조회 개수가 올바르지 않습니다.');
+          throw new InvalidRequestError('종목 또는 조회 개수가 올바르지 않습니다.');
         params.set('symbol', symbol);
         params.set('count', String(count));
         params.set('interval', '1d');
@@ -433,7 +452,7 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
         const before = url.searchParams.get('before');
         if (before) {
           if (!Number.isFinite(Date.parse(before)))
-            throw new Error('조회 시각이 올바르지 않습니다.');
+            throw new InvalidRequestError('조회 시각이 올바르지 않습니다.');
           params.set('before', before);
         }
       } else if (endpoint === 'rankings') {
@@ -445,7 +464,7 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
           count < 1 ||
           count > 100
         ) {
-          throw new Error('랭킹 시장과 조회 개수를 확인해 주세요.');
+          throw new InvalidRequestError('랭킹 시장과 조회 개수를 확인해 주세요.');
         }
         params.set('type', 'MARKET_TRADING_AMOUNT');
         params.set('marketCountry', marketCountry!);
@@ -454,7 +473,7 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
       } else if (endpoint === 'indicator-prices') {
         const symbols = url.searchParams.get('symbols') ?? '';
         if (!/^(KOSPI|KOSDAQ)(,(KOSPI|KOSDAQ))*$/.test(symbols)) {
-          throw new Error('지원하는 지수 심볼을 입력해 주세요.');
+          throw new InvalidRequestError('지원하는 지수 심볼을 입력해 주세요.');
         }
         params.set('symbols', symbols);
         upstreamEndpoint = 'market-indicators/prices';
@@ -468,7 +487,7 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
           count < 2 ||
           count > 200
         ) {
-          throw new Error('지원하는 지수와 조회 개수를 확인해 주세요.');
+          throw new InvalidRequestError('지원하는 지수와 조회 개수를 확인해 주세요.');
         }
         params.set('interval', interval);
         params.set('count', String(count));
@@ -476,7 +495,7 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
       } else {
         const symbols = url.searchParams.get('symbols') ?? '';
         if (!/^[A-Za-z0-9.-]+(,[A-Za-z0-9.-]+)*$/.test(symbols) || symbols.split(',').length > 200)
-          throw new Error('종목은 1~200개 입력해주세요.');
+          throw new InvalidRequestError('종목은 1~200개 입력해주세요.');
         params.set('symbols', symbols);
       }
       const request = async () =>
@@ -498,9 +517,14 @@ export function createTossApiHandler(env: Record<string, string | undefined>) {
         );
         return;
       }
-      res.end(JSON.stringify(await response.json()));
+      respond(await response.json());
     } catch (error) {
-      res.statusCode = 502;
+      res.statusCode =
+        error instanceof InvalidRequestError
+          ? 400
+          : error instanceof TossConfigurationError
+            ? 503
+            : 502;
       res.end(
         JSON.stringify({
           message: error instanceof Error ? error.message : '토스 API 연결에 실패했습니다.',

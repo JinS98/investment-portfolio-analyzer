@@ -69,6 +69,13 @@ export function TransactionTable({
                               예정 {history.scheduledDate ?? history.date} · 반영 {history.date}
                             </small>
                           </span>
+                        ) : history.source === 'LEGACY_IMPORT' ? (
+                          <span
+                            className={styles.manualSource}
+                            title="과거 체결 내역이 아닌 초기 보유 기록입니다."
+                          >
+                            초기 보유 이관
+                          </span>
                         ) : (
                           <span className={styles.manualSource}>수동 기록</span>
                         )}

@@ -196,4 +196,6 @@ export interface PortfolioLedger {
   holdings: Holding[];
   histories: HoldingHistory[];
   summary: PortfolioSummary;
+  /** Server ledger version used to reject stale concurrent writes. */
+  ledgerRevision?: number;
 }

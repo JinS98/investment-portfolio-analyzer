@@ -55,7 +55,9 @@ export function TransactionMobileList({
                 <span>
                   {history.source === 'RECURRING'
                     ? (history.recurringRuleName ?? '적립식 자동매수')
-                    : '수동 기록'}
+                    : history.source === 'LEGACY_IMPORT'
+                      ? '초기 보유 이관'
+                      : '수동 기록'}
                 </span>
                 {showConfirm && needsConfirmation ? (
                   <span className={styles.mobilePending}>체결 확인 필요</span>
@@ -75,6 +77,9 @@ export function TransactionMobileList({
                   <small>
                     예정 {history.scheduledDate ?? history.date} · 반영 {history.date}
                   </small>
+                )}
+                {history.source === 'LEGACY_IMPORT' && (
+                  <small>이관 전 실제 거래 내역이 아닌 초기 보유 기록입니다.</small>
                 )}
                 <dl className={styles.mobileCardValues}>
                   <div>
