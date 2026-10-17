@@ -1,3 +1,5 @@
+import { fetchSecStatement } from '../functions/src/sec.mts';
+import { fetchDartStatement } from '../functions/src/dart.mts';
 import type { Plugin, Connect } from 'vite';
 import { createStockSearch } from './stockSearch.ts';
 import type { StockSearchItem } from '../src/types/market.ts';
@@ -119,8 +121,8 @@ async function stockInsights(
   const naverId = env.NAVER_CLIENT_ID;
   const naverSecret = env.NAVER_CLIENT_SECRET;
   const marketauxToken = env.MARKETAUX_API_TOKEN;
-  const [fundamentals, news] = await Promise.all([
-    eodToken
+  const [fundamentals, news, dart] = await Promise.all([
+    market === 'US' && eodToken
       ? fetch(
           `https://eodhd.com/api/fundamentals/${encodeURIComponent(externalSymbol)}?${new URLSearchParams({ api_token: eodToken, fmt: 'json' })}`,
           { signal: AbortSignal.timeout(15_000) },
@@ -149,15 +151,22 @@ async function stockInsights(
     market === 'KR'
       ? naverId && naverSecret
         ? fetch(
-            `https://openapi.naver.com/v1/search/news.json?${new URLSearchParams({ query: name, display: '3', sort: 'date' })}`,
+            `https://naverapihub.apigw.ntruss.com/search/v1/news?${new URLSearchParams({ query: name, display: '3', sort: 'date', format: 'json' })}`,
             {
-              headers: { 'X-Naver-Client-Id': naverId, 'X-Naver-Client-Secret': naverSecret },
+              headers: { 'X-NCP-APIGW-API-KEY-ID': naverId, 'X-NCP-APIGW-API-KEY': naverSecret },
               signal: AbortSignal.timeout(15_000),
             },
           )
             .then(async (response) => {
-              if (!response.ok)
-                return { items: [], message: '국내 뉴스 API를 사용할 수 없습니다.' };
+              if (!response.ok) {
+                const message =
+                  response.status === 401 || response.status === 403
+                    ? '네이버 API HUB 인증키와 검색 API 이용 신청 상태를 확인해 주세요.'
+                    : response.status === 429
+                      ? '국내 뉴스 API 호출 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.'
+                      : '국내 뉴스 API를 사용할 수 없습니다.';
+                return { items: [], message };
+              }
               const data = (await response.json()) as { items?: Array<Record<string, unknown>> };
               return {
                 items: (data.items ?? []).flatMap((item) =>
@@ -183,7 +192,8 @@ async function stockInsights(
             .catch(() => ({ items: [], message: '국내 뉴스를 불러오지 못했습니다.' }))
         : Promise.resolve({
             items: [],
-            message: 'NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET을 설정하면 국내 뉴스를 볼 수 있습니다.',
+            message:
+              '네이버 API HUB의 Client ID와 Client Secret을 설정하면 국내 뉴스를 볼 수 있습니다.',
           })
       : marketauxToken
         ? fetch(
@@ -217,8 +227,12 @@ async function stockInsights(
             items: [],
             message: 'MARKETAUX_API_TOKEN을 설정하면 해외 뉴스를 볼 수 있습니다.',
           }),
+    market === 'KR'
+      ? fetchDartStatement(symbol, env.DART_API_KEY)
+      : fetchSecStatement(symbol, env.SEC_USER_AGENT),
   ]);
   const value = {
+    ...dart,
     fundamentals: fundamentals.data,
     fundamentalsMessage: fundamentals.message,
     news: news.items,

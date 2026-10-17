@@ -68,18 +68,22 @@ npm run dev
 
 `.env.local.example`을 복사해 `.env.local`을 만들고 값을 채웁니다. `.env.local`은 Git에 포함하지 않습니다.
 
-| 변수                                     | 필수                     | 용도                            |
-| ---------------------------------------- | ------------------------ | ------------------------------- |
-| `TOSS_CLIENT_ID`                         | 시세·시장 데이터 사용 시 | 토스증권 Open API Client ID     |
-| `TOSS_CLIENT_SECRET`                     | 시세·시장 데이터 사용 시 | 토스증권 Open API Client Secret |
-| `VITE_FIREBASE_*`                        | 로그인·저장 사용 시      | Firebase 웹 앱 설정값           |
-| `EODHD_API_TOKEN`                        | 선택                     | 종목 지표 조회                  |
-| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 선택                     | 국내 종목 뉴스 조회             |
-| `MARKETAUX_API_TOKEN`                    | 선택                     | 미국 종목 뉴스 조회             |
+| 변수                                     | 필수                     | 용도                             |
+| ---------------------------------------- | ------------------------ | -------------------------------- |
+| `TOSS_CLIENT_ID`                         | 시세·시장 데이터 사용 시 | 토스증권 Open API Client ID      |
+| `TOSS_CLIENT_SECRET`                     | 시세·시장 데이터 사용 시 | 토스증권 Open API Client Secret  |
+| `VITE_FIREBASE_*`                        | 로그인·저장 사용 시      | Firebase 웹 앱 설정값            |
+| `SEC_USER_AGENT`                         | 미국 재무제표 사용 시    | SEC 요청 식별용 이름·연락 이메일 |
+| `DART_API_KEY`                           | 선택                     | 국내 재무제표·핵심 지표 계산     |
+| `EODHD_API_TOKEN`                        | 선택                     | 종목 지표 조회                   |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 선택                     | 국내 종목 뉴스 조회              |
+| `MARKETAUX_API_TOKEN`                    | 선택                     | 미국 종목 뉴스 조회              |
 
 토스증권 WTS의 **설정 → Open API → 허용 IP 관리**에서 현재 네트워크의 공인 IP를 등록해야 합니다. 등록되지 않은 IP에서는 토큰 발급이 403으로 차단됩니다.
 
 `VITE_` 접두사가 붙은 값은 브라우저 번들에 노출될 수 있습니다. 토스·외부 정보 API 키에는 절대 `VITE_` 접두사를 붙이지 마세요. 배포 시 서버 키는 `functions/.env.example`을 기준으로 Functions 환경에 별도로 설정합니다. 로컬 `.env.local` 값만으로 배포된 Function의 키가 설정되지는 않습니다.
+
+네이버 뉴스는 **NAVER API HUB 검색 API**에서 발급한 Client ID·Client Secret을 사용합니다. 키 입력과 확인 순서는 [네이버 뉴스 설정 안내](docs/stock-search.md#네이버-뉴스-키-설정-naver-api-hub)를 참고하세요.
 
 ## 데이터 흐름
 
@@ -161,6 +165,8 @@ npm run test:day34
 | 21일차    | 프런트엔드 컴포넌트 리팩토링    | [계획](docs/day21-frontend-component-refactoring-plan.md), [기준선](docs/day21-refactoring-baseline.md)     |
 | 22~31일차 | UI·기능 수정과 회귀 검증        | [작업 계획](docs/day22-31-ui-feature-roadmap.md), [31일차 검증 기록](docs/day31-regression-verification.md) |
 | 32~41일차 | 배포 준비·설정·출시 검증        | [배포 계획](docs/day32-41-deployment-roadmap.md)                                                            |
+
+시장 탐색의 뉴스·재무정보 연동과 상세 패널 개선은 [작업 기록](docs/market-data-integration.md)에, SEC 접근 차단은 [진단 기록](docs/sec-access-diagnostics.md)에 정리했습니다.
 
 35·36일차의 배포 문서 정리와 출시 후보 판정은 각각 [35일차](docs/day35-release-documentation.md), [36일차](docs/day36-release-candidate.md)에 기록합니다.
 

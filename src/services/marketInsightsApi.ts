@@ -1,3 +1,21 @@
+export interface FinancialStatement {
+  source?: 'DART' | 'SEC';
+  periodStart?: string;
+  periodEnd?: string;
+  filedAt?: string;
+  reportUrl?: string;
+  year: number;
+  basis: 'CFS' | 'OFS';
+  currency: string;
+  receiptNo: string | null;
+  revenue: number | null;
+  operatingProfit: number | null;
+  netIncome: number | null;
+  assets: number | null;
+  liabilities: number | null;
+  equity: number | null;
+}
+
 export interface StockFundamentals {
   per: number | null;
   pbr: number | null;
@@ -14,7 +32,20 @@ export interface MarketNewsArticle {
   summary: string | null;
 }
 
+export interface DomesticMetricInputs {
+  year: number;
+  basis: 'CFS' | 'OFS';
+  eps: number | null;
+  bps: number | null;
+  roe: number | null;
+  dividendPerShare: number | null;
+}
+
 export interface StockInsights {
+  domesticMetricInputs?: DomesticMetricInputs | null;
+  domesticMetricsMessage?: string | null;
+  financialStatement?: FinancialStatement | null;
+  financialStatementMessage?: string | null;
   fundamentals: StockFundamentals | null;
   fundamentalsMessage: string | null;
   news: MarketNewsArticle[];

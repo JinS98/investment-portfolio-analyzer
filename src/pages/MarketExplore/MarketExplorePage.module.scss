@@ -519,7 +519,11 @@
 }
 
 .drawerHeader {
+  position: sticky;
+  z-index: 1;
+  top: 0;
   display: flex;
+  background: var(--color-surface);
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -592,8 +596,8 @@
 
 .drawerContent {
   display: grid;
-  gap: 24px;
-  padding: 24px;
+  gap: 16px;
+  padding: 20px 24px 32px;
 }
 
 .portfolioActionNotice {
@@ -606,7 +610,6 @@
 
 .currentQuote,
 .dailyChartSection,
-.fundamentalsSection,
 .newsSection {
   padding: 20px;
   border-radius: 16px;
@@ -652,7 +655,6 @@
   }
 }
 
-.fundamentalsSection,
 .newsSection {
   h3 {
     font-size: 1rem;
@@ -669,10 +671,11 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin: 16px 0 0;
+  margin: 0;
 
   div {
-    padding: 12px;
+    min-width: 0;
+    padding: 14px;
     border-radius: 12px;
     background: var(--color-surface);
   }
@@ -685,7 +688,9 @@
   dd {
     margin: 5px 0 0;
     color: var(--color-text);
-    font-weight: 800;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -720,9 +725,14 @@
   }
 
   strong {
+    display: -webkit-box;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
   }
 
   span {
@@ -1039,5 +1049,219 @@
     input {
       min-width: 0;
     }
+  }
+}
+
+// Stock details: compact section headers and progressive disclosure.
+.detailSectionHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+
+  > span {
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+  }
+}
+
+.detailDisclosure {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface-muted);
+}
+
+.disclosureTrigger {
+  display: flex;
+  width: 100%;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-interactive);
+    outline-offset: -3px;
+    border-radius: 12px;
+  }
+
+  &[aria-expanded='true'] .disclosureChevron {
+    transform: rotate(180deg);
+  }
+}
+
+.disclosureLabel {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.disclosureTitle {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.disclosureDescription {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.disclosureChevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: transform 160ms ease;
+}
+
+.disclosureContent {
+  padding: 0 20px 18px;
+
+  > .insightUnavailable {
+    margin-top: 0;
+  }
+}
+
+.financialSource {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 16px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+
+  a {
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+    gap: 5px;
+    color: var(--color-text-muted);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-interactive);
+      text-decoration: underline;
+    }
+  }
+}
+
+.metricUnit {
+  margin-left: 3px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.methodDisclosure {
+  margin-top: 14px;
+  border-top: 1px solid var(--color-border);
+
+  .disclosureTrigger {
+    min-height: 44px;
+    padding: 12px 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+
+    &:hover {
+      background: transparent;
+      color: var(--color-text);
+    }
+  }
+}
+
+.methodLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.methodContent {
+  padding-top: 12px;
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.7;
+
+  > p {
+    margin: 12px 0 0;
+  }
+}
+
+.methodList {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+
+  > div {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  dt {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.newsHeadline {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+
+  strong {
+    flex: 1;
+    min-width: 0;
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    font-size: 12px;
+  }
+}
+
+@include mobile {
+  .drawerContent {
+    gap: 12px;
+    padding: 16px 16px 24px;
+  }
+
+  .currentQuote,
+  .dailyChartSection,
+  .newsSection {
+    padding: 16px;
+  }
+
+  .disclosureTrigger {
+    padding: 16px;
+  }
+
+  .disclosureContent {
+    padding: 0 16px 16px;
+  }
+
+  .fundamentalsGrid div {
+    padding: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosureChevron {
+    transition: none;
   }
 }

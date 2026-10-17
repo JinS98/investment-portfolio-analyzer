@@ -154,3 +154,98 @@ test('request limiter bounds its client map and accepts new clients after expiry
   now += 60_000;
   assert.equal(limited('new-client'), false);
 });
+
+test('Naver API HUB news works with only Naver keys and normalizes articles', async () => {
+  let requests = 0;
+  globalThis.fetch = async (url, options) => {
+    requests++;
+    const request = new URL(url);
+    assert.equal(request.origin, 'https://naverapihub.apigw.ntruss.com');
+    assert.equal(request.pathname, '/search/v1/news');
+    assert.equal(request.searchParams.get('query'), '삼성전자');
+    assert.equal(request.searchParams.get('display'), '3');
+    assert.equal(request.searchParams.get('sort'), 'date');
+    assert.equal(request.searchParams.get('format'), 'json');
+    assert.equal(options.headers['X-NCP-APIGW-API-KEY-ID'], 'hub-id');
+    assert.equal(options.headers['X-NCP-APIGW-API-KEY'], 'hub-secret');
+    return Response.json({
+      items: [
+        {
+          title: '<b>삼성전자</b> &amp; 반도체',
+          originallink: 'https://publisher.example/news',
+          link: 'https://news.naver.com/article',
+          description: '<b>실적</b> 발표',
+          pubDate: 'Sat, 17 Oct 2026 09:00:00 +0900',
+        },
+      ],
+    });
+  };
+  const handler = createTossApiHandler({
+    NAVER_CLIENT_ID: 'hub-id',
+    NAVER_CLIENT_SECRET: 'hub-secret',
+  });
+  const path =
+    '/api/toss/stock-insights?' +
+    new URLSearchParams({ symbol: '005930', market: 'KR', name: '삼성전자' });
+  const result = await call(handler, path);
+  assert.equal(result.status, 200);
+  assert.equal(result.body.result.fundamentals, null);
+  assert.deepEqual(result.body.result.news, [
+    {
+      title: '삼성전자 & 반도체',
+      url: 'https://publisher.example/news',
+      summary: '실적 발표',
+      publishedAt: 'Sat, 17 Oct 2026 09:00:00 +0900',
+      source: '네이버 뉴스',
+    },
+  ]);
+  assert.equal(JSON.stringify(result.body).includes('hub-secret'), false);
+  await call(handler, path);
+  assert.equal(requests, 1);
+});
+
+for (const status of [401, 403, 429]) {
+  test(`Naver API HUB ${status} returns an actionable news message`, async () => {
+    globalThis.fetch = async () => new Response('', { status });
+    const handler = createTossApiHandler({
+      NAVER_CLIENT_ID: 'hub-id',
+      NAVER_CLIENT_SECRET: 'hub-secret',
+    });
+    const result = await call(
+      handler,
+      '/api/toss/stock-insights?' +
+        new URLSearchParams({ symbol: `KR${status}`, market: 'KR', name: `오류${status}` }),
+    );
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.result.news, []);
+    assert.match(
+      result.body.result.newsMessage,
+      status === 429 ? /호출 한도/ : /인증키.*이용 신청/,
+    );
+  });
+}
+
+test('SEC denial does not hide overseas news', async () => {
+  globalThis.fetch = async (input) => {
+    if (String(input).startsWith('https://api.marketaux.com/'))
+      return Response.json({
+        data: [
+          { title: 'Apple news', url: 'https://publisher.example/apple', source: 'Publisher' },
+        ],
+      });
+    if (String(input).startsWith('https://www.sec.gov/')) return new Response('', { status: 403 });
+    throw new Error('Unexpected provider');
+  };
+  const result = await call(
+    createTossApiHandler({
+      MARKETAUX_API_TOKEN: 'private-token',
+      SEC_USER_AGENT: 'PortfolioApp private@example.com',
+    }),
+    '/api/toss/stock-insights?symbol=AAPL&name=Apple&market=US',
+  );
+  assert.equal(result.status, 200);
+  assert.equal(result.body.result.news[0].title, 'Apple news');
+  assert.equal(result.body.result.financialStatement, null);
+  assert.match(result.body.result.financialStatementMessage, /SEC 접근/);
+  assert.equal(JSON.stringify(result.body).includes('private'), false);
+});
