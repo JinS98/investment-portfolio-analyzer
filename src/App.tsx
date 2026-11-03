@@ -5,6 +5,7 @@ import { Header } from './app/ui/Header/Header';
 import { AuthDialog } from '@features/auth';
 import { useAuth } from './hooks/useAuth';
 import { useExchangeRateSync } from './hooks/useExchangeRateSync';
+import { startLandingTracking } from './services/landingTracking';
 import { useDisplayCurrencyStore } from './store/displayCurrencyStore';
 import styles from './App.module.scss';
 
@@ -22,6 +23,10 @@ function App() {
   const displayCurrency = useDisplayCurrencyStore((state) => state.displayCurrency);
   const setDisplayCurrency = useDisplayCurrencyStore((state) => state.setDisplayCurrency);
   useExchangeRateSync(!isAuthLoading, user?.uid ?? null);
+
+  useEffect(() => {
+    void startLandingTracking();
+  }, []);
 
   useEffect(() => {
     const syncPage = () => setPage(pageFromHash(window.location.hash));

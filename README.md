@@ -68,21 +68,28 @@ npm run dev
 
 `.env.local.example`을 복사해 `.env.local`을 만들고 값을 채웁니다. `.env.local`은 Git에 포함하지 않습니다.
 
-| 변수                                     | 필수                     | 용도                            |
-| ---------------------------------------- | ------------------------ | ------------------------------- |
-| `TOSS_CLIENT_ID`                         | 시세·시장 데이터 사용 시 | 토스증권 Open API Client ID     |
-| `TOSS_CLIENT_SECRET`                     | 시세·시장 데이터 사용 시 | 토스증권 Open API Client Secret |
-| `VITE_FIREBASE_*`                        | 로그인·저장 사용 시      | Firebase 웹 앱 설정값           |
-| `DART_API_KEY`                           | 선택                     | 국내 재무제표·핵심 지표 계산    |
-| `ALPHA_VANTAGE_API_KEY`                  | 미국 재무정보 사용 시    | 미국 연간 재무제표·지표 계산    |
-| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 선택                     | 국내 종목 뉴스 조회             |
-| `MARKETAUX_API_TOKEN`                    | 선택                     | 미국 종목 뉴스 조회             |
+| 변수                                     | 필수                     | 용도                               |
+| ---------------------------------------- | ------------------------ | ---------------------------------- |
+| `TOSS_CLIENT_ID`                         | 시세·시장 데이터 사용 시 | 토스증권 Open API Client ID        |
+| `TOSS_CLIENT_SECRET`                     | 시세·시장 데이터 사용 시 | 토스증권 Open API Client Secret    |
+| `VITE_FIREBASE_*`                        | 로그인·저장 사용 시      | Firebase 웹 앱 설정값              |
+| `DART_API_KEY`                           | 선택                     | 국내 재무제표·핵심 지표 계산       |
+| `ALPHA_VANTAGE_API_KEY`                  | 미국 재무정보 사용 시    | 미국 연간 재무제표·지표 계산       |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 선택                     | 국내 종목 뉴스 조회                |
+| `MARKETAUX_API_TOKEN`                    | 선택                     | 미국 종목 뉴스 조회                |
+| `VITE_LTM_SITE_ID`                       | 광고 매체 설정 사용 시   | Landing Tracking Manager 사이트 ID |
 
 토스증권 WTS의 **설정 → Open API → 허용 IP 관리**에서 현재 네트워크의 공인 IP를 등록해야 합니다. 등록되지 않은 IP에서는 토큰 발급이 403으로 차단됩니다.
 
 `VITE_` 접두사가 붙은 값은 브라우저 번들에 노출될 수 있습니다. 토스·외부 정보 API 키에는 절대 `VITE_` 접두사를 붙이지 마세요. 배포 시 서버 키는 `functions/.env.example`을 기준으로 Functions 환경에 별도로 설정합니다. 로컬 `.env.local` 값만으로 배포된 Function의 키가 설정되지는 않습니다.
 
 네이버 뉴스는 **NAVER API HUB 검색 API**에서 발급한 Client ID·Client Secret을 사용합니다. 키 입력과 확인 순서는 [네이버 뉴스 설정 안내](docs/stock-search.md#네이버-뉴스-키-설정-naver-api-hub)를 참고하세요.
+
+### 광고 매체 공통 스크립트
+
+앱 시작 시 Landing Tracking Manager SDK를 한 번 로드하고 `VITE_LTM_SITE_ID`에 게시된 설정을 읽습니다. 메타 Pixel ID와 당근 코드 ID는 관리자 게시 설정에서만 가져옵니다. 이 앱에는 문의 저장과 `/complete` 경로가 없어 전환 이벤트는 실행하지 않습니다.
+
+현재 앱에는 광고 추적 동의 절차가 없습니다. `test` 사이트의 연동 검증을 위해 배포 빌드에서만 `VITE_LTM_TEST_ALLOW_WITHOUT_CONSENT=true`를 설정해 `hasConsent`를 기본 허용합니다. 이 설정은 실제 방문자의 매체 픽셀도 실행할 수 있습니다. 실제 동의 관리 기능을 도입할 때 이 임시 설정을 제거하고 `src/services/landingTracking.ts`의 `setLandingTrackingConsentProvider(() => 실제_광고_동의_상태)`를 연결해야 합니다. 픽셀 설정 UI는 이 앱에 두지 않습니다.
 
 ## 데이터 흐름
 
