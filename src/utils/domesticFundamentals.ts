@@ -1,7 +1,7 @@
-import type { DomesticMetricInputs, StockFundamentals } from '../services/marketInsightsApi.ts';
+import type { StockMetricInputs, StockFundamentals } from '../services/marketInsightsApi.ts';
 
 export function calculateDomesticFundamentals(
-  inputs: DomesticMetricInputs,
+  inputs: StockMetricInputs,
   price: number | null,
 ): StockFundamentals {
   const validPrice = typeof price === 'number' && Number.isFinite(price) && price > 0;

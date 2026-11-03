@@ -1,11 +1,11 @@
 export interface FinancialStatement {
-  source?: 'DART' | 'SEC';
+  source?: 'DART' | 'SEC' | 'ALPHA_VANTAGE';
   periodStart?: string;
   periodEnd?: string;
   filedAt?: string;
   reportUrl?: string;
   year: number;
-  basis: 'CFS' | 'OFS';
+  basis: 'CFS' | 'OFS' | 'N/A';
   currency: string;
   receiptNo: string | null;
   revenue: number | null;
@@ -32,18 +32,27 @@ export interface MarketNewsArticle {
   summary: string | null;
 }
 
-export interface DomesticMetricInputs {
-  year: number;
-  basis: 'CFS' | 'OFS';
+export interface StockMetricInputs {
   eps: number | null;
   bps: number | null;
   roe: number | null;
   dividendPerShare: number | null;
 }
 
+export interface DomesticMetricInputs extends StockMetricInputs {
+  year: number;
+  basis: 'CFS' | 'OFS';
+}
+
+export interface UsMetricInputs extends StockMetricInputs {
+  year: number;
+  currency: string;
+}
+
 export interface StockInsights {
   domesticMetricInputs?: DomesticMetricInputs | null;
   domesticMetricsMessage?: string | null;
+  usMetricInputs?: UsMetricInputs | null;
   financialStatement?: FinancialStatement | null;
   financialStatementMessage?: string | null;
   fundamentals: StockFundamentals | null;

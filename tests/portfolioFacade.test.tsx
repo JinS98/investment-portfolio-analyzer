@@ -84,6 +84,53 @@ describe('portfolio facade operations', () => {
     expect(usePortfolioStore.getState().isLoading).toBe(false);
   });
 
+  it('keeps refreshed quotes and the last good rate when the rate request fails', async () => {
+    usePortfolioStore.setState({ exchangeRate });
+    api.fetchCurrentPrices.mockImplementation(async ([ticker]: string[]) => ({ [ticker]: 80_000 }));
+    api.fetchUsdKrwExchangeRate.mockRejectedValue(new Error('temporary rate failure'));
+    const { result } = renderHook(() =>
+      usePortfolioPriceRefresh({
+        portfolio: [],
+        snapshotPositions: [krHolding, usHolding],
+        prices: {},
+      }),
+    );
+
+    await act(async () => result.current.refreshPrices());
+    expect(usePortfolioStore.getState().prices).toEqual({ '005930': 80_000, AAPL: 80_000 });
+    expect(usePortfolioStore.getState().exchangeRate).toEqual(exchangeRate);
+    expect(usePortfolioStore.getState().isError).toBe(false);
+    expect(result.current.priceRefreshFailures).toEqual([]);
+  });
+
+  it('shows refreshed quotes before a slow rate request finishes', async () => {
+    let resolveRate: (rate: ExchangeRate) => void = () => {};
+    api.fetchCurrentPrices.mockResolvedValue({ '005930': 80_000 });
+    api.fetchUsdKrwExchangeRate.mockImplementation(
+      () => new Promise<ExchangeRate>((resolve) => (resolveRate = resolve)),
+    );
+    const { result } = renderHook(() =>
+      usePortfolioPriceRefresh({
+        portfolio: [],
+        snapshotPositions: [krHolding],
+        prices: {},
+      }),
+    );
+
+    let refresh: Promise<void> = Promise.resolve();
+    await act(async () => {
+      refresh = result.current.refreshPrices();
+      await Promise.resolve();
+    });
+    expect(usePortfolioStore.getState().prices['005930']).toBe(80_000);
+    expect(usePortfolioStore.getState().exchangeRate).toBeNull();
+    await act(async () => {
+      resolveRate(exchangeRate);
+      await refresh;
+    });
+    expect(usePortfolioStore.getState().exchangeRate).toEqual(exchangeRate);
+  });
+
   it('reports a snapshot save failure without discarding refreshed quotes', async () => {
     api.fetchCurrentPrices.mockResolvedValue({ '005930': 80_000 });
     api.saveDailyPortfolioHistory.mockRejectedValue(new Error('이력 저장 거부'));

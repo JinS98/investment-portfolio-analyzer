@@ -225,7 +225,7 @@ for (const status of [401, 403, 429]) {
   });
 }
 
-test('SEC denial does not hide overseas news', async () => {
+test('Alpha Vantage denial does not hide overseas news', async () => {
   globalThis.fetch = async (input) => {
     if (String(input).startsWith('https://api.marketaux.com/'))
       return Response.json({
@@ -233,19 +233,21 @@ test('SEC denial does not hide overseas news', async () => {
           { title: 'Apple news', url: 'https://publisher.example/apple', source: 'Publisher' },
         ],
       });
-    if (String(input).startsWith('https://www.sec.gov/')) return new Response('', { status: 403 });
+    if (String(input).startsWith('https://www.alphavantage.co/'))
+      return Response.json({ Information: 'API rate limit exceeded for private-key' });
     throw new Error('Unexpected provider');
   };
   const result = await call(
     createTossApiHandler({
       MARKETAUX_API_TOKEN: 'private-token',
-      SEC_USER_AGENT: 'PortfolioApp private@example.com',
+      ALPHA_VANTAGE_API_KEY: 'private-key',
     }),
     '/api/toss/stock-insights?symbol=AAPL&name=Apple&market=US',
   );
   assert.equal(result.status, 200);
   assert.equal(result.body.result.news[0].title, 'Apple news');
   assert.equal(result.body.result.financialStatement, null);
-  assert.match(result.body.result.financialStatementMessage, /SEC 접근/);
+  assert.match(result.body.result.financialStatementMessage, /호출 간격|일일 한도/);
+  assert.equal(result.cache, 'no-store');
   assert.equal(JSON.stringify(result.body).includes('private'), false);
 });

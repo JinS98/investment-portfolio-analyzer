@@ -77,4 +77,19 @@ describe('market explore requests', () => {
     expect(result.current.selectedStock?.symbol).toBe('NEW');
     expect(result.current.stockDetail?.quote?.symbol).toBe('NEW');
   });
+
+  it.each(['KR', 'US'])('shows %s stock candles from the last 30 calendar days', async (market) => {
+    const candles = ['2026-09-17', '2026-10-04', '2026-10-05', '2026-10-31', '2026-11-03'].map(
+      (date) => ({ date, timestamp: `${date}T00:00:00+09:00`, closePrice: 100 }),
+    );
+    api.fetchCandlePage.mockResolvedValue({ candles });
+    const selected = { ...stock('TEST'), market: market === 'KR' ? 'KOSPI' : 'NASDAQ' };
+    const { result } = renderHook(() => useStockDetail());
+
+    act(() => result.current.openStockDrawer(selected));
+    await waitFor(() => expect(result.current.stockDetail?.candles).toHaveLength(3));
+    expect(result.current.stockDetail?.candles[0].date).toBe('2026-10-05');
+    expect(result.current.stockDetail?.candles.at(-1)?.date).toBe('2026-11-03');
+    expect(api.fetchCandlePage).toHaveBeenCalledWith('TEST', 30);
+  });
 });

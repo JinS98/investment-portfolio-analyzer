@@ -12,6 +12,11 @@ export const tossApi = onRequest(
     timeoutSeconds: 60,
     memory: '256MiB',
     maxInstances: 5,
+    networkInterface: {
+      network: 'portfolio-vpc',
+      subnetwork: 'toss-egress-subnet',
+    },
+    vpcEgress: 'ALL_TRAFFIC',
   },
   async (request, response) => {
     const clientKey = request.ip ?? 'unknown';

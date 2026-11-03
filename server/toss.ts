@@ -1,4 +1,4 @@
-import { fetchSecStatement } from '../functions/src/sec.mts';
+import { fetchAlphaVantage } from '../functions/src/alphaVantage.mts';
 import { fetchDartStatement } from '../functions/src/dart.mts';
 import type { Plugin, Connect } from 'vite';
 import { createStockSearch } from './stockSearch.ts';
@@ -95,11 +95,6 @@ async function usIndexData(
 
 const insightCache = new Map<string, { expiresAt: number; value: unknown }>();
 
-const asFinite = (value: unknown) => {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
-};
-
 const stripHtml = (value: string) =>
   value
     .replace(/<[^>]*>/g, '')
@@ -116,38 +111,10 @@ async function stockInsights(
   const cacheKey = `${market}:${symbol}:${name}`;
   const cached = insightCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
-  const externalSymbol = market === 'KR' ? `${symbol}.KO` : `${symbol}.US`;
-  const eodToken = env.EODHD_API_TOKEN;
   const naverId = env.NAVER_CLIENT_ID;
   const naverSecret = env.NAVER_CLIENT_SECRET;
   const marketauxToken = env.MARKETAUX_API_TOKEN;
-  const [fundamentals, news, dart] = await Promise.all([
-    market === 'US' && eodToken
-      ? fetch(
-          `https://eodhd.com/api/fundamentals/${encodeURIComponent(externalSymbol)}?${new URLSearchParams({ api_token: eodToken, fmt: 'json' })}`,
-          { signal: AbortSignal.timeout(15_000) },
-        )
-          .then(async (response) => {
-            if (!response.ok) return { data: null, message: '재무 지표 API를 사용할 수 없습니다.' };
-            const data = (await response.json()) as { Highlights?: Record<string, unknown> };
-            const values = data.Highlights;
-            if (!values) return { data: null, message: '해당 종목의 재무 지표가 없습니다.' };
-            return {
-              data: {
-                per: asFinite(values.PERatio),
-                pbr: asFinite(values.PriceBookMRQ),
-                roe: asFinite(values.ReturnOnEquityTTM),
-                dividendYield: asFinite(values.DividendYield),
-                marketCap: asFinite(values.MarketCapitalization),
-              },
-              message: null,
-            };
-          })
-          .catch(() => ({ data: null, message: '재무 지표를 불러오지 못했습니다.' }))
-      : Promise.resolve({
-          data: null,
-          message: 'EODHD_API_TOKEN을 설정하면 재무 지표를 볼 수 있습니다.',
-        }),
+  const [news, financials] = await Promise.all([
     market === 'KR'
       ? naverId && naverSecret
         ? fetch(
@@ -229,16 +196,26 @@ async function stockInsights(
           }),
     market === 'KR'
       ? fetchDartStatement(symbol, env.DART_API_KEY)
-      : fetchSecStatement(symbol, env.SEC_USER_AGENT),
+      : fetchAlphaVantage(symbol, env.ALPHA_VANTAGE_API_KEY),
   ]);
   const value = {
-    ...dart,
-    fundamentals: fundamentals.data,
-    fundamentalsMessage: fundamentals.message,
+    ...financials,
+    fundamentals: null,
+    fundamentalsMessage:
+      market === 'US' && 'fundamentalsMessage' in financials
+        ? financials.fundamentalsMessage
+        : null,
     news: news.items,
     newsMessage: news.message,
   };
-  insightCache.set(cacheKey, { expiresAt: Date.now() + 15 * 60 * 1000, value });
+  insightCache.set(cacheKey, {
+    expiresAt:
+      Date.now() +
+      (market === 'US' && (value.financialStatementMessage || value.fundamentalsMessage) ? 5 : 15) *
+        60 *
+        1000,
+    value,
+  });
   return value;
 }
 

@@ -52,7 +52,7 @@ gcloud compute networks create portfolio-vpc \
 gcloud compute networks subnets create toss-egress-subnet \
   --network=portfolio-vpc \
   --region=asia-northeast3 \
-  --range=10.10.0.0/28
+  --range=10.10.0.0/26
 
 gcloud compute addresses create toss-egress-ip \
   --region=asia-northeast3

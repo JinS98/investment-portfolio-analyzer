@@ -103,7 +103,7 @@ export function MarketIndicatorSection({
                     : 'S&P 500'}{' '}
               최근 30일
             </h2>
-            <p>일별 종가 기준 흐름입니다.</p>
+            <p>마지막 거래일 기준 30일 동안의 거래일 종가입니다.</p>
           </div>
           <button type="button" onClick={() => onClose()} aria-label="지수 차트 닫기">
             ×

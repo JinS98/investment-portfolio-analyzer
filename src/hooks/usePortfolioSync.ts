@@ -31,7 +31,7 @@ export function usePortfolioSync() {
         return { loading: false, error: action.error ?? '포트폴리오를 불러오지 못했습니다.' };
       return { loading: false, error: '' };
     },
-    { loading: false, error: '' },
+    { loading: true, error: '' },
   );
 
   useEffect(() => {

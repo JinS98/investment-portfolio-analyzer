@@ -1,5 +1,12 @@
 {
   "projects": {
     "default": "investment-portfolio-ana-a7218"
+  },
+  "targets": {
+    "investment-portfolio-ana-a7218": {
+      "hosting": {
+        "main": ["investment-ana"]
+      }
+    }
   }
 }

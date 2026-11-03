@@ -35,12 +35,10 @@ export function usePortfolioPriceRefresh({
 
     try {
       const tickers = snapshotPositions.map((position) => position.ticker);
-      const [priceResults, exchangeRate] = await Promise.all([
-        Promise.allSettled(
-          tickers.map(async (ticker) => ({ ticker, prices: await fetchCurrentPrices([ticker]) })),
-        ),
-        fetchUsdKrwExchangeRate(),
-      ]);
+      const exchangeRateRequest = fetchUsdKrwExchangeRate().catch(() => null);
+      const priceResults = await Promise.allSettled(
+        tickers.map(async (ticker) => ({ ticker, prices: await fetchCurrentPrices([ticker]) })),
+      );
       const newPrices: PriceMap = {};
       const failures: string[] = [];
       priceResults.forEach((result, index) => {
@@ -53,7 +51,8 @@ export function usePortfolioPriceRefresh({
       setPriceRefreshFailures(failures);
       const mergedPrices = { ...prices, ...newPrices };
       setPrices(mergedPrices);
-      setExchangeRate(exchangeRate);
+      const exchangeRate = await exchangeRateRequest;
+      if (exchangeRate) setExchangeRate(exchangeRate);
       if (portfolio.length) setComputedData(calcPortfolio(portfolio, mergedPrices));
       setLastUpdated(new Date().toISOString());
       setHistorySaveError('');

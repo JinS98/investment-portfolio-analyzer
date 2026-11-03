@@ -88,7 +88,6 @@ export const usePortfolioStore = create<PortfolioState>()(
         set({
           portfolio,
           prices: {},
-          exchangeRate: null,
           historicalData: {},
           computedData: null,
           riskData: null,

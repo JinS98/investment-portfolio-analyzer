@@ -11,6 +11,7 @@ import {
 } from '../../services/marketExploreService';
 import type { MarketIndexData, MarketIndexSymbol, MarketIndicatorCandle } from '../../types/market';
 import type { IndicatorCardChart } from './MarketIndicatorSection';
+import { recentCalendarDays } from './chartRange';
 
 interface UseMarketOverviewOptions {
   setExchangeRate: (rate: Awaited<ReturnType<typeof fetchUsdKrwExchangeRate>>) => void;
@@ -34,14 +35,12 @@ export function useMarketOverview({ setExchangeRate }: UseMarketOverviewOptions)
     void Promise.all([
       fetchMarketExploreOverview('KR'),
       fetchMarketExploreOverview('US'),
-      fetchUsdKrwExchangeRate(),
       fetchMarketIndicatorPrices(['KOSPI', 'KOSDAQ']),
       fetchUsMarketIndices(),
     ])
-      .then(([krStocks, usStocks, freshExchangeRate, krIndicators, usIndicators]) => {
+      .then(([krStocks, usStocks, krIndicators, usIndicators]) => {
         if (mounted) {
           setOverview([...krStocks, ...usStocks]);
-          setExchangeRate(freshExchangeRate);
           setIndicators([
             ...krIndicators.map((indicator) => ({ ...indicator, changeRate: null, candles: [] })),
             ...usIndicators,
@@ -66,6 +65,20 @@ export function useMarketOverview({ setExchangeRate }: UseMarketOverviewOptions)
     return () => {
       mounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    void fetchUsdKrwExchangeRate()
+      .then((rate) => {
+        if (mounted) setExchangeRate(rate);
+      })
+      .catch(() => {
+        // The shared rate sync retries failures; market rankings remain available.
+      });
+    return () => {
+      mounted = false;
+    };
   }, [setExchangeRate]);
 
   useEffect(() => {
@@ -83,7 +96,10 @@ export function useMarketOverview({ setExchangeRate }: UseMarketOverviewOptions)
       } catch {
         // Fall through to daily candles when intraday data is unavailable.
       }
-      return { candles: dailyCandles, previousClose: dailyCandles.at(-2)?.closePrice ?? null };
+      return {
+        candles: recentCalendarDays(dailyCandles, (candle) => candle.timestamp),
+        previousClose: dailyCandles.at(-2)?.closePrice ?? null,
+      };
     };
     void Promise.allSettled([
       loadKoreanSparkline('KOSPI'),
@@ -97,7 +113,7 @@ export function useMarketOverview({ setExchangeRate }: UseMarketOverviewOptions)
         const indicator = usIndicators.find((item) => item.symbol === symbol);
         const changeRate = indicator?.changeRate;
         return {
-          candles: indicator?.candles ?? [],
+          candles: recentCalendarDays(indicator?.candles ?? [], (candle) => candle.timestamp),
           previousClose:
             indicator && changeRate !== null && changeRate !== undefined && changeRate > -1
               ? indicator.price / (1 + changeRate)
@@ -134,8 +150,9 @@ export function useMarketOverview({ setExchangeRate }: UseMarketOverviewOptions)
           });
     void request
       .then((candles) => {
-        candleCache.current.set(selectedIndicator, candles);
-        if (mounted) setIndicatorCandles(candles);
+        const recentCandles = recentCalendarDays(candles, (candle) => candle.timestamp);
+        candleCache.current.set(selectedIndicator, recentCandles);
+        if (mounted) setIndicatorCandles(recentCandles);
       })
       .catch(() => {
         if (mounted) setIndicatorCandles([]);

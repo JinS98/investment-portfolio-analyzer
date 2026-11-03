@@ -62,7 +62,7 @@ export function MiniLineChart({
       <svg
         className={styles.miniChart}
         viewBox={`0 0 ${chart.width} ${chart.height}`}
-        aria-label="최근 30일 지수 흐름"
+        aria-label={currency ? '최근 30일 주가 흐름' : '최근 30일 지수 흐름'}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">

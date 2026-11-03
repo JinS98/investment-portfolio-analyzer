@@ -90,27 +90,28 @@ export function StockDetailDrawer({
 }: StockDetailDrawerProps) {
   const domestic = selectedStock ? isKoreanMarket(selectedStock.market) : false;
   const metricInputs = stockDetail?.insights?.domesticMetricInputs;
-  const fundamentals = domestic
-    ? metricInputs
-      ? calculateDomesticFundamentals(
-          metricInputs,
-          stockDetail?.quote?.price ?? selectedStock?.price ?? null,
-        )
-      : null
-    : stockDetail?.insights?.fundamentals;
+  const usMetricInputs = stockDetail?.insights?.usMetricInputs;
+  const inputs = domestic ? metricInputs : usMetricInputs;
+  const quotePrice = stockDetail?.quote?.price ?? selectedStock?.price ?? null;
+  const priceMatchesCurrency =
+    domestic || (selectedStock?.currency === 'USD' && usMetricInputs?.currency === 'USD');
+  const fundamentals = inputs
+    ? calculateDomesticFundamentals(inputs, priceMatchesCurrency ? quotePrice : null)
+    : null;
   const statement = stockDetail?.insights?.financialStatement;
-  const secStatement = statement?.source === 'SEC';
-  const statementScale = secStatement ? 1_000_000 : statement?.currency === 'KRW' ? 100_000_000 : 1;
+  const usStatement = statement?.source === 'ALPHA_VANTAGE' || statement?.source === 'SEC';
+  const statementScale = usStatement ? 1_000_000 : statement?.currency === 'KRW' ? 100_000_000 : 1;
   const statementDescription = statement
-    ? secStatement
+    ? usStatement
       ? `회계연도 종료 ${statement.periodEnd} · ${statement.currency === 'USD' ? '백만 달러' : `백만 ${statement.currency}`}`
       : `${statement.year}년 · ${statement.basis === 'CFS' ? '연결' : '별도'} · ${statement.currency === 'KRW' ? '억 원' : statement.currency}`
     : '연간 실적과 재무 현황';
-  const statementUrl = secStatement
-    ? statement?.reportUrl
-    : statement?.receiptNo
-      ? `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${statement.receiptNo}`
-      : null;
+  const statementUrl =
+    statement?.source === 'SEC'
+      ? statement?.reportUrl
+      : statement?.receiptNo
+        ? `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${statement.receiptNo}`
+        : null;
   return (
     <Drawer open={selectedStock !== null} labelledBy="stock-drawer-title" onClose={onClose}>
       {selectedStock ? (
@@ -186,7 +187,7 @@ export function StockDetailDrawer({
               <section className={styles.dailyChartSection} aria-labelledby="daily-chart-title">
                 <div className={styles.detailSectionHeading}>
                   <h3 id="daily-chart-title">주가 흐름</h3>
-                  <span>최근 30일 · 종가</span>
+                  <span>마지막 거래일 기준 30일 · 종가</span>
                 </div>
                 {stockDetail.candles.length >= 2 ? (
                   <MiniLineChart
@@ -226,18 +227,20 @@ export function StockDetailDrawer({
                     </dl>
                     <footer className={styles.financialSource}>
                       <span>
-                        {secStatement
-                          ? `출처 · SEC${statement.filedAt ? ` · 공시 ${statement.filedAt}` : ''}`
-                          : '출처 · 금융감독원 DART'}
+                        {statement.source === 'ALPHA_VANTAGE'
+                          ? '출처 · Alpha Vantage'
+                          : statement.source === 'SEC'
+                            ? `출처 · SEC${statement.filedAt ? ` · 공시 ${statement.filedAt}` : ''}`
+                            : '출처 · 금융감독원 DART'}
                       </span>
                       {statementUrl ? (
                         <a
                           href={statementUrl}
                           target="_blank"
                           rel="noreferrer"
-                          aria-label={`${statement.year}년 ${secStatement ? 'SEC 연간보고서' : '사업보고서'} 새 탭에서 보기`}
+                          aria-label={`${statement.year}년 ${statement.source === 'SEC' ? 'SEC 연간보고서' : '사업보고서'} 새 탭에서 보기`}
                         >
-                          {secStatement ? '연간보고서' : '사업보고서'}{' '}
+                          {statement.source === 'SEC' ? '연간보고서' : '사업보고서'}{' '}
                           <FiExternalLink aria-hidden="true" />
                         </a>
                       ) : null}
@@ -256,7 +259,9 @@ export function StockDetailDrawer({
                 description={
                   domestic && metricInputs
                     ? `${metricInputs.year}년 ${metricInputs.basis === 'CFS' ? '연결' : '별도'} 실적 · 현재가 기준`
-                    : '가치평가 · 수익성 · 배당'
+                    : usMetricInputs
+                      ? `${usMetricInputs.year}년 실적 · 최근 12개월 배당 · 현재가 기준`
+                      : '가치평가 · 수익성 · 배당'
                 }
               >
                 {fundamentals ? (
@@ -327,9 +332,40 @@ export function StockDetailDrawer({
                     </p>
                   </DetailDisclosure>
                 ) : null}
+                {!domestic && usMetricInputs ? (
+                  <DetailDisclosure title="지표 산정 방식" compact>
+                    <dl className={styles.methodList}>
+                      <div>
+                        <dt>PER</dt>
+                        <dd>토스 현재가 ÷ Alpha Vantage 연간 EPS</dd>
+                      </div>
+                      <div>
+                        <dt>PBR</dt>
+                        <dd>토스 현재가 ÷ 연말 보통주 주당순자산</dd>
+                      </div>
+                      <div>
+                        <dt>ROE</dt>
+                        <dd>연간 순이익 ÷ 기초·기말 평균 자본 × 100</dd>
+                      </div>
+                      <div>
+                        <dt>배당수익률</dt>
+                        <dd>최근 12개월 주당 배당금 ÷ 토스 현재가 × 100</dd>
+                      </div>
+                    </dl>
+                    <p>
+                      연간 확정 실적과 현재가를 조합한 참고값입니다. 공시 통화가 USD가 아니거나
+                      EPS·주식 수 등 필요한 자료가 없으면 해당 지표는 -로 표시합니다.
+                    </p>
+                  </DetailDisclosure>
+                ) : null}
                 {domestic && stockDetail.insights?.domesticMetricsMessage ? (
                   <p className={styles.insightUnavailable}>
                     {stockDetail.insights.domesticMetricsMessage}
+                  </p>
+                ) : null}
+                {!domestic && fundamentals && stockDetail.insights?.fundamentalsMessage ? (
+                  <p className={styles.insightUnavailable}>
+                    {stockDetail.insights.fundamentalsMessage}
                   </p>
                 ) : null}
               </DetailDisclosure>

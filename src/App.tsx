@@ -4,6 +4,7 @@ import { Content } from './app/ui/Content/Content';
 import { Header } from './app/ui/Header/Header';
 import { AuthDialog } from '@features/auth';
 import { useAuth } from './hooks/useAuth';
+import { useExchangeRateSync } from './hooks/useExchangeRateSync';
 import { useDisplayCurrencyStore } from './store/displayCurrencyStore';
 import styles from './App.module.scss';
 
@@ -20,6 +21,7 @@ function App() {
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const displayCurrency = useDisplayCurrencyStore((state) => state.displayCurrency);
   const setDisplayCurrency = useDisplayCurrencyStore((state) => state.setDisplayCurrency);
+  useExchangeRateSync(!isAuthLoading, user?.uid ?? null);
 
   useEffect(() => {
     const syncPage = () => setPage(pageFromHash(window.location.hash));

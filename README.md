@@ -41,7 +41,7 @@
 - State: Zustand
 - Backend services: Firebase Authentication, Cloud Firestore
 - Market data: 토스증권 Open API
-- Optional data: EODHD, Naver Search API, Marketaux
+- Optional data: Alpha Vantage, Naver Search API, Marketaux
 - Quality: ESLint, Oxc linter, Prettier, Node.js test runner
 
 ## 시작하기
@@ -68,16 +68,15 @@ npm run dev
 
 `.env.local.example`을 복사해 `.env.local`을 만들고 값을 채웁니다. `.env.local`은 Git에 포함하지 않습니다.
 
-| 변수                                     | 필수                     | 용도                             |
-| ---------------------------------------- | ------------------------ | -------------------------------- |
-| `TOSS_CLIENT_ID`                         | 시세·시장 데이터 사용 시 | 토스증권 Open API Client ID      |
-| `TOSS_CLIENT_SECRET`                     | 시세·시장 데이터 사용 시 | 토스증권 Open API Client Secret  |
-| `VITE_FIREBASE_*`                        | 로그인·저장 사용 시      | Firebase 웹 앱 설정값            |
-| `SEC_USER_AGENT`                         | 미국 재무제표 사용 시    | SEC 요청 식별용 이름·연락 이메일 |
-| `DART_API_KEY`                           | 선택                     | 국내 재무제표·핵심 지표 계산     |
-| `EODHD_API_TOKEN`                        | 선택                     | 종목 지표 조회                   |
-| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 선택                     | 국내 종목 뉴스 조회              |
-| `MARKETAUX_API_TOKEN`                    | 선택                     | 미국 종목 뉴스 조회              |
+| 변수                                     | 필수                     | 용도                            |
+| ---------------------------------------- | ------------------------ | ------------------------------- |
+| `TOSS_CLIENT_ID`                         | 시세·시장 데이터 사용 시 | 토스증권 Open API Client ID     |
+| `TOSS_CLIENT_SECRET`                     | 시세·시장 데이터 사용 시 | 토스증권 Open API Client Secret |
+| `VITE_FIREBASE_*`                        | 로그인·저장 사용 시      | Firebase 웹 앱 설정값           |
+| `DART_API_KEY`                           | 선택                     | 국내 재무제표·핵심 지표 계산    |
+| `ALPHA_VANTAGE_API_KEY`                  | 미국 재무정보 사용 시    | 미국 연간 재무제표·지표 계산    |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 선택                     | 국내 종목 뉴스 조회             |
+| `MARKETAUX_API_TOKEN`                    | 선택                     | 미국 종목 뉴스 조회             |
 
 토스증권 WTS의 **설정 → Open API → 허용 IP 관리**에서 현재 네트워크의 공인 IP를 등록해야 합니다. 등록되지 않은 IP에서는 토큰 발급이 403으로 차단됩니다.
 

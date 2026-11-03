@@ -223,4 +223,51 @@ describe('stock detail disclosures', () => {
     );
     expect(screen.queryByText('출처 · 금융감독원 DART')).not.toBeInTheDocument();
   });
+
+  it('shows Alpha Vantage statements and calculates US ratios from the Toss quote', async () => {
+    render(
+      <StockDetailDrawer
+        {...props}
+        selectedStock={{
+          ...stock,
+          symbol: 'AAPL',
+          name: 'Apple',
+          market: 'NASDAQ',
+          currency: 'USD',
+        }}
+        stockDetail={{
+          ...props.stockDetail,
+          quote: { symbol: 'AAPL', price: 120, currency: 'USD', timestamp: null },
+          insights: {
+            ...props.stockDetail.insights,
+            domesticMetricInputs: undefined,
+            usMetricInputs: {
+              year: 2025,
+              currency: 'USD',
+              eps: 5,
+              bps: 12,
+              roe: 20,
+              dividendPerShare: 2.5,
+            },
+            financialStatement: {
+              ...props.stockDetail.insights.financialStatement,
+              source: 'ALPHA_VANTAGE',
+              basis: 'N/A',
+              currency: 'USD',
+              receiptNo: null,
+              periodEnd: '2025-09-27',
+            },
+          },
+        }}
+      />,
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: /^재무제표/ }));
+    expect(screen.getByText('출처 · Alpha Vantage')).toBeVisible();
+    expect(screen.queryByRole('link', { name: /연간보고서 새 탭/ })).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: /^재무지표/ }));
+    expect(screen.getByText('24')).toBeVisible();
+    expect(screen.getByText('10')).toBeVisible();
+    expect(screen.getByText('20')).toBeVisible();
+    expect(screen.getByText('2.08')).toBeVisible();
+  });
 });

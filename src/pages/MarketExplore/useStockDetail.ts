@@ -4,6 +4,7 @@ import type { MarketExploreStock } from '../../services/marketExploreService';
 import { fetchStockInsights } from '../../services/marketInsightsApi';
 import { fetchCandlePage, fetchQuotes } from '../../services/tossApi';
 import type { StockDetail } from './StockDetailDrawer';
+import { recentCalendarDays } from './chartRange';
 
 export function useStockDetail() {
   const [selectedStock, setSelectedStock] = useState<MarketExploreStock | null>(null);
@@ -36,7 +37,11 @@ export function useStockDetail() {
         ).catch(() => null),
       ]);
       if (requestId === detailRequestId.current) {
-        setStockDetail({ quote: quotes[0] ?? null, candles: candlePage.candles, insights });
+        setStockDetail({
+          quote: quotes[0] ?? null,
+          candles: recentCalendarDays(candlePage.candles, (candle) => candle.date),
+          insights,
+        });
       }
     } catch (cause) {
       if (requestId === detailRequestId.current) {
