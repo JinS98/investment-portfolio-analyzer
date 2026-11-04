@@ -14,9 +14,6 @@ beforeEach(() => {
 describe('Landing Tracking Manager common script', () => {
   it('loads once, passes published-config options and allows the test-site override', async () => {
     const start = vi.fn().mockResolvedValue(undefined);
-    const createMetaAdapter = vi.fn().mockReturnValue({ provider: 'meta' });
-    const createKarrotAdapter = vi.fn().mockReturnValue({ provider: 'karrot' });
-    const createTikTokAdapter = vi.fn().mockReturnValue({ provider: 'tikTok' });
     const TrackingSdk = vi.fn(function (options: unknown) {
       void options;
       return { start };
@@ -30,7 +27,7 @@ describe('Landing Tracking Manager common script', () => {
 
     Object.defineProperty(window, 'LandingTrackingSdk', {
       configurable: true,
-      value: { TrackingSdk, createMetaAdapter, createKarrotAdapter, createTikTokAdapter },
+      value: { TrackingSdk },
     });
     scripts[0].dispatchEvent(new Event('load'));
     await Promise.all([first, second]);
@@ -39,21 +36,13 @@ describe('Landing Tracking Manager common script', () => {
     const options = TrackingSdk.mock.calls[0][0] as {
       siteId: string;
       configUrl: string;
-      adapters: Record<string, unknown>;
       hasConsent: () => boolean;
       verifyCompletionToken: () => null;
       onDiagnostic: (signal: { kind: string; siteId: string; releaseVersion: number }) => void;
     };
     expect(options.siteId).toBe('test');
     expect(options.configUrl).toBe('https://pixel-manager.web.app/tracking-config');
-    expect(options.adapters).toEqual({
-      meta: { provider: 'meta' },
-      karrot: { provider: 'karrot' },
-      tikTok: { provider: 'tikTok' },
-    });
-    expect(createMetaAdapter).toHaveBeenCalledOnce();
-    expect(createKarrotAdapter).toHaveBeenCalledOnce();
-    expect(createTikTokAdapter).toHaveBeenCalledOnce();
+    expect(options).not.toHaveProperty('adapters');
     expect(options.hasConsent()).toBe(true);
     expect(options.verifyCompletionToken()).toBeNull();
 
