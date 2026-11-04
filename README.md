@@ -87,7 +87,7 @@ npm run dev
 
 ### 광고 매체 공통 스크립트
 
-앱 시작 시 Landing Tracking Manager SDK를 한 번 로드하고 `VITE_LTM_SITE_ID`에 게시된 설정을 읽습니다. 메타 Pixel ID와 당근 코드 ID는 관리자 게시 설정에서만 가져옵니다. 이 앱에는 문의 저장과 `/complete` 경로가 없어 전환 이벤트는 실행하지 않습니다.
+앱 시작 시 Landing Tracking Manager SDK를 한 번 로드하고 `VITE_LTM_SITE_ID`에 게시된 설정을 읽습니다. SDK 번들이 내보내는 `create*Adapter` 함수를 자동 등록해 게시 설정의 활성 매체를 연결합니다. 매체 설정 변경은 이 앱의 재배포 없이 반영되며, 새 매체는 해당 이름 규칙의 어댑터를 중앙 SDK 번들에 추가해 배포합니다. 이 앱에는 문의 저장과 `/complete` 경로가 없어 전환 이벤트는 실행하지 않습니다.
 
 현재 앱에는 광고 추적 동의 절차가 없습니다. `test` 사이트의 연동 검증을 위해 배포 빌드에서만 `VITE_LTM_TEST_ALLOW_WITHOUT_CONSENT=true`를 설정해 `hasConsent`를 기본 허용합니다. 이 설정은 실제 방문자의 매체 픽셀도 실행할 수 있습니다. 실제 동의 관리 기능을 도입할 때 이 임시 설정을 제거하고 `src/services/landingTracking.ts`의 `setLandingTrackingConsentProvider(() => 실제_광고_동의_상태)`를 연결해야 합니다. 픽셀 설정 UI는 이 앱에 두지 않습니다.
 

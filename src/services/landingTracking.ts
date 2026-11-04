@@ -20,14 +20,13 @@ interface TrackingBundle {
   TrackingSdk: new (options: {
     siteId: string;
     configUrl: string;
-    adapters: { meta: unknown; karrot: unknown };
+    adapters: Record<string, unknown>;
     hasConsent: () => boolean;
     verifyCompletionToken: () => null;
     onDiagnostic: (signal: TrackingDiagnosticSignal) => void;
     onError: (error: Error) => void;
   }) => TrackingInstance;
-  createMetaAdapter(): unknown;
-  createKarrotAdapter(): unknown;
+  [exportName: string]: unknown;
 }
 
 declare global {
@@ -65,6 +64,17 @@ function sendDiagnostic(signal: TrackingDiagnosticSignal): void {
   }).catch((error: unknown) => console.error('Landing tracking diagnostic failed', error));
 }
 
+function createAdapters(bundle: TrackingBundle): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(bundle).flatMap(([name, factory]) => {
+      const match = /^create([A-Z].*)Adapter$/.exec(name);
+      if (!match || typeof factory !== 'function') return [];
+      const provider = match[1][0].toLowerCase() + match[1].slice(1);
+      return [[provider, factory()]];
+    }),
+  );
+}
+
 function loadBundle(): Promise<TrackingBundle> {
   if (window.LandingTrackingSdk) return Promise.resolve(window.LandingTrackingSdk);
   if (scriptPromise) return scriptPromise;
@@ -98,15 +108,12 @@ export function startLandingTracking(): Promise<void> {
           new bundle.TrackingSdk({
             siteId: SITE_ID,
             configUrl: CONFIG_URL,
-            adapters: {
-              meta: bundle.createMetaAdapter(),
-              karrot: bundle.createKarrotAdapter(),
-            },
+            adapters: createAdapters(bundle),
             hasConsent: hasAdvertisingConsent,
             // No consultation flow or /complete route exists in this app.
             verifyCompletionToken: () => null,
             onDiagnostic: sendDiagnostic,
-            onError: () => {},
+            onError: (error) => console.error('Landing Tracking SDK:', error),
           }),
       );
       const instance = await instancePromise;
